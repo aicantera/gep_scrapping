@@ -1,0 +1,324 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Calibri:wght@300;400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 242 6% 95%; /* #F2F1F1 Pantone 427-30% */
+    --foreground: 0 0% 60%; /* #999996 Black 90% - Pantone 431 U */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 60%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 60%;
+    --primary: 0 0% 60%; /* #999996 Black 90% - Pantone 431 U */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 2% 83%; /* #D1D3D3 Pantone 427 */
+    --secondary-foreground: 0 0% 60%;
+    --muted: 210 2% 83%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 42 98% 62%; /* #FEBD3F Pantone 136 */
+    --accent-foreground: 0 0% 60%;
+    --destructive: 345 90% 37%; /* #B52244 Pantone 201 U */
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 2% 83%;
+    --input: 210 2% 83%;
+    --ring: 210 2% 83%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+
+  body {
+    font-family: 'Calibri', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+}
+
+@layer components {
+  /* Login Form Styles */
+  .login-container {
+    @apply min-h-screen flex items-center justify-center p-4 bg-secondary-light;
+  }
+
+  .login-card {
+    @apply w-full max-w-md bg-white rounded-2xl shadow-2xl border-0 overflow-hidden;
+  }
+
+  .login-header {
+    @apply p-8 text-center;
+    background: none;
+    color: theme('colors.primary.DEFAULT');
+  }
+
+  .login-header h1 {
+    @apply text-3xl font-bold mb-2 text-primary;
+  }
+  .login-header p {
+    @apply text-primary-dark;
+  }
+
+  .login-form {
+    @apply p-8 space-y-6;
+  }
+
+  .form-group {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply text-sm font-medium text-primary block;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 border border-secondary rounded-lg focus:ring-2 focus:ring-accent focus:border-accent bg-secondary-light text-black placeholder-neutral-300 transition-all duration-200;
+  }
+
+  .form-input:focus {
+    @apply bg-white shadow-sm;
+  }
+
+  .login-button {
+    @apply w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:ring-4 focus:ring-accent;
+  }
+  .login-button:hover {
+    @apply bg-primary-dark;
+  }
+
+  .error-message {
+    @apply bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg text-sm;
+  }
+
+  .security-info {
+    @apply bg-secondary border border-secondary p-4 rounded-lg;
+  }
+
+  /* Títulos globales */
+  h1, .title-main {
+    @apply text-primary font-bold;
+  }
+  h2, .title-section {
+    @apply text-primary-dark font-semibold;
+  }
+  h3, .title-sub {
+    @apply text-primary font-medium;
+  }
+  /* Botones globales */
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-dark;
+  }
+  .btn-secondary {
+    @apply bg-secondary text-primary hover:bg-secondary-light;
+  }
+  .btn-outline {
+    @apply border border-primary text-primary bg-transparent hover:bg-secondary-light;
+  }
+
+  /* Dashboard Styles */
+  .dashboard-container {
+    @apply flex h-screen bg-gray-50;
+  }
+
+  .sidebar-clean {
+    @apply w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm;
+  }
+
+  .sidebar-header {
+    @apply p-6 border-b border-gray-200;
+  }
+
+  .sidebar-nav {
+    @apply flex-1 p-4 space-y-2;
+  }
+
+  .nav-item {
+    @apply flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 cursor-pointer;
+  }
+
+  .nav-item.active {
+    @apply bg-blue-50 text-blue-700 border-r-2 border-blue-600;
+  }
+
+  .nav-item:hover {
+    @apply text-gray-900;
+  }
+
+  .main-content {
+    @apply flex-1 overflow-hidden;
+  }
+
+  .dashboard-header {
+    @apply bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between;
+  }
+
+  .dashboard-body {
+    @apply p-6 overflow-y-auto;
+  }
+
+  /* Metric Cards */
+  .metrics-grid {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+  }
+
+  .metric-card {
+    @apply bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200;
+  }
+
+  .metric-large {
+    @apply text-3xl font-bold text-gray-900 mb-2;
+  }
+
+  .metric-title {
+    @apply text-sm font-medium text-gray-600 mb-1;
+  }
+
+  .metric-description {
+    @apply text-xs text-gray-500;
+  }
+
+  .trend-positive {
+    @apply text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  .trend-negative {
+    @apply text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  /* Content Sections */
+  .content-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+  }
+
+  .content-card {
+    @apply bg-white rounded-xl p-6 shadow-sm border border-gray-200;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  /* Posts Section */
+  .post-item {
+    @apply flex items-center space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors duration-200;
+  }
+
+  .post-image {
+    @apply w-12 h-12 rounded-lg object-cover flex-shrink-0;
+  }
+
+  .post-content {
+    @apply flex-1 min-w-0;
+  }
+
+  .post-title {
+    @apply font-medium text-gray-900 truncate;
+  }
+
+  .post-meta {
+    @apply text-sm text-gray-500;
+  }
+
+  .post-stats {
+    @apply text-right text-sm;
+  }
+
+  .post-views {
+    @apply font-medium text-gray-900;
+  }
+
+  .post-engagement {
+    @apply text-gray-500;
+  }
+
+  /* Progress Bars */
+  .progress-bar {
+    @apply w-full bg-[#A1A3A5] rounded-full h-2 overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-[#999996] transition-all duration-500 ease-out;
+  }
+
+  /* Chart Styles */
+  .chart-container {
+    @apply space-y-4;
+  }
+
+  .chart-item {
+    @apply flex items-center justify-between;
+  }
+
+  .chart-label {
+    @apply text-sm text-gray-600;
+  }
+
+  .chart-value {
+    @apply text-sm font-medium text-gray-900;
+  }
+
+  /* Circular Progress */
+  .circular-progress {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .circular-progress-text {
+    @apply absolute text-2xl font-bold text-gray-900;
+  }
+
+  /* Search Bar */
+  .search-container {
+    @apply relative;
+  }
+
+  .search-input {
+    @apply w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996] bg-gray-50;
+  }
+
+  .search-icon {
+    @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+  }
+
+  /* User Profile */
+  .user-profile {
+    @apply flex items-center space-x-3;
+  }
+
+  .user-avatar {
+    @apply w-8 h-8 rounded-full bg-gradient-to-br from-[#999996] to-[#A1A3A5] flex items-center justify-center text-white text-sm font-medium;
+  }
+}

@@ -22,6 +22,7 @@ import {
   X,
   Save
 } from 'lucide-react'
+import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
 
 interface Document {
   id_senado_doc: number
@@ -40,10 +41,11 @@ interface Document {
   resumen: string
   analisis: string
   objeto: string
-  correspondier: string
+  correspondiente: string
   tipo: string
   analizado?: string        // Nueva columna opcional
   Proponente?: string       // Nueva columna opcional
+  transitorios?: string     // Nueva columna opcional
 }
 
 interface Filters {
@@ -462,13 +464,14 @@ const DocumentManagement: React.FC = () => {
             tipo: editedDocument.tipo,
             personas: editedDocument.personas,
             objeto: editedDocument.objeto,
-            correspondier: editedDocument.correspondier,
+            correspondiente: editedDocument.correspondiente,
             temas: editedDocument.temas,
             gaceta: editedDocument.gaceta,
             link_iniciativa: editedDocument.link_iniciativa,
             sinopsis: editedDocument.sinopsis,
             resumen: editedDocument.resumen,
-            analisis: editedDocument.analisis
+            analisis: editedDocument.analisis,
+            transitorios: editedDocument.transitorios
           })
           .eq('id_senado_doc', editedDocument.id_senado_doc)
         
@@ -489,13 +492,14 @@ const DocumentManagement: React.FC = () => {
               tipo: editedDocument.tipo,
               personas: editedDocument.personas,
               objeto: editedDocument.objeto,
-              correspondier: editedDocument.correspondier,
+              correspondiente: editedDocument.correspondiente,
               temas: editedDocument.temas,
               gaceta: editedDocument.gaceta,
               link_iniciativa: editedDocument.link_iniciativa,
               sinopsis: editedDocument.sinopsis,
               resumen: editedDocument.resumen,
-              analisis: editedDocument.analisis
+              analisis: editedDocument.analisis,
+              transitorios: editedDocument.transitorios
             })
             .eq('id_senado_doc', editedDocument.id_senado_doc)
           
@@ -543,7 +547,7 @@ const DocumentManagement: React.FC = () => {
     if (!text) return 'Sin información'
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
   }
-
+//
   const EditModal: React.FC = () => {
     const [editData, setEditData] = useState<Document>(selectedDocument!)
 
@@ -581,11 +585,10 @@ const DocumentManagement: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="form-label">Título *</label>
-                  <input
-                    type="text"
+                  <textarea
                     value={editData.iniciativa_texto}
                     onChange={(e) => handleChange('iniciativa_texto', e.target.value)}
-                    className="form-input"
+                    className="form-input resize-none uppercase h-[50px]"
                     required
                   />
                 </div>
@@ -601,29 +604,27 @@ const DocumentManagement: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="form-label">Proponente</label>
-                  <input
-                    type="text"
+                  <textarea
                     value={editData.personas}
                     onChange={(e) => handleChange('personas', e.target.value)}
-                    className="form-input"
+                    className="form-input resize-none h-[50px]"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="form-label">Cámara de origen</label>
                   <input
                     type="text"
-                    value={editData.correspondier}
-                    onChange={(e) => handleChange('correspondier', e.target.value)}
+                    value={editData.fuente}
+                    onChange={(e) => handleChange('fuente', e.target.value)}
                     className="form-input"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="form-label">Temas/Subtemas</label>
-                  <input
-                    type="text"
+                  <textarea
                     value={editData.temas}
                     onChange={(e) => handleChange('temas', e.target.value)}
-                    className="form-input"
+                    className="form-input resize-none"
                   />
                 </div>
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
@@ -638,31 +639,45 @@ const DocumentManagement: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="form-label">Correspondiente</label>
+                <label className="form-label">Análisis</label>
                 <textarea
-                  value={editData.sinopsis}
-                  onChange={(e) => handleChange('sinopsis', e.target.value)}
+                  value={editData.analisis}
+                  onChange={(e) => handleChange('analisis', e.target.value)}
                   className="form-input h-24 resize-none"
                 />
               </div>
               <div className="space-y-2">
-                <label className="form-label">Información Adicional</label>
+                <label className="form-label">Transitorios</label>
                 <textarea
-                  value={editData.analisis}
-                  onChange={(e) => handleChange('analisis', e.target.value)}
+                  value={editData.transitorios}
+                  onChange={(e) => handleChange('transitorios', e.target.value)}
                   className="form-input h-24 resize-none"
                   placeholder="Links al perfil del proponente"
                 />
               </div>
               <div className="space-y-2">
                 <label className="form-label">Estatus</label>
-                <input
-                  type="text"
-                  value={editData.resumen}
-                  onChange={(e) => handleChange('resumen', e.target.value)}
-                  className="form-input"
-                  placeholder="Estatus de la iniciativa o propuesta"
-                />
+                {editData.fuente === sources[0] || editData.fuente === sources[1] ? (
+                  <select
+                    value={editData.resumen}
+                    onChange={(e) => handleChange('resumen', e.target.value)}
+                    className="form-input"
+                  >
+                    {ESTATUS_DOC_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={editData.resumen}
+                    onChange={(e) => handleChange('resumen', e.target.value)}
+                    className="form-input"
+                    placeholder="Estatus de la iniciativa o propuesta"
+                  />
+                )}
               </div>
               <div className="flex justify-end gap-2 mt-6 rounded-xl bg-white p-2">
                 <button
@@ -878,7 +893,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.correspondier || 'Sin proponente', 40)}
+                            {truncateText(document.correspondiente || 'Sin proponente', 40)}
                           </div>
                         </td>
                         <td className="px-6 py-4">

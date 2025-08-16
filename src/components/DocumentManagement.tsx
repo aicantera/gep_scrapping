@@ -50,6 +50,7 @@ interface Document {
   titulo?: string           // Nueva columna opcional
   ultimo_doc_expediente?: string // Nueva columna opcional
   ver_expediente?: string  // Nueva columna opcional
+  informacion_adicional?: string // Nueva columna opcional
 }
 
 interface Filters {
@@ -86,7 +87,12 @@ const DocumentManagement: React.FC = () => {
     'Cámara de Senadores',
     'CONAMER',
     'Diario Oficial de la Federación'
-  ]
+  ];
+
+  const docTypes: string[] = [
+    'PUNTO DE ACUERDO',
+    'INICIATIVA',
+  ];
 
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
@@ -469,7 +475,8 @@ const DocumentManagement: React.FC = () => {
             dependencia: editedDocument.dependencia,
             titulo: editedDocument.titulo,
             ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
-            ver_expediente: editedDocument.ver_expediente
+            ver_expediente: editedDocument.ver_expediente,
+            informacion_adicional: editedDocument.informacion_adicional
           })
           .eq('id_senado_doc', editedDocument.id_senado_doc)
         
@@ -501,7 +508,8 @@ const DocumentManagement: React.FC = () => {
               dependencia: editedDocument.dependencia,
               titulo: editedDocument.titulo,
               ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
-              ver_expediente: editedDocument.ver_expediente
+              ver_expediente: editedDocument.ver_expediente,
+              informacion_adicional: editedDocument.informacion_adicional
             })
             .eq('id_senado_doc', editedDocument.id_senado_doc)
           
@@ -561,12 +569,20 @@ const DocumentManagement: React.FC = () => {
       e.preventDefault()
       switch(editData.fuente){
         case sources[2]:
-          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
+          if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
             alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return;
+          }
+          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
+            alert('Todos los campos obligatorios deben estar c1ompletos para guardar los cambios.')
             return
           }
           break
         case sources[3]:
+          if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return;
+          }
           if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
             alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
             return
@@ -582,7 +598,7 @@ const DocumentManagement: React.FC = () => {
 
       handleSaveEdit(editData)
     }
-    console.log('Edit Data:', editData, editData.fuente === sources[3])
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -601,7 +617,7 @@ const DocumentManagement: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="form-label">Título *</label>
-                  {(editData.fuente === sources[3] || editData.fuente === sources[2]) ? (
+                  {(editData.fuente === sources[3] || editData.fuente === sources[2] || editData.tipo === docTypes[0]) ? (
                     <textarea
                       value={editData.titulo}
                       onChange={(e) => handleChange('titulo', e.target.value)}
@@ -630,7 +646,7 @@ const DocumentManagement: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="form-label">Proponente</label>
+                      <label className="form-label">Proponente *</label>
                       <textarea
                         value={editData.personas}
                         onChange={(e) => handleChange('personas', e.target.value)}
@@ -640,7 +656,12 @@ const DocumentManagement: React.FC = () => {
                   </>
                 )}
                 <div className="space-y-2">
-                  <label className="form-label">{(editData.fuente !== sources[3] && editData.fuente !== sources[2]) ? 'Cámara de origen' : 'Órgano de difusión'}</label>
+                  <label className="form-label">
+                    {(editData.tipo === docTypes[0] && (editData.fuente === sources[0] || editData.fuente === sources[1])) ? "Fuente" :
+                    (editData.fuente === sources[3] || editData.fuente === sources[2]) ? 'Órgano de difusión' : 
+                    'Cámara de origen'
+                    } *
+                  </label>
                   <input
                     type="text"
                     value={editData.fuente}
@@ -650,7 +671,7 @@ const DocumentManagement: React.FC = () => {
                 </div>
                 {(editData.fuente === sources[3] || editData.fuente === sources[2]) && (
                   <div className="space-y-2 md:col-span-2">
-                    <label className="form-label">Dependencia</label>
+                    <label className="form-label">Dependencia *</label>
                     <input
                       type="text"
                       value={editData.dependencia}
@@ -660,7 +681,7 @@ const DocumentManagement: React.FC = () => {
                   </div>
                 )}
                 <div className="space-y-2 md:col-span-2">
-                  <label className="form-label">Temas/Subtemas</label>
+                  <label className="form-label">Temas/Subtemas *</label>
                   <textarea
                     value={editData.temas}
                     onChange={(e) => handleChange('temas', e.target.value)}
@@ -693,13 +714,23 @@ const DocumentManagement: React.FC = () => {
                 )}
               </div>
               <div className="space-y-2">
-                <label className="form-label">Análisis</label>
+                <label className="form-label">Análisis *</label>
                 <textarea
                   value={editData.analisis}
                   onChange={(e) => handleChange('analisis', e.target.value)}
                   className="form-input h-24 resize-none"
                 />
               </div>
+              {((editData.tipo === docTypes[0] || editData.tipo === docTypes[1]) && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
+                <div className="space-y-2">
+                  <label className="form-label">Información adicional</label>
+                  <textarea
+                    value={editData.informacion_adicional}
+                    onChange={(e) => handleChange('informacion_adicional', e.target.value)}
+                    className="form-input h-24 resize-none"
+                  />
+                </div>
+              )}
               { editData.fuente === sources[2] ? (
                 <>
                   <div className="space-y-2 md:col-span-2">
@@ -722,6 +753,7 @@ const DocumentManagement: React.FC = () => {
                 </>
               ) : editData.fuente !== sources[3] && (
                 <>
+                {editData.tipo !== docTypes[0] && (
                   <div className="space-y-2">
                     <label className="form-label">Transitorios</label>
                     <textarea
@@ -731,9 +763,10 @@ const DocumentManagement: React.FC = () => {
                       placeholder="Links al perfil del proponente"
                     />
                   </div>                
+                )}
                   <div className="space-y-2">
                     <label className="form-label">Estatus</label>
-                    {editData.fuente === sources[0] || editData.fuente === sources[1] ? (
+                    {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
                       <select
                         value={editData.resumen}
                         onChange={(e) => handleChange('resumen', e.target.value)}

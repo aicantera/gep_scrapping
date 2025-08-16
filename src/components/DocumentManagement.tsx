@@ -569,20 +569,12 @@ const DocumentManagement: React.FC = () => {
       e.preventDefault()
       switch(editData.fuente){
         case sources[2]:
-          if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
-            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-            return;
-          }
           if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
             alert('Todos los campos obligatorios deben estar c1ompletos para guardar los cambios.')
             return
           }
           break
         case sources[3]:
-          if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
-            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-            return;
-          }
           if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
             alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
             return
@@ -594,6 +586,15 @@ const DocumentManagement: React.FC = () => {
             return
           }
           break
+      }
+
+      if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
+        alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+        return;
+      }
+      if(editData.tipo === docTypes[1] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis)) {
+        alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+        return;
       }
 
       handleSaveEdit(editData)

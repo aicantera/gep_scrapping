@@ -773,6 +773,7 @@ const DocumentManagement: React.FC = () => {
                         onChange={(e) => handleChange('resumen', e.target.value)}
                         className="form-input"
                       >
+                        <option value=""></option>
                         {ESTATUS_DOC_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}

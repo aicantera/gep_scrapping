@@ -1,4 +1,4 @@
-# 🚀 GEP AI - Sistema de Gestión Empresarial aja23
+# 🚀 GEP AI - Sistema de Gestión Empresarial aja23cc
 
 **Versión 1.3.5** | Un CRM completo y moderno desarrollado con tecnologías de vanguardia
 

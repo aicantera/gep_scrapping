@@ -1,5 +1,4 @@
 name: Deploy on main
-
 on:
   push:
     branches: [ main ]
@@ -7,28 +6,49 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-gepdash
-      cancel-in-progress: true
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up SSH key
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-
-      - name: Add server to known_hosts
-        run: |
           ssh-keyscan -p "${{ secrets.SSH_PORT || 22 }}" -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Remote deploy
+      - name: Remote deploy (inline)
         env:
           PORT: ${{ secrets.SSH_PORT || 22 }}
           HOST: ${{ secrets.SERVER_HOST }}
           USER: ${{ secrets.SERVER_USER }}
         run: |
-          ssh -p "$PORT" "$USER@$HOST" 'bash -lc "/usr/local/bin/deploy-gepdash.sh"'
+          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USER@$HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          APP_DIR="/var/www/gepdash"
+          cd "$APP_DIR"
+
+          # evita 'detected dubious ownership'
+          git config --global --add safe.directory "$APP_DIR"
+          git fetch origin main
+          git reset --hard origin/main
+          git clean -fdx
+
+          # cargar nvm si existiera (opcional)
+          export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true
+
+          echo "==> Instalando dependencias"
+          npm ci || npm install
+
+          echo "==> Compilando"
+          npm run build
+
+          # Detectar carpeta de build
+          if [ -d dist ]; then BUILD_DIR=dist; elif [ -d build ]; then BUILD_DIR=build; else echo "No dist/ ni build/"; exit 1; fi
+
+          # permisos/propietario si lo necesitas (requiere sudo NOPASSWD)
+          sudo chown -R www-data:www-data "$APP_DIR/$BUILD_DIR" || true
+
+          echo "==> Recargando Nginx"
+          sudo nginx -t || true
+          sudo systemctl reload nginx || true
+          REMOTE

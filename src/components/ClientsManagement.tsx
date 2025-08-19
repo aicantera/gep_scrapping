@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useRef } from 'react'
+import ExcelJS from 'exceljs';
 
 // Interfaces para temas y subtemas
 interface Tema {
@@ -38,6 +39,7 @@ interface Subtema {
 
 interface Client {
   id_cliente: string
+  id_cliente_numerico?: number
   nombre_cliente: string
   siglas: string | null
   logo: string | null
@@ -69,7 +71,7 @@ const ClientsManagement: React.FC = () => {
   const [temas, setTemas] = useState<Tema[]>([])
   const [subtemas, setSubtemas] = useState<Subtema[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [modalError, setModalError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -168,7 +170,6 @@ const ClientsManagement: React.FC = () => {
 
   const loadClients = async () => {
     setLoading(true)
-    setError(null)
     
     try {
       let query = supabase
@@ -192,7 +193,7 @@ const ClientsManagement: React.FC = () => {
       // Obtener datos paginados
       const { data, error } = await query
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1)
-        .order('creado_en', { ascending: false })
+        .order('id_cliente_numerico', { ascending: true })
       
       if (error) throw error
       
@@ -240,7 +241,7 @@ const ClientsManagement: React.FC = () => {
       setClients(processedClients)
     } catch (error) {
       console.error('Error cargando clientes:', error)
-      setError('No se pudieron cargar los clientes.')
+      // Los errores de carga se manejan silenciosamente para no interrumpir la UI
     } finally {
       setLoading(false)
     }
@@ -328,18 +329,18 @@ const ClientsManagement: React.FC = () => {
 
     const validationError = validateForm();
     if (validationError) {
-      setError(validationError);
+      setModalError(validationError);
       return;
     }
 
     setLoading(true);
-    setError(null);
+    setModalError(null);
 
     try {
       // Verificar nombre duplicado
       const isDuplicate = await checkDuplicateName(dataToSave.nombre_cliente);
       if (isDuplicate) {
-        setError('Ya existe un cliente con ese nombre. Por favor utiliza un nombre distinto.');
+        setModalError('Ya existe un cliente con ese nombre. Por favor utiliza un nombre distinto.');
         setLoading(false);
         return;
       }
@@ -395,7 +396,7 @@ const ClientsManagement: React.FC = () => {
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
       console.error('❌ Error final al guardar cliente:', error);
-      setError('No se pudo guardar el cliente. Intenta nuevamente.');
+      setModalError('No se pudo guardar el cliente. Intenta nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -406,7 +407,7 @@ const ClientsManagement: React.FC = () => {
     if (!selectedClient) return
     
     setLoading(true)
-    setError(null)
+    setModalError(null)
     
     try {
       const { error } = await supabase
@@ -422,7 +423,7 @@ const ClientsManagement: React.FC = () => {
       setTimeout(() => setSuccessMessage(''), 3000)
     } catch (error) {
       console.error('Error eliminando cliente:', error)
-      setError('No se pudo eliminar el cliente. Intenta nuevamente.')
+      setModalError('No se pudo eliminar el cliente. Intenta nuevamente.')
     } finally {
       setLoading(false)
     }
@@ -439,7 +440,7 @@ const ClientsManagement: React.FC = () => {
     if (!clientToToggle) return
     
     setLoading(true)
-    setError(null)
+    setModalError(null)
     
     try {
       const newStatus = clientToToggle.estado === 'activo' ? 'inactivo' : 'activo'
@@ -461,8 +462,8 @@ const ClientsManagement: React.FC = () => {
       setTimeout(() => setSuccessMessage(''), 5000)
     } catch (error) {
       console.error('Error cambiando estado:', error)
-      setError('No se pudo actualizar el estado del cliente. Intenta nuevamente.')
-      setTimeout(() => setError(null), 5000)
+      setModalError('No se pudo actualizar el estado del cliente. Intenta nuevamente.')
+      setTimeout(() => setModalError(null), 5000)
     } finally {
       setLoading(false)
     }
@@ -472,14 +473,14 @@ const ClientsManagement: React.FC = () => {
   const closeStatusModal = () => {
     setShowStatusModal(false)
     setClientToToggle(null)
-    setError(null)
+    setModalError(null)
   }
 
   // Abrir modal
   const openModal = (type: typeof modalType, client?: Client) => {
     setModalType(type)
     setSelectedClient(client || null)
-    setError(null)
+    setModalError(null)
     
     if (type === 'create') {
       setFormData({
@@ -514,7 +515,7 @@ const ClientsManagement: React.FC = () => {
   const closeModal = () => {
     setShowModal(false)
     setSelectedClient(null)
-    setError(null)
+    setModalError(null)
   }
 
   // Manejar búsqueda
@@ -569,22 +570,22 @@ const ClientsManagement: React.FC = () => {
   // Funciones para manejar listas de distribución
   const addListaDistribucion = () => {
     if (formData.listas_distribucion.length >= 30) {
-      setError('No se pueden agregar más de 30 listas de distribución.')
+      setModalError('No se pueden agregar más de 30 listas de distribución.')
       return
     }
     
     if (!newLista.nombre.trim()) {
-      setError('El nombre de la lista es obligatorio.')
+      setModalError('El nombre de la lista es obligatorio.')
       return
     }
     
     if (newLista.temas_subtemas.length === 0) {
-      setError('Debe seleccionar al menos un tema o subtema.')
+      setModalError('Debe seleccionar al menos un tema o subtema.')
       return
     }
     
     if (newLista.correos.length === 0 || newLista.correos.every(correo => !correo.trim())) {
-      setError('Debe agregar al menos un correo electrónico válido.')
+      setModalError('Debe agregar al menos un correo electrónico válido.')
       return
     }
     
@@ -606,7 +607,7 @@ const ClientsManagement: React.FC = () => {
       correos: ['']
     })
     
-    setError(null)
+    setModalError(null)
   }
 
   const removeListaDistribucion = (id: string) => {
@@ -704,73 +705,106 @@ const ClientsManagement: React.FC = () => {
     const fileName = `${Date.now()}.${fileExt}`;
     const { error } = await supabase.storage.from('logo').upload(fileName, file, { upsert: true });
     if (error) {
-      setError('Error subiendo el logo.');
+      setModalError('Error subiendo el logo.');
       return;
     }
     const { data: publicUrlData } = supabase.storage.from('logo').getPublicUrl(fileName);
     setFormData(prev => ({ ...prev, logo: publicUrlData.publicUrl }));
   };
 
-  // Función para descargar listas de distribución en Excel
+  // Reemplazar la función de descarga por una versión con logo en Excel
   const downloadListasDistribucion = async () => {
     if (!selectedClient || !formData.listas_distribucion.length) {
-      setError('No hay listas de distribución para descargar.');
+      setModalError('No hay listas de distribución para descargar.');
       return;
     }
 
     try {
-      // Crear el contenido del Excel con formato mejorado
-      let csvContent = 'data:text/csv;charset=utf-8,';
-      
-      // Agregar encabezado con información del cliente
-      csvContent += `REPORTE DE LISTAS DE DISTRIBUCIÓN\n`;
-      csvContent += `=====================================\n\n`;
-      csvContent += `INFORMACIÓN DEL CLIENTE:\n`;
-      csvContent += `Cliente: ${formData.nombre_cliente}\n`;
-      if (formData.siglas) {
-        csvContent += `Siglas: ${formData.siglas}\n`;
-      }
-      csvContent += `Estado: ${formData.estado}\n`;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Listas de Distribución');
+
+      // Si hay logo, descargarlo y agregarlo
+      let logoId = null;
       if (formData.logo) {
-        csvContent += `Logo: ${formData.logo}\n`;
+        try {
+          const response = await fetch(formData.logo);
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          // Detectar extensión
+          let extension: 'png' | 'jpeg' | 'gif' = 'png';
+          if (formData.logo.endsWith('.jpg') || formData.logo.endsWith('.jpeg')) extension = 'jpeg';
+          else if (formData.logo.endsWith('.png')) extension = 'png';
+          else if (blob.type === 'image/jpeg') extension = 'jpeg';
+          else if (blob.type === 'image/png') extension = 'png';
+          else extension = 'png'; // fallback
+          // exceljs en browser requiere Uint8Array
+          logoId = workbook.addImage({
+            buffer: new Uint8Array(arrayBuffer),
+            extension,
+          });
+          worksheet.addImage(logoId, {
+            tl: { col: 0, row: 0 },
+            ext: { width: 120, height: 60 },
+          });
+        } catch (e) {
+          console.warn('No se pudo cargar el logo o el formato no es compatible:', e);
+        }
       }
-      csvContent += `Fecha de descarga: ${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX')}\n`;
-      csvContent += `Total de listas: ${formData.listas_distribucion.length}\n\n`;
-      
-      // Encabezados de las columnas
-      csvContent += 'LISTA DE DISTRIBUCIÓN,TEMAS Y SUBTEMAS,CORREOS ELECTRÓNICOS,TOTAL CORREOS\n';
-      
+
+      // Información del cliente
+      let rowIdx = 5;
+      worksheet.getCell(`A${rowIdx++}`).value = 'REPORTE DE LISTAS DE DISTRIBUCIÓN';
+      worksheet.getCell(`A${rowIdx++}`).value = '=====================================';
+      worksheet.getCell(`A${rowIdx++}`).value = `Cliente: ${formData.nombre_cliente}`;
+      if (formData.siglas) worksheet.getCell(`A${rowIdx++}`).value = `Siglas: ${formData.siglas}`;
+      worksheet.getCell(`A${rowIdx++}`).value = `Estado: ${formData.estado}`;
+      worksheet.getCell(`A${rowIdx++}`).value = `Fecha de descarga: ${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX')}`;
+      worksheet.getCell(`A${rowIdx++}`).value = `Total de listas: ${formData.listas_distribucion.length}`;
+      rowIdx++;
+
+      // Encabezados
+      worksheet.getRow(rowIdx).values = ['LISTA DE DISTRIBUCIÓN', 'TEMAS Y SUBTEMAS', 'CORREOS ELECTRÓNICOS', 'TOTAL CORREOS'];
+      worksheet.getRow(rowIdx).font = { bold: true };
+      rowIdx++;
+
       // Datos de cada lista
       formData.listas_distribucion.forEach(lista => {
         const temas = lista.temas_subtemas.join('; ');
         const correos = lista.correos.join('; ');
         const totalCorreos = lista.correos.length;
-        csvContent += `"${lista.nombre}","${temas}","${correos}","${totalCorreos}"\n`;
+        worksheet.addRow([lista.nombre, temas, correos, totalCorreos]);
       });
-      
-      // Agregar resumen al final
-      csvContent += `\nRESUMEN:\n`;
-      csvContent += `Total de listas: ${formData.listas_distribucion.length}\n`;
+      rowIdx += formData.listas_distribucion.length;
+
+      // Resumen
+      rowIdx++;
+      worksheet.getCell(`A${rowIdx++}`).value = 'RESUMEN:';
+      worksheet.getCell(`A${rowIdx++}`).value = `Total de listas: ${formData.listas_distribucion.length}`;
       const totalCorreos = formData.listas_distribucion.reduce((acc, lista) => acc + lista.correos.length, 0);
-      csvContent += `Total de correos: ${totalCorreos}\n`;
+      worksheet.getCell(`A${rowIdx++}`).value = `Total de correos: ${totalCorreos}`;
       const totalTemas = formData.listas_distribucion.reduce((acc, lista) => acc + lista.temas_subtemas.length, 0);
-      csvContent += `Total de temas/subtemas: ${totalTemas}\n`;
-      
-      // Crear y descargar el archivo
-      const encodedUri = encodeURI(csvContent);
+      worksheet.getCell(`A${rowIdx++}`).value = `Total de temas/subtemas: ${totalTemas}`;
+
+      // Ajustar ancho de columnas
+      worksheet.columns.forEach(col => {
+        col.width = 30;
+      });
+
+      // Descargar el archivo
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const link = document.createElement('a');
-      link.setAttribute('href', encodedUri);
-      const fileName = `listas_distribucion_${formData.nombre_cliente.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
-      link.setAttribute('download', fileName);
+      const fileName = `listas_distribucion_${formData.nombre_cliente.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
       setSuccessMessage(`✅ Listas de distribución descargadas correctamente: ${fileName}`);
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
       console.error('Error descargando listas:', error);
-      setError('Error al descargar las listas de distribución.');
+      setModalError('Error al descargar las listas de distribución.');
     }
   };
 
@@ -803,13 +837,7 @@ const ClientsManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Mensajes */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      )}
-
+      {/* Solo mensajes de éxito en la ventana principal */}
       {successMessage && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 font-semibold text-center">
           {successMessage}
@@ -876,9 +904,8 @@ const ClientsManagement: React.FC = () => {
                   {filteredClients.map((client) => (
                     <tr key={client.id_cliente} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900" title={client.id_cliente}>
-                          {client.id_cliente.substring(0, 8)}
-                          {client.id_cliente.length > 8 && '...'}
+                        <div className="text-sm font-medium text-gray-900" title={`ID: ${client.id_cliente_numerico || 'N/A'}`}>
+                          {client.id_cliente_numerico || 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -1041,9 +1068,9 @@ const ClientsManagement: React.FC = () => {
                   Esta acción eliminará permanentemente al cliente "{selectedClient?.nombre_cliente}" 
                   y todas sus configuraciones asociadas. Esta acción no se puede deshacer.
                 </p>
-                {error && (
+                {modalError && (
                   <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-600 text-sm">{error}</p>
+                    <p className="text-red-600 text-sm">{modalError}</p>
                   </div>
                 )}
                 <div className="flex justify-center space-x-3 mb-8">
@@ -1069,12 +1096,6 @@ const ClientsManagement: React.FC = () => {
               <>
                 <div className="px-6 py-4">
                   <div className="space-y-6">
-                    {error && (
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-600 text-sm">{error}</p>
-                      </div>
-                    )}
-
                     {/* Previsualización del logo SIEMPRE visible si hay logo */}
                     {formData.logo ? (
                       <div className="flex justify-center mb-6">
@@ -1151,13 +1172,22 @@ const ClientsManagement: React.FC = () => {
                     {modalType === 'view' && selectedClient && (
                       <div className="border-t pt-6">
                         <h4 className="text-lg font-medium text-gray-900 mb-4">Información Adicional del Cliente</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              ID del Cliente
+                              ID Numérico del Cliente
                             </label>
                             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                              <span className="text-sm font-mono text-gray-800">{selectedClient.id_cliente}</span>
+                              <span className="text-sm font-mono text-gray-800">{selectedClient.id_cliente_numerico || 'N/A'}</span>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              ID UUID del Cliente
+                            </label>
+                            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                              <span className="text-xs font-mono text-gray-600 break-all">{selectedClient.id_cliente}</span>
                             </div>
                           </div>
 
@@ -1350,7 +1380,7 @@ const ClientsManagement: React.FC = () => {
                                               return (
                                                 <div key={tema.id_tema} className="space-y-1">
                                                   {/* Tema principal */}
-                                                  <div className="flex items-center gap-2">
+                                                  <div className="flex items-start gap-2 w-full">
                                                     <button
                                                       type="button"
                                                       onClick={() => {
@@ -1360,7 +1390,7 @@ const ClientsManagement: React.FC = () => {
                                                           addTemaSubtemaToLista(lista.id, tema.nombre_tema);
                                                         }
                                                       }}
-                                                      className={`w-4 h-4 rounded border ${
+                                                      className={`w-4 h-4 rounded border flex-shrink-0 ${
                                                         temaSeleccionado 
                                                           ? 'bg-blue-600 border-blue-600' 
                                                           : 'border-gray-300'
@@ -1372,7 +1402,7 @@ const ClientsManagement: React.FC = () => {
                                                         </svg>
                                                       )}
                                                     </button>
-                                                    <span className="font-medium text-gray-800 text-sm">{tema.nombre_tema}</span>
+                                                    <span className="font-medium text-gray-800 text-sm break-words flex-1 min-w-0">{tema.nombre_tema}</span>
                                                   </div>
                                                   
                                                   {/* Subtemas */}
@@ -1386,7 +1416,7 @@ const ClientsManagement: React.FC = () => {
                                                       const subtemaSeleccionado = lista.temas_subtemas.includes(st.subtema_text);
                                                       
                                                       return (
-                                                        <div key={st.id_subtema} className="flex items-center gap-2 ml-6">
+                                                        <div key={st.id_subtema} className="flex items-start gap-2 ml-6 w-full">
                                                           <button
                                                             type="button"
                                                             onClick={() => {
@@ -1396,7 +1426,7 @@ const ClientsManagement: React.FC = () => {
                                                                 addTemaSubtemaToLista(lista.id, st.subtema_text);
                                                               }
                                                             }}
-                                                            className={`w-4 h-4 rounded border ${
+                                                            className={`w-4 h-4 rounded border flex-shrink-0 ${
                                                               subtemaSeleccionado 
                                                                 ? 'bg-blue-600 border-blue-600' 
                                                                 : 'border-gray-300'
@@ -1408,7 +1438,7 @@ const ClientsManagement: React.FC = () => {
                                                               </svg>
                                                             )}
                                                           </button>
-                                                          <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1">{st.subtema_text}</span>
+                                                          <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1 break-words flex-1 min-w-0 inline-block leading-relaxed">{st.subtema_text}</span>
                                                         </div>
                                                       );
                                                     })}
@@ -1654,6 +1684,11 @@ const ClientsManagement: React.FC = () => {
                     >
                       {modalType === 'view' ? 'Cerrar' : 'Cancelar'}
                     </button>
+                    {modalError && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+                        <p className="text-red-600 text-sm">{modalError}</p>
+                      </div>
+                    )}
                     {modalType !== 'view' && (
                       <button
                         onClick={saveClient}
@@ -1686,9 +1721,9 @@ const ClientsManagement: React.FC = () => {
               Esta acción cambiará el estado del cliente "{clientToToggle?.nombre_cliente}" a "{clientToToggle?.estado === 'activo' ? 'inactivo' : 'activo'}".
               Esta acción no se puede deshacer.
             </p>
-            {error && (
+            {modalError && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600 text-sm">{error}</p>
+                <p className="text-red-600 text-sm">{modalError}</p>
               </div>
             )}
             <div className="flex justify-center space-x-3">

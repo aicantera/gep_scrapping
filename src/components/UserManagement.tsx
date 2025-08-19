@@ -73,8 +73,7 @@ const UserManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
-  // Debug
-  const [showDebug, setShowDebug] = useState(false)
+
   
   // Estados para visibilidad de contraseñas
   const [showPassword, setShowPassword] = useState(false)
@@ -531,23 +530,7 @@ const UserManagement: React.FC = () => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)))
   }
 
-  // Debug function
-  const testConnections = async () => {
-    console.log('🔧 PRUEBA DE CONEXIÓN - USUARIOS')
-    
-    try {
-      const { data: usuariosData, error: usuariosError } = await supabase
-        .from('usuarios')
-        .select('*')
-        .limit(10)
-      
-      console.log('✅ Usuarios:', { data: usuariosData, error: usuariosError })
-    } catch (e) {
-      console.error('❌ Error usuarios:', e)
-    }
-    
-    console.log('📊 Estado actual: Usuarios cargados:', users.length)
-  }
+
 
   return (
     <>
@@ -635,37 +618,11 @@ const UserManagement: React.FC = () => {
               </select>
             </div>
 
-            {/* Debug toggle */}
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowDebug(!showDebug)}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                {showDebug ? 'Ocultar Debug' : 'Debug'}
-              </button>
-              <button
-                onClick={testConnections}
-                className="text-sm text-[#999996] hover:text-[#B52244]"
-              >
-                Test
-              </button>
-            </div>
+
           </div>
         </div>
 
-        {/* Panel de debug */}
-        {showDebug && (
-          <div className="bg-gray-900 text-gray-100 rounded-lg p-4 mb-6 text-sm font-mono">
-            <h3 className="text-yellow-400 font-bold mb-2">DEBUG INFO</h3>
-            <div className="space-y-1">
-              <div>Total usuarios: {users.length}</div>
-              <div>Página actual: {currentPage}/{totalPages}</div>
-              <div>Loading: {loading.toString()}</div>
-              <div>Filtros: búsqueda="{searchTerm}", estado={statusFilter}, rol={roleFilter}</div>
-              <div>Modal: tipo={modalType}, visible={showModal.toString()}</div>
-            </div>
-          </div>
-        )}
+
 
         {/* Tabla de usuarios */}
         <div className="bg-white rounded-lg shadow-sm border">

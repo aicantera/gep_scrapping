@@ -86,7 +86,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           setErrors({ general: result.error })
           setPassword('')
         } else if (result.error === 'Contraseña incorrecta. Intente nuevamente.') {
-          setErrors({ password: result.error })
+          setErrors({ general: 'Correo o contraseña incorrectos.' })
           setPassword('')
         } else if (result.error?.includes('inactiva') || result.error?.includes('desactivada')) {
           setErrors({ general: result.error })
@@ -120,7 +120,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           <h1 className="text-3xl font-bold mb-2">
             Bienvenido a GEP
           </h1>
-          <p className="text-blue-100">
+          <p className="text-base">
             Plataforma de Información Estratégica
           </p>
         </div>
@@ -137,7 +137,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
             {/* Email Field */}
             <div className="form-group">
-              <label className="form-label">
+              <label style={{ color: '#3C3C3B' }} className="text-sm font-medium block mb-2">
                 Correo
               </label>
               <div className="relative">
@@ -174,7 +174,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
             {/* Password Field */}
             <div className="form-group">
-              <label className="form-label">
+              <label style={{ color: '#3C3C3B' }} className="text-sm font-medium block mb-2">
                 Contraseña
               </label>
               {errors.password && (
@@ -222,7 +222,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             <button
               type="submit"
               disabled={loading}
-              className="login-button disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: '#3C3C3B' }}
+              className="w-full text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:ring-4 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2A2A29'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3C3C3B'}
             >
               {loading ? (
                 <div className="flex items-center justify-center space-x-2">

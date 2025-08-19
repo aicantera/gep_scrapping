@@ -6,6 +6,7 @@ import ClientsManagement from './ClientsManagement'
 import CompaniesManagement from './CompaniesManagement'
 import UserManagement from './UserManagement'
 import AlertsManagement from './AlertsManagement'
+import { supabase } from '../lib/supabase'
 import logoNegro from '../assets/images/logonegro.jpg'
 import { 
   BarChart3, 
@@ -32,7 +33,7 @@ import {
   Tag,
   Download
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import ExcelJS from 'exceljs';
 
 interface KPIData {
   documentsToday: number
@@ -94,8 +95,9 @@ interface BotExecutionHistory {
   fuente: string;
   fecha: string;
   tipo: string;
-  ejecutadoPor: string | null;
+  ejecutado_por: string | null;
   estatus: string;
+  detalles: any;
 }
 
 // Componente BotsExecution inline
@@ -105,8 +107,8 @@ const BotsExecution: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // MOCK: Historial de ejecuciones (esto debe venir de la BD en el futuro)
   const [history, setHistory] = useState<BotExecutionHistory[]>([]);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     fuente: 'todas',
     tipo: 'todos',
@@ -117,22 +119,30 @@ const BotsExecution: React.FC = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // Simulación de datos de historial
+  // Cargar historial de ejecuciones desde Supabase
+  const loadBotExecutions = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('bot_executions')
+        .select('*')
+        .order('fecha', { ascending: false })
+        .limit(1000); // Limitar a 1000 registros más recientes
+
+      if (error) {
+        console.error('Error loading bot executions:', error);
+      } else {
+        setHistory(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading bot executions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Solo para demo, reemplazar por fetch a Supabase
-    const fuentes = ['Cámara de Diputados', 'Senado', 'DOF', 'CONAMER'];
-    const tipos = ['Manual', 'Automática'];
-    const estatuses = ['éxito', 'falla', 'en proceso'];
-    const usuarios = ['admin@demo.com', 'analista@demo.com', 'soporte@demo.com'];
-    const mock = Array.from({ length: 30 }, (_, i) => ({
-      id: 1000 + i,
-      fuente: fuentes[Math.floor(Math.random() * fuentes.length)],
-      fecha: new Date(Date.now() - i * 3600 * 1000 * 6).toISOString(),
-      tipo: tipos[Math.floor(Math.random() * tipos.length)],
-      ejecutadoPor: Math.random() > 0.5 ? usuarios[Math.floor(Math.random() * usuarios.length)] : null,
-      estatus: estatuses[Math.floor(Math.random() * estatuses.length)]
-    }));
-    setHistory(mock);
+    loadBotExecutions();
   }, []);
 
   // Limpieza automática si supera 1200 registros
@@ -203,7 +213,31 @@ const BotsExecution: React.FC = () => {
       user_email: user?.email || null
     }
 
+    // Registrar inicio de ejecución en la base de datos
+    const executionStart = {
+      fuente: bot.name,
+      tipo: 'Manual',
+      ejecutado_por: user?.email || null,
+      estatus: 'en proceso',
+      detalles: { payload, initiated_at: new Date().toISOString() }
+    }
+
+    let executionId: number | null = null
+
     try {
+      // Insertar registro de ejecución
+      const { data: insertData, error: insertError } = await supabase
+        .from('bot_executions')
+        .insert(executionStart)
+        .select('id')
+        .single()
+
+      if (insertError) {
+        console.error('Error insertando ejecución:', insertError)
+      } else {
+        executionId = insertData?.id
+      }
+
       console.log(`🤖 Ejecutando bot ${bot.name}...`)
       console.log(`🔗 URL: ${bot.webhookUrl}`)
 
@@ -236,11 +270,42 @@ const BotsExecution: React.FC = () => {
           body: JSON.stringify(payload)
         })
 
+        // Actualizar estado a éxito (fallback)
+        if (executionId) {
+          await supabase
+            .from('bot_executions')
+            .update({ 
+              estatus: 'éxito', 
+              detalles: { 
+                ...executionStart.detalles, 
+                completed_at: new Date().toISOString(),
+                method: 'no-cors fallback'
+              }
+            })
+            .eq('id', executionId)
+        }
+
         setSuccessMessage(`✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`)
+        loadBotExecutions() // Recargar lista
         return
       }
 
       if (response && response.ok) {
+        // Actualizar estado a éxito
+        if (executionId) {
+          await supabase
+            .from('bot_executions')
+            .update({ 
+              estatus: 'éxito', 
+              detalles: { 
+                ...executionStart.detalles, 
+                completed_at: new Date().toISOString(),
+                response_status: response.status
+              }
+            })
+            .eq('id', executionId)
+        }
+        
         setSuccessMessage(`✅ Bot ${bot.name} ejecutado exitosamente. En 30 minutos los datos estarán actualizados.`)
         console.log(`✅ Bot ${bot.name} ejecutado correctamente`)
       } else {
@@ -251,14 +316,47 @@ const BotsExecution: React.FC = () => {
           keepalive: true,
           body: JSON.stringify(payload)
         })
+
+        // Actualizar estado a éxito (fallback)
+        if (executionId) {
+          await supabase
+            .from('bot_executions')
+            .update({ 
+              estatus: 'éxito', 
+              detalles: { 
+                ...executionStart.detalles, 
+                completed_at: new Date().toISOString(),
+                method: 'no-cors fallback response'
+              }
+            })
+            .eq('id', executionId)
+        }
+
         setSuccessMessage(`✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`)
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       console.error(`❌ Error ejecutando bot ${bot.name}:`, error)
+      
+      // Actualizar estado a falla
+      if (executionId) {
+        await supabase
+          .from('bot_executions')
+          .update({ 
+            estatus: 'falla', 
+            detalles: { 
+              ...executionStart.detalles, 
+              completed_at: new Date().toISOString(),
+              error: errorMessage
+            }
+          })
+          .eq('id', executionId)
+      }
+      
       setError(`Error ejecutando el bot ${bot.name}: ${errorMessage}`)
     } finally {
       setExecutingBot(null)
+      loadBotExecutions() // Recargar lista en todos los casos
     }
   }
 
@@ -423,27 +521,39 @@ const BotsExecution: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {paginated.map(row => (
-              <tr key={row.id} className="border-b last:border-0">
-                <td className="px-3 py-2">{row.id}</td>
-                <td className="px-3 py-2">{row.fuente}</td>
-                <td className="px-3 py-2">{new Date(row.fecha).toLocaleString('es-MX')}</td>
-                <td className="px-3 py-2">{row.tipo}</td>
-                <td className="px-3 py-2">{row.tipo === 'Manual' ? (row.ejecutadoPor || '-') : '-'}</td>
-                <td className="px-3 py-2">
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                    row.estatus === 'éxito' ? 'bg-green-100 text-green-700' :
-                    row.estatus === 'falla' ? 'bg-red-100 text-red-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {row.estatus.charAt(0).toUpperCase() + row.estatus.slice(1)}
-                  </span>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-8 text-center">
+                  <div className="flex items-center justify-center space-x-2">
+                    <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
+                    <span className="text-gray-500">Cargando historial de ejecuciones...</span>
+                  </div>
                 </td>
               </tr>
-            ))}
-            {paginated.length === 0 && (
+            ) : (
+              paginated.map(row => (
+                <tr key={row.id} className="border-b last:border-0">
+                  <td className="px-3 py-2">{row.id}</td>
+                  <td className="px-3 py-2">{row.fuente}</td>
+                  <td className="px-3 py-2">{new Date(row.fecha).toLocaleString('es-MX')}</td>
+                  <td className="px-3 py-2">{row.tipo}</td>
+                  <td className="px-3 py-2">{row.tipo === 'Manual' ? (row.ejecutado_por || '-') : '-'}</td>
+                  <td className="px-3 py-2">
+                    <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                      row.estatus === 'éxito' ? 'bg-green-100 text-green-700' :
+                      row.estatus === 'falla' ? 'bg-red-100 text-red-700' :
+                      row.estatus === 'en proceso' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {row.estatus.charAt(0).toUpperCase() + row.estatus.slice(1)}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+            {!loading && paginated.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center text-gray-400 py-6">Sin registros</td>
+                <td colSpan={6} className="text-center text-gray-400 py-6">No hay ejecuciones registradas</td>
               </tr>
             )}
           </tbody>
@@ -898,48 +1008,68 @@ const Dashboard: React.FC = () => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
   }
 
-  const exportToCSV = () => {
+  const exportToExcel = async () => {
     if (documentsToday.length === 0) {
       alert('No hay documentos para exportar.')
       return
     }
-
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Documentos del Día');
+    // Encabezados con todos los campos de la interfaz Document
     const headers = [
       'ID',
+      'Fecha de creación',
+      'Sinopsis',
       'Título',
-      'Proponente',
+      'ID Iniciativa',
+      'Gaceta',
+      'Link Iniciativa',
       'Fuente',
-      'Fecha y Hora',
+      'Imagen Link',
       'Temas',
-      'Tipo',
+      'Personas',
+      'Partidos',
+      'Leyes',
+      'Resumen',
+      'Análisis',
       'Objeto',
-      'Sinopsis'
-    ]
-
-    const csvContent = [
-      headers.join(','),
-      ...documentsToday.map(doc => [
+      'Proponente',
+      'Tipo',
+      'Correspondiente',
+    ];
+    worksheet.addRow(headers);
+    documentsToday.forEach(doc => {
+      worksheet.addRow([
         doc.id_senado_doc,
-        `"${(doc.iniciativa_texto || '').replace(/"/g, '""')}"`,
-        `"${(doc.correspondier || doc.personas || '').replace(/"/g, '""')}"`,
+        doc.created_at,
+        doc.sinopsis,
+        doc.iniciativa_texto,
+        doc.iniciativa_id,
+        doc.gaceta,
+        doc.link_iniciativa,
         doc.fuente,
-        new Date(doc.created_at).toLocaleString('es-MX'),
-        `"${(doc.temas || '').replace(/"/g, '""')}"`,
-        `"${(doc.tipo || '').replace(/"/g, '""')}"`,
-        `"${(doc.objeto || '').replace(/"/g, '""')}"`,
-        `"${(doc.sinopsis || '').replace(/"/g, '""')}"`
-      ].join(','))
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `documentos_del_dia_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+        doc.imagen_link,
+        doc.temas,
+        doc.personas,
+        doc.partidos,
+        doc.leyes,
+        doc.resumen,
+        doc.analisis,
+        doc.objeto,
+        doc.correspondier,
+        doc.tipo,
+        // Correspondiente puede ser null, pero lo incluimos para mantener el orden
+      ]);
+    });
+    worksheet.columns.forEach(col => { col.width = 25; });
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `documentos_del_dia_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   const renderContent = () => {
@@ -1274,11 +1404,11 @@ const Dashboard: React.FC = () => {
                    </div>
                   {documentsToday.length > 0 && (
                     <button
-                       onClick={exportToCSV}
+                       onClick={exportToExcel}
                       className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                     >
                       <Download className="w-4 h-4" />
-                      <span>Exportar CSV</span>
+                      <span>Exportar Excel</span>
                     </button>
                   )}
                 </div>
@@ -1473,49 +1603,52 @@ const Dashboard: React.FC = () => {
                 </li>
               )
             })}
+            
+            {/* Cerrar Sesión como último elemento del menú */}
+            <li>
+              <button
+                onClick={() => {
+                  handleLogout()
+                  setMobileMenuOpen(false)
+                }}
+                className={`
+                  w-full flex items-center p-3 rounded-lg text-left
+                  text-red-600 hover:bg-red-50 hover:text-red-700
+                  transition-all duration-200
+                  ${sidebarCollapsed && !mobileMenuOpen ? 'justify-center' : 'justify-start'}
+                `}
+                title={sidebarCollapsed && !mobileMenuOpen ? 'Cerrar Sesión' : undefined}
+              >
+                <div className="flex-shrink-0">
+                  <LogOut size={20} />
+                </div>
+                {(!sidebarCollapsed || mobileMenuOpen) && (
+                  <span className="ml-3 font-medium">Cerrar Sesión</span>
+                )}
+              </button>
+            </li>
           </ul>
         </nav>
 
-        {/* Logout button */}
+        {/* Información del sistema */}
         <div className="p-4 border-t border-gray-200">
-          <button
-            onClick={() => {
-              handleLogout()
-              setMobileMenuOpen(false)
-            }}
-            className={`
-              w-full flex items-center p-3 rounded-lg text-left
-              text-red-600 hover:bg-red-50 hover:text-red-700
-              transition-all duration-200
-              ${sidebarCollapsed && !mobileMenuOpen ? 'justify-center' : 'justify-start'}
-            `}
-            title={sidebarCollapsed && !mobileMenuOpen ? 'Cerrar Sesión' : undefined}
-          >
-            <div className="flex-shrink-0">
-              <LogOut size={20} />
-            </div>
-            {(!sidebarCollapsed || mobileMenuOpen) && (
-              <span className="ml-3 font-medium">Cerrar Sesión</span>
-            )}
-          </button>
-          
           {/* Versión del sistema */}
           {(!sidebarCollapsed || mobileMenuOpen) && (
-            <div className="mt-4 px-3 py-2 text-center">
+            <div className="px-3 py-2 text-center">
               <p className="text-xs text-gray-500">
                 GEP AI
               </p>
               <p className="text-xs text-gray-400 font-mono">
-                v1.3.5
+                v1.3.9
               </p>
             </div>
           )}
           
           {/* Versión compacta para sidebar colapsado */}
           {sidebarCollapsed && !mobileMenuOpen && (
-            <div className="mt-4 text-center">
+            <div className="text-center">
               <p className="text-xs text-gray-400 font-mono transform rotate-90 whitespace-nowrap">
-                v1.3.5
+                v1.3.9
               </p>
             </div>
           )}

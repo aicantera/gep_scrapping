@@ -24,6 +24,17 @@ interface SidebarProps {
   onToggle: () => void
 }
 
+// Tipos para elementos del menú
+type MenuItemType = 'navigation' | 'action'
+
+interface MenuItem {
+  module: string
+  icon: React.ComponentType<any>
+  label: string
+  href: string
+  type: MenuItemType
+}
+
 // Mapeo de módulos a iconos y rutas
 const moduleConfig = {
   'dashboard': { icon: Home, href: '/', label: 'Dashboard' },
@@ -45,8 +56,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
   }
 
   // Generar menú dinámico basado en permisos del usuario
-  const menuItems = useMemo(() => {
-    return allowedModules
+  const menuItems = useMemo((): MenuItem[] => {
+    const items: MenuItem[] = allowedModules
       .filter(module => moduleConfig[module as keyof typeof moduleConfig])
       .map(module => {
         const config = moduleConfig[module as keyof typeof moduleConfig]
@@ -54,9 +65,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
           module,
           icon: config.icon,
           label: config.label,
-          href: config.href
+          href: config.href,
+          type: 'navigation' as MenuItemType
         }
       })
+    
+    // Agregar botón de cerrar sesión como último elemento
+    items.push({
+      module: 'logout',
+      icon: LogOut,
+      label: 'Cerrar Sesión',
+      href: '#',
+      type: 'action' as MenuItemType
+    })
+    
+    return items
   }, [allowedModules])
 
   const isAdmin = userRole === 'Administrador'
@@ -71,10 +94,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-700">
         {!isCollapsed && (
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center">
             <div className="w-16 h-16 bg-[#999996] rounded-lg flex items-center justify-center">
               <BarChart3 className="w-10 h-10 text-white" />
             </div>
+            {/* Versión del sistema */}
+            <span className="mt-2 text-xs text-slate-300 font-semibold">v1.3.9</span>
           </div>
         )}
         <Button
@@ -94,45 +119,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-2">
         {/* Menú principal dinámico basado en permisos */}
-        {menuItems.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            className={cn(
-              'flex items-center w-full px-3 py-2 rounded text-left text-slate-300 hover:text-white hover:bg-[#A1A3A5]/70 transition-colors duration-200',
-              location.pathname === item.href && 'bg-[#D4133D] text-white',
-              isCollapsed && 'justify-center px-2'
-            )}
-          >
-            <item.icon className={cn('h-5 w-5', isCollapsed ? '' : 'mr-3')} />
-            {!isCollapsed && (
-              <span className="text-sm font-medium">{item.label}</span>
-            )}
-          </Link>
-        ))}
-
-        {/* Botón de Cerrar Sesión - Justo después del menú */}
-        <div className="pt-4 border-t border-slate-700">
-          {!isCollapsed ? (
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              className="w-full flex items-center px-3 py-2 text-slate-300 hover:text-white hover:bg-red-600/20 hover:border-red-500/30 transition-all duration-200 rounded"
+        {menuItems.map((item) => {
+          if (item.type === 'action') {
+            return (
+              <button
+                key={item.module}
+                onClick={handleSignOut}
+                className={cn(
+                  'flex items-center w-full px-3 py-2 rounded text-left text-slate-300 hover:text-white hover:bg-red-600/20 transition-colors duration-200',
+                  isCollapsed && 'justify-center px-2'
+                )}
+              >
+                <item.icon className={cn('h-5 w-5', isCollapsed ? '' : 'mr-3')} />
+                {!isCollapsed && (
+                  <span className="text-sm font-medium">{item.label}</span>
+                )}
+              </button>
+            )
+          }
+          
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                'flex items-center w-full px-3 py-2 rounded text-left text-slate-300 hover:text-white hover:bg-[#A1A3A5]/70 transition-colors duration-200',
+                location.pathname === item.href && 'bg-[#D4133D] text-white',
+                isCollapsed && 'justify-center px-2'
+              )}
             >
-              <LogOut className="h-4 w-4 mr-3" />
-              <span className="text-sm">Cerrar Sesión</span>
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              size="icon"
-              className="w-full text-slate-300 hover:text-white hover:bg-red-600/20 transition-all duration-200 justify-center px-2 py-2 rounded"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+              <item.icon className={cn('h-5 w-5', isCollapsed ? '' : 'mr-3')} />
+              {!isCollapsed && (
+                <span className="text-sm font-medium">{item.label}</span>
+              )}
+            </Link>
+          )
+        })}
 
         {/* Mensaje informativo sobre permisos */}
         {!isAdmin && !isCollapsed && (

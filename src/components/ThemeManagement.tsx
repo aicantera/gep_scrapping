@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Power,
-  Eye
+  Eye,
+  AlertTriangle
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -778,7 +779,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
           </div>
           <div>
             <select
-              className="form-select w-full"
+              className="form-input w-full"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -1325,20 +1326,26 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
       {showStatusModal && themeToToggle && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">
-                {nextStatusForToggle ? 'Confirmar Activación' : 'Confirmar Desactivación'}
+            <div className="text-center px-6 py-4">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                nextStatusForToggle ? 'bg-red-100' : 'bg-orange-100'
+              }`}>
+                <AlertTriangle className={`w-8 h-8 ${
+                  nextStatusForToggle ? 'text-red-600' : 'text-orange-600'
+                }`} />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                ¿Estás seguro?
               </h3>
-            </div>
-            <div className="px-6 py-4">
+              <p className="text-gray-600 mb-6">
+                Esta acción cambiará el estado del tema "{themeToToggle.nombre_tema}" 
+                a "{nextStatusForToggle ? 'activo' : 'inactivo'}". Esta acción no se puede deshacer.
+              </p>
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
-              <p className="text-gray-700 mb-4">
-                ¿Deseas {nextStatusForToggle ? 'activar' : 'desactivar'} el tema <strong>"{themeToToggle.nombre_tema}"</strong>?
-              </p>
               {!nextStatusForToggle && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                   <p className="text-yellow-800 text-sm">
@@ -1346,27 +1353,25 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                   </p>
                 </div>
               )}
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowStatusModal(false)
-                  setThemeToToggle(null)
-                  setError(null)
-                }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => themeToToggle && toggleThemeStatus(themeToToggle)}
-                disabled={loading}
-                className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-                  nextStatusForToggle ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
-                }`}
-              >
-                {nextStatusForToggle ? 'Activar' : 'Desactivar'}
-              </button>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowStatusModal(false)
+                    setThemeToToggle(null)
+                    setError(null)
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => themeToToggle && toggleThemeStatus(themeToToggle)}
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Procesando...' : (nextStatusForToggle ? 'Activar' : 'Desactivar')}
+                </button>
+              </div>
             </div>
           </div>
         </div>

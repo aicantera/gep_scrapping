@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase, supabaseAdmin } from '../lib/supabase'
 
+
 // Importar configuración de Supabase
 const supabaseUrl = 'https://masterd.gepdigital.ai'
 const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q'

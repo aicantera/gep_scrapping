@@ -79,14 +79,15 @@
   .login-header {
     @apply p-8 text-center;
     background: none;
-    color: theme('colors.primary.DEFAULT');
   }
 
   .login-header h1 {
-    @apply text-3xl font-bold mb-2 text-primary;
+    color: #3C3C3B !important;
+    @apply text-3xl font-bold mb-2;
   }
   .login-header p {
-    @apply text-primary-dark;
+    color: #3C3C3B !important;
+    @apply text-base;
   }
 
   .login-form {
@@ -98,7 +99,8 @@
   }
 
   .form-label {
-    @apply text-sm font-medium text-primary block;
+    color: #999996 !important;
+    @apply text-sm font-medium block;
   }
 
   .form-input {
@@ -110,10 +112,11 @@
   }
 
   .login-button {
-    @apply w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:ring-4 focus:ring-accent;
+    background-color: #999996 !important;
+    @apply w-full text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:ring-4 focus:ring-accent;
   }
   .login-button:hover {
-    @apply bg-primary-dark;
+    background-color: #8a8a87 !important;
   }
 
   .error-message {

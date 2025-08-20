@@ -33,6 +33,7 @@ interface Alerta {
   id_analista: string | null          // text nullable
   enviado_correo: boolean | null      // boolean nullable
   datetime_enviado_correo: string | null // timestamp nullable
+  link_pdf_enviado?: string | null    // url del pdf enviado
   
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
@@ -60,6 +61,14 @@ interface Alerta {
 
 
 const AlertsManagement: React.FC = () => {
+  // Función para normalizar texto removiendo tildes
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  }
+
   // Estados principales
   const [alertas, setAlertas] = useState<Alerta[]>([])
   const [loading, setLoading] = useState(false)
@@ -226,6 +235,7 @@ const AlertsManagement: React.FC = () => {
           id_analista,
           enviado_correo,
           datetime_enviado_correo,
+          link_pdf_enviado,
           clientes (
             nombre_cliente,
             siglas,
@@ -321,14 +331,20 @@ const AlertsManagement: React.FC = () => {
         // Normalizar estado - CLAVE PARA EL PROBLEMA
         let estadoNormalizado = 'pendientes'
         if (alerta.estado) {
-          const estado = String(alerta.estado).toLowerCase().trim()
+          const estadoOriginal = String(alerta.estado).trim()
+          const estado = estadoOriginal.toLowerCase()
+          
+          // Log para debug
+          console.log('Estado recibido:', estadoOriginal)
+          
           if (estado === 'pendiente' || estado === 'pendientes') {
             estadoNormalizado = 'pendientes'
-          } else if (estado === 'enviada' || estado === 'enviadas') {
+          } else if (estado === 'enviada' || estado === 'enviadas' || estadoOriginal === 'Enviado al Correo') {
             estadoNormalizado = 'enviadas'
           } else if (estado === 'rechazada' || estado === 'rechazadas') {
             estadoNormalizado = 'rechazadas'
           } else {
+            console.log('Estado no reconocido, usando pendientes por defecto:', estadoOriginal)
             estadoNormalizado = 'pendientes' // Valor por defecto
           }
         }
@@ -346,6 +362,7 @@ const AlertsManagement: React.FC = () => {
           id_analista: alerta.id_analista,
           enviado_correo: alerta.enviado_correo,
           datetime_enviado_correo: alerta.datetime_enviado_correo,
+          link_pdf_enviado: alerta.link_pdf_enviado || null,
           
           // Campos derivados para UI (siempre arrays)
           nombre_cliente: nombreCliente,
@@ -449,11 +466,11 @@ const AlertsManagement: React.FC = () => {
       
       // Filtro de búsqueda por texto
       if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase()
+        const searchNormalized = normalizeText(searchTerm)
         return (
-          (alerta.nombre_cliente || '').toLowerCase().includes(searchLower) ||
-          (alerta.documento_senado?.sinopsis || '').toLowerCase().includes(searchLower) ||
-          (alerta.temas_subtemas || []).some(tema => tema.toLowerCase().includes(searchLower))
+          normalizeText(alerta.nombre_cliente || '').includes(searchNormalized) ||
+          normalizeText(alerta.documento_senado?.sinopsis || '').includes(searchNormalized) ||
+          (alerta.temas_subtemas || []).some(tema => normalizeText(tema).includes(searchNormalized))
         )
       }
       
@@ -621,7 +638,7 @@ const AlertsManagement: React.FC = () => {
       const { error } = await supabase
         .from('alertas_directorio')
         .update({
-          estado: 'enviadas',
+          estado: 'Enviado al Correo',
           enviado_correo: true,
           datetime_enviado_correo: new Date().toISOString()
         })
@@ -736,81 +753,6 @@ const AlertsManagement: React.FC = () => {
     setCurrentPage(1)
   }
 
-  // Descargar alerta en PDF (usando ventana imprimible)
-  const descargarAlertaPDF = (alerta: Alerta) => {
-    try {
-      const tituloDoc = alerta.documento_senado?.sinopsis || 'Sinopsis no disponible'
-      const proponente = alerta.documento_senado?.Proponente || 'N/A'
-      const tipo = alerta.documento_senado?.tipo || 'N/A'
-      const objeto = alerta.documento_senado?.objeto || 'N/A'
-      const fechaDoc = alerta.documento_senado?.created_at
-        ? new Date(alerta.documento_senado.created_at).toLocaleDateString('es-MX')
-        : 'N/A'
-      const enlace = alerta.documento_senado?.link_iniciativa || ''
-      const temas = (alerta.temas_subtemas || []).join(', ')
-
-      const w = window.open('', '_blank')
-      if (!w) return
-
-      w.document.write(`
-        <!doctype html>
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>Alerta #${alerta.id_alerta} - ${alerta.nombre_cliente || ''}</title>
-            <style>
-              *{box-sizing:border-box;font-family:Calibri,Arial,Helvetica,sans-serif}
-              body{margin:24px;color:#111}
-              .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-              h1{font-size:20px;margin:0 0 4px 0}
-              .meta{font-size:12px;color:#555}
-              .section{margin-top:16px}
-              .section h2{font-size:14px;margin:0 0 8px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:4px}
-              .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 12px;font-size:13px}
-              .kv div.label{color:#555}
-              .box{background:#fafafa;border:1px solid #eee;border-radius:8px;padding:12px;font-size:13px;white-space:pre-wrap}
-              .footer{margin-top:24px;font-size:12px;color:#777}
-              @media print{.btn{display:none}}
-              .btn{display:inline-block;margin-top:16px;padding:8px 12px;background:#D4133D;color:#fff;border-radius:6px;text-decoration:none}
-              a{color:#0b57d0}
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div>
-                <h1>Alerta #${alerta.id_alerta}</h1>
-                <div class="meta">Cliente: <strong>${alerta.nombre_cliente || 'N/A'}</strong></div>
-                <div class="meta">Estado: ${alerta.estado || 'N/A'} • Fuente: ${alerta.fuente || 'N/A'} • Creada: ${new Date(alerta.created_at).toLocaleDateString('es-MX')}</div>
-              </div>
-            </div>
-
-            <div class="section">
-              <h2>Documento</h2>
-              <div class="kv">
-                <div class="label">Tipo</div><div>${tipo}</div>
-                <div class="label">Proponente</div><div>${proponente}</div>
-                <div class="label">Fecha</div><div>${fechaDoc}</div>
-                <div class="label">Temas/Subtemas</div><div>${temas || 'Sin temas'}</div>
-              </div>
-              <div class="box" style="margin-top:8px"><strong>Sinopsis</strong>\n${tituloDoc}</div>
-              ${objeto ? `<div class="box" style="margin-top:8px"><strong>Objeto</strong>\n${objeto}</div>` : ''}
-              ${enlace ? `<div class="section"><div class="label">Enlace</div><a href="${enlace}" target="_blank">${enlace}</a></div>` : ''}
-            </div>
-
-            <div class="footer">Generado automáticamente por GEP AI – ${new Date().toLocaleString('es-MX')}</div>
-            <a class="btn" href="#" onclick="window.print();return false;">Imprimir/Guardar PDF</a>
-          </body>
-        </html>
-      `)
-      w.document.close()
-      w.focus()
-    } catch (e) {
-      console.error('No se pudo generar el PDF de la alerta:', e)
-      alert('No se pudo generar el PDF. Intenta de nuevo.')
-    }
-  }
-  
   return (
     <div className="p-6">
       {/* Header */}
@@ -1114,7 +1056,7 @@ const AlertsManagement: React.FC = () => {
                               <CheckCircle size={16} />
                             </button>
                           )}
-                          {activeTab === 'enviadas' && (
+                          {alerta.estado === 'enviadas' && (
                             <>
                               <button
                                 onClick={() => verAlerta(alerta)}
@@ -1778,12 +1720,16 @@ const AlertsManagement: React.FC = () => {
               )}
 
               <div className="flex justify-end pt-4 border-t space-x-2">
-                <button
-                  onClick={() => descargarAlertaPDF(alertaSeleccionada)}
-                  className="px-6 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors"
-                >
-                  Descargar PDF
-                </button>
+                {alertaSeleccionada.link_pdf_enviado && (
+                  <a
+                    href={alertaSeleccionada.link_pdf_enviado}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors"
+                  >
+                    Descargar PDF
+                  </a>
+                )}
                 <button
                   onClick={() => setShowVerModal(false)}
                   className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"

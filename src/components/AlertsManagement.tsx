@@ -810,7 +810,7 @@ const AlertsManagement: React.FC = () => {
       alert('No se pudo generar el PDF. Intenta de nuevo.')
     }
   }
-
+  
   return (
     <div className="p-6">
       {/* Header */}

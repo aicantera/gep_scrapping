@@ -551,11 +551,34 @@ const DocumentManagement: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
-      
-      // Validar campos obligatorios
-      if (!editData.iniciativa_texto || !editData.tipo || !editData.objeto) {
+      switch(editData.fuente){
+        case sources[2]:
+          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
+            alert('Todos los campos obligatorios deben estar c1ompletos para guardar los cambios.')
+            return
+          }
+          break
+        case sources[3]:
+          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return
+          }
+          break
+        default:
+          if (!editData.iniciativa_texto || !editData.tipo || !editData.objeto) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return
+          }
+          break
+        }
+
+      if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
         alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-        return
+        return;
+      }
+      if(editData.tipo === docTypes[1] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis)) {
+        alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+        return;
       }
 
       handleSaveEdit(editData)
@@ -652,20 +675,76 @@ const DocumentManagement: React.FC = () => {
                   placeholder="Links al perfil del proponente"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="form-label">Estatus</label>
-                <select
-                  value={editData.resumen}
-                  onChange={(e) => handleChange('resumen', e.target.value)}
-                  className="form-input"
-                >
-                  {ESTATUS_DOC_OPTIONS.map((option: { value: string; label: string }) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {((editData.tipo === docTypes[0] || editData.tipo === docTypes[1]) && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
+                <div className="space-y-2">
+                  <label className="form-label">Información adicional</label>
+                  <textarea
+                    value={editData.informacion_adicional}
+                    onChange={(e) => handleChange('informacion_adicional', e.target.value)}
+                    className="form-input h-24 resize-none"
+                  />
+                </div>
+              )}
+              { editData.fuente === sources[2] ? (
+                <>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Último Documento del Expediente</label>
+                    <textarea
+                      value={editData.ultimo_doc_expediente}
+                      onChange={(e) => handleChange('ultimo_doc_expediente', e.target.value)}
+                      className="form-input resize-none"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Link al enlace del expediente</label>
+                    <input
+                      type="text"
+                      value={editData.ver_expediente}
+                      onChange={(e) => handleChange('ver_expediente', e.target.value)}
+                      className="form-input resize-none"
+                    />
+                  </div>
+                </>
+              ) : editData.fuente !== sources[3] && (
+                <>
+                {editData.tipo !== docTypes[0] && (
+                  <div className="space-y-2">
+                    <label className="form-label">Transitorios</label>
+                    <textarea
+                      value={editData.transitorios}
+                      onChange={(e) => handleChange('transitorios', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      placeholder="Links al perfil del proponente"
+                    />
+                  </div>                
+                )}
+                  <div className="space-y-2">
+                    <label className="form-label">Estatus</label>
+                    {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
+                      <select
+                        value={editData.resumen}
+                        onChange={(e) => handleChange('resumen', e.target.value)}
+                        className="form-input"
+                      >
+                        <option value=""></option>
+                        {ESTATUS_DOC_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={editData.resumen}
+                        onChange={(e) => handleChange('resumen', e.target.value)}
+                        className="form-input"
+                        placeholder="Estatus de la iniciativa o propuesta"
+                      />
+                    )}
+                  </div>
+                </>
+              )}
               <div className="flex justify-end gap-2 mt-6 rounded-xl bg-white p-2">
                 <button
                   type="button"

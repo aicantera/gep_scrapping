@@ -636,14 +636,10 @@ const DocumentManagement: React.FC = () => {
                 { editData.fuente !== sources[3] && (
                   <>
                     <div className="space-y-2">
-                      <label className="form-label">Tipo de Proyecto *</label>
-                      <input
-                        type="text"
-                        value={editData.tipo}
-                        onChange={(e) => handleChange('tipo', e.target.value)}
-                        className="form-input"
-                        required
-                      />
+                      <label className="form-label">Tipo de Proyecto</label>
+                      <div className="form-input bg-gray-100 text-gray-600">
+                        {editData.tipo || 'No especificado'}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <label className="form-label">Proponente</label>
@@ -660,12 +656,9 @@ const DocumentManagement: React.FC = () => {
                   <label className="form-label">
                     {editData.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
                   </label>
-                  <input
-                    type="text"
-                    value={editData.fuente}
-                    onChange={(e) => handleChange('fuente', e.target.value)}
-                    className="form-input"
-                  />
+                  <div className="form-input bg-gray-100 text-gray-600">
+                    {editData.fuente || 'No especificado'}
+                  </div>
                 </div>
                 {editData.fuente !== sources[3] && (
                   <div className="space-y-2 md:col-span-2">

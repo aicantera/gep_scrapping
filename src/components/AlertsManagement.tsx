@@ -1295,20 +1295,15 @@ const AlertsManagement: React.FC = () => {
                         required
                       />
                     </div>
-                    {/* Tipo de proyecto - Solo mostrar si no es fuente[3] */}
+                    {/* Tipo de proyecto - Solo mostrar si no es fuente[3] - NO EDITABLE */}
                     {documentoEditable.fuente !== sources[3] && (
                       <div className="col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Tipo de Proyecto *
+                          Tipo de Proyecto
                         </label>
-                        <input
-                          type="text"
-                          value={documentoEditable.tipo}
-                          onChange={(e) => setDocumentoEditable({...documentoEditable, tipo: e.target.value})}
-                          className="form-input w-full"
-                          placeholder="Tipo de proyecto"
-                          required
-                        />
+                        <div className="form-input w-full bg-gray-100 text-gray-600">
+                          {documentoEditable.tipo || 'No especificado'}
+                        </div>
                       </div>
                     )}
 
@@ -1328,18 +1323,14 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Camara de origen / Órgano de difusión */}
+                    {/* Camara de origen / Órgano de difusión - NO EDITABLE */}
                     <div className='col-span-1'>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         {documentoEditable.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
                       </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.fuente}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, fuente: e.target.value})}
-                        className="form-input w-full"
-                        placeholder={documentoEditable.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
-                      />
+                      <div className="form-input w-full bg-gray-100 text-gray-600">
+                        {documentoEditable.fuente || 'No especificado'}
+                      </div>
                     </div>
 
                     {/* Dependencia - Solo mostrar si no es fuente[3] */}
@@ -1700,28 +1691,20 @@ const AlertsManagement: React.FC = () => {
                   </h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Sinopsis */}
-                    {alertaSeleccionada.documento_senado.sinopsis && (
+                    {/* Título */}
+                    {alertaSeleccionada.documento_senado.iniciativa_texto && (
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Sinopsis</label>
+                        <label className="block text-sm font-medium text-gray-700">Título</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.sinopsis}
+                          {alertaSeleccionada.documento_senado.iniciativa_texto}
                         </div>
                       </div>
                     )}
 
-                    {/* Proponente */}
-                    {alertaSeleccionada.documento_senado.Proponente && (
+                    {/* Tipo de Proyecto - Solo mostrar si no es DOF */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.tipo && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Proponente</label>
-                        <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.Proponente}</div>
-                      </div>
-                    )}
-
-                    {/* Tipo */}
-                    {alertaSeleccionada.documento_senado.tipo && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                        <label className="block text-sm font-medium text-gray-700">Tipo de Proyecto</label>
                         <div className="text-gray-900">
                           <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
                             {alertaSeleccionada.documento_senado.tipo}
@@ -1730,31 +1713,148 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Objeto */}
-                    {alertaSeleccionada.documento_senado.objeto && (
+                    {/* Proponente - Solo mostrar si no es DOF */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && (alertaSeleccionada.documento_senado.Proponente || alertaSeleccionada.documento_senado.personas) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Proponente</label>
+                        <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.Proponente || alertaSeleccionada.documento_senado.personas}</div>
+                      </div>
+                    )}
+
+                    {/* Cámara de origen / Órgano de difusión */}
+                    {alertaSeleccionada.documento_senado.fuente && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {alertaSeleccionada.documento_senado.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
+                        </label>
+                        <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.fuente}</div>
+                      </div>
+                    )}
+
+                    {/* Dependencia - Solo mostrar si no es DOF */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.dependencia && (
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Objeto</label>
+                        <label className="block text-sm font-medium text-gray-700">Dependencia</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.objeto}
+                          {alertaSeleccionada.documento_senado.dependencia}
                         </div>
                       </div>
                     )}
 
-                    {/* ID de Iniciativa */}
-                    {alertaSeleccionada.documento_senado.iniciativa_id && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">ID de Iniciativa</label>
-                        <div className="text-gray-900">
-                          <span className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                            {alertaSeleccionada.documento_senado.iniciativa_id}
-                          </span>
+                    {/* Temas/Subtemas */}
+                    {alertaSeleccionada.documento_senado.temas && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Temas/Subtemas</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.temas}
                         </div>
                       </div>
                     )}
 
-                    {/* Enlaces */}
+                    {/* Objeto o Resumen según fuente */}
+                    {alertaSeleccionada.documento_senado.fuente === sources[3] ? (
+                      alertaSeleccionada.documento_senado.resumen && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Resumen</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.resumen}
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      alertaSeleccionada.documento_senado.objeto && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Objeto</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.objeto}
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    {/* Análisis o Correspondiente según fuente */}
+                    {alertaSeleccionada.documento_senado.fuente === sources[3] ? (
+                      alertaSeleccionada.documento_senado.analisis && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Análisis</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.analisis}
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      alertaSeleccionada.documento_senado.correspondiente && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Correspondiente</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.correspondiente}
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    {/* Campos específicos para CONAMER */}
+                    {alertaSeleccionada.documento_senado.fuente === sources[2] && (
+                      <>
+                        {alertaSeleccionada.documento_senado.ultimo_doc_expediente && (
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">Último Documento del Expediente</label>
+                            <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                              {alertaSeleccionada.documento_senado.ultimo_doc_expediente}
+                            </div>
+                          </div>
+                        )}
+                        {alertaSeleccionada.documento_senado.ver_expediente && (
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">Link al enlace del expediente</label>
+                            <div className="mt-1">
+                              <a 
+                                href={alertaSeleccionada.documento_senado.ver_expediente}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline break-all"
+                              >
+                                {alertaSeleccionada.documento_senado.ver_expediente}
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Transitorios - Solo para fuentes que no sean DOF y tipos que no sean PUNTO DE ACUERDO */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.tipo !== docTypes[0] && alertaSeleccionada.documento_senado.transitorios && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Transitorios</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.transitorios}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Estatus */}
+                    {(alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.resumen) && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Estatus</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.resumen}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Información adicional - Solo para tipos específicos con fuentes de Cámaras */}
+                    {((alertaSeleccionada.documento_senado.tipo === docTypes[0] || alertaSeleccionada.documento_senado.tipo === docTypes[1]) && (alertaSeleccionada.documento_senado.fuente === sources[0] || alertaSeleccionada.documento_senado.fuente === sources[1])) && alertaSeleccionada.documento_senado.informacion_adicional && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Información adicional</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.informacion_adicional}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Enlaces adicionales */}
                     {alertaSeleccionada.documento_senado.link_iniciativa && (
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Enlace Iniciativa</label>
                         <div className="mt-1">
                           <a 
@@ -1769,24 +1869,7 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Imagen Link */}
-                    {alertaSeleccionada.documento_senado.imagen_link && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Enlace de Imagen</label>
-                        <div className="mt-1">
-                          <a 
-                            href={alertaSeleccionada.documento_senado.imagen_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 underline break-all"
-                          >
-                            Ver imagen del documento
-                          </a>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Gaceta */}
+                    {/* Campos adicionales */}
                     {alertaSeleccionada.documento_senado.gaceta && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Gaceta</label>
@@ -1794,23 +1877,17 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Temas del documento */}
-                    {alertaSeleccionada.documento_senado.temas && (
+                    {alertaSeleccionada.documento_senado.iniciativa_id && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Temas del Documento</label>
-                        <div className="text-gray-900">{alertaSeleccionada.documento_senado.temas}</div>
+                        <label className="block text-sm font-medium text-gray-700">ID de Iniciativa</label>
+                        <div className="text-gray-900">
+                          <span className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                            {alertaSeleccionada.documento_senado.iniciativa_id}
+                          </span>
+                        </div>
                       </div>
                     )}
 
-                    {/* Personas */}
-                    {alertaSeleccionada.documento_senado.personas && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Personas Involucradas</label>
-                        <div className="text-gray-900">{alertaSeleccionada.documento_senado.personas}</div>
-                      </div>
-                    )}
-
-                    {/* Partidos */}
                     {alertaSeleccionada.documento_senado.partidos && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Partidos</label>
@@ -1818,49 +1895,10 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Leyes */}
                     {alertaSeleccionada.documento_senado.leyes && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Leyes</label>
                         <div className="text-gray-900">{alertaSeleccionada.documento_senado.leyes}</div>
-                      </div>
-                    )}
-
-                    {/* Correspondiente */}
-                    {alertaSeleccionada.documento_senado.correspondiente && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Correspondiente</label>
-                        <div className="text-gray-900">{alertaSeleccionada.documento_senado.correspondiente}</div>
-                      </div>
-                    )}
-
-                    {/* Resumen */}
-                    {alertaSeleccionada.documento_senado.resumen && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Resumen</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.resumen}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Iniciativa Texto */}
-                    {alertaSeleccionada.documento_senado.iniciativa_texto && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Texto de la Iniciativa</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg max-h-32 overflow-y-auto">
-                          {alertaSeleccionada.documento_senado.iniciativa_texto}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Análisis */}
-                    {alertaSeleccionada.documento_senado.analisis && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Análisis</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.analisis}
-                        </div>
                       </div>
                     )}
 
@@ -1887,6 +1925,16 @@ const AlertsManagement: React.FC = () => {
                         </span>
                       </div>
                     </div>
+
+                    {/* Fecha de Creación del Documento */}
+                    {alertaSeleccionada.documento_senado.created_at && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Fecha de Creación del Documento</label>
+                        <div className="text-gray-900">
+                          {new Date(alertaSeleccionada.documento_senado.created_at).toLocaleDateString('es-MX')}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

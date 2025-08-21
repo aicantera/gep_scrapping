@@ -46,6 +46,12 @@ interface Document {
   tipo: string
   analizado?: string        // Nueva columna opcional
   Proponente?: string       // Nueva columna opcional
+  dependencia?: string      // Nueva columna opcional
+  ver_expediente?: string   // Nueva columna opcional
+  ultimo_doc_expediente?: string // Nueva columna opcional
+  transitorios?: string      // Nueva columna opcional
+  informacion_adicional?: string // Nueva columna opcional
+  titulo?: string // Nueva columna opcional
 }
 
 interface Filters {
@@ -83,6 +89,11 @@ const DocumentManagement: React.FC = () => {
     'CONAMER',
     'Diario Oficial de la Federación'
   ]
+  
+  const docTypes: string[] = [
+    'PUNTO DE ACUERDO',
+    'INICIATIVA',
+  ];
 
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
@@ -466,7 +477,13 @@ const DocumentManagement: React.FC = () => {
             link_iniciativa: editedDocument.link_iniciativa,
             sinopsis: editedDocument.sinopsis,
             resumen: editedDocument.resumen,
-            analisis: editedDocument.analisis
+            analisis: editedDocument.analisis,
+            dependencia: editedDocument.dependencia,
+            ver_expediente: editedDocument.ver_expediente,
+            ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
+            transitorios: editedDocument.transitorios,
+            informacion_adicional: editedDocument.informacion_adicional,
+            titulo: editedDocument.titulo
           })
           .eq('id_senado_doc', editedDocument.id_senado_doc)
         
@@ -493,7 +510,13 @@ const DocumentManagement: React.FC = () => {
               link_iniciativa: editedDocument.link_iniciativa,
               sinopsis: editedDocument.sinopsis,
               resumen: editedDocument.resumen,
-              analisis: editedDocument.analisis
+              analisis: editedDocument.analisis,
+              dependencia: editedDocument.dependencia,
+              ver_expediente: editedDocument.ver_expediente,
+              ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
+              transitorios: editedDocument.transitorios,
+              informacion_adicional: editedDocument.informacion_adicional,
+              titulo: editedDocument.titulo
             })
             .eq('id_senado_doc', editedDocument.id_senado_doc)
           
@@ -551,11 +574,34 @@ const DocumentManagement: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
-      
-      // Validar campos obligatorios
-      if (!editData.iniciativa_texto || !editData.tipo || !editData.objeto) {
+      switch(editData.fuente){
+        case sources[2]:
+          if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return
+          }
+          break
+        case sources[3]:
+          if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return
+          }
+          break
+        default:
+          if (!editData.iniciativa_texto || !editData.tipo || !editData.objeto) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return
+          }
+          break
+        }
+
+      if(editData.tipo === docTypes[0] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
         alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-        return
+        return;
+      }
+      if(editData.tipo === docTypes[1] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis)) {
+        alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+        return;
       }
 
       handleSaveEdit(editData)
@@ -581,40 +627,50 @@ const DocumentManagement: React.FC = () => {
                   <label className="form-label">Título *</label>
                   <input
                     type="text"
-                    value={editData.iniciativa_texto}
-                    onChange={(e) => handleChange('iniciativa_texto', e.target.value)}
+                    value={editData.titulo}
+                    onChange={(e) => handleChange('titulo', e.target.value)}
                     className="form-input"
                     required
                   />
                 </div>
+                { editData.fuente !== sources[3] && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="form-label">Tipo de Proyecto</label>
+                      <div className="form-input bg-gray-100 text-gray-600">
+                        {editData.tipo || 'No especificado'}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="form-label">Proponente</label>
+                      <input
+                        type="text"
+                        value={editData.personas}
+                        onChange={(e) => handleChange('personas', e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
-                  <label className="form-label">Tipo de Proyecto *</label>
-                  <input
-                    type="text"
-                    value={editData.tipo}
-                    onChange={(e) => handleChange('tipo', e.target.value)}
-                    className="form-input"
-                    required
-                  />
+                  <label className="form-label">
+                    {editData.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
+                  </label>
+                  <div className="form-input bg-gray-100 text-gray-600">
+                    {editData.fuente || 'No especificado'}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="form-label">Proponente</label>
-                  <input
-                    type="text"
-                    value={editData.personas}
-                    onChange={(e) => handleChange('personas', e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="form-label">Cámara de origen</label>
-                  <input
-                    type="text"
-                    value={editData.correspondier}
-                    onChange={(e) => handleChange('correspondier', e.target.value)}
-                    className="form-input"
-                  />
-                </div>
+                {editData.fuente !== sources[3] && (
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Dependencia</label>
+                    <input
+                      type="text"
+                      value={editData.dependencia}
+                      onChange={(e) => handleChange('dependencia', e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2 md:col-span-2">
                   <label className="form-label">Temas/Subtemas</label>
                   <input
@@ -627,45 +683,121 @@ const DocumentManagement: React.FC = () => {
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
               </div>
               <div className="space-y-2">
-                <label className="form-label">Objeto *</label>
-                <textarea
-                  value={editData.objeto}
-                  onChange={(e) => handleChange('objeto', e.target.value)}
-                  className="form-input h-24 resize-none"
-                  required
-                />
+              {editData.fuente === sources[3] ? (
+                  <>
+                    <label className="form-label">Resumen *</label>
+                    <textarea
+                      value={editData.resumen}
+                      onChange={(e) => handleChange('resumen', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      required
+                    />
+                  </>
+                ) : (
+                  <>
+                    <label className="form-label">Objeto *</label>
+                    <textarea
+                      value={editData.objeto}
+                      onChange={(e) => handleChange('objeto', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      required
+                    />
+                  </>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="form-label">Correspondiente</label>
-                <textarea
-                  value={editData.sinopsis}
-                  onChange={(e) => handleChange('sinopsis', e.target.value)}
-                  className="form-input h-24 resize-none"
-                />
+                {editData.fuente === sources[3] ? (
+                  <>
+                    <label className="form-label">Análisis</label>
+                    <textarea
+                      value={editData.analisis}
+                      onChange={(e) => handleChange('analisis', e.target.value)}
+                      className="form-input h-24 resize-none"
+                    />
+                  </>
+                ) : ( 
+                  <>
+                    <label className="form-label">Correspondiente</label>
+                    <textarea
+                      value={editData.sinopsis}
+                      onChange={(e) => handleChange('sinopsis', e.target.value)}
+                      className="form-input h-24 resize-none"
+                    />
+                  </>
+                )}
               </div>
-              <div className="space-y-2">
-                <label className="form-label">Información Adicional</label>
-                <textarea
-                  value={editData.analisis}
-                  onChange={(e) => handleChange('analisis', e.target.value)}
-                  className="form-input h-24 resize-none"
-                  placeholder="Links al perfil del proponente"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="form-label">Estatus</label>
-                <select
-                  value={editData.resumen}
-                  onChange={(e) => handleChange('resumen', e.target.value)}
-                  className="form-input"
-                >
-                  {ESTATUS_DOC_OPTIONS.map((option: { value: string; label: string }) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              { editData.fuente === sources[2] ? (
+                <>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Último Documento del Expediente</label>
+                    <textarea
+                      value={editData.ultimo_doc_expediente}
+                      onChange={(e) => handleChange('ultimo_doc_expediente', e.target.value)}
+                      className="form-input resize-none"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Link al enlace del expediente</label>
+                    <input
+                      type="text"
+                      value={editData.ver_expediente}
+                      onChange={(e) => handleChange('ver_expediente', e.target.value)}
+                      className="form-input resize-none"
+                    />
+                  </div>
+                </>
+              ) : editData.fuente !== sources[3] && (
+                <>
+                  <div className="space-y-2">
+                    {editData.tipo !== docTypes[0] && (
+                      <>
+                        <label className="form-label">Transitorios</label>
+                        <textarea
+                          value={editData.transitorios}
+                          onChange={(e) => handleChange('transitorios', e.target.value)}
+                          className="form-input h-24 resize-none"
+                          placeholder="Transitorios de la iniciativa o propuesta"
+                        />
+                      </>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="form-label">Estatus</label>
+                    {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
+                      <select
+                        value={editData.resumen}
+                        onChange={(e) => handleChange('resumen', e.target.value)}
+                        className="form-input"
+                      >
+                        <option value="">Sin estatus</option>
+                        {ESTATUS_DOC_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={editData.resumen}
+                        onChange={(e) => handleChange('resumen', e.target.value)}
+                        className="form-input"
+                        placeholder="Estatus de la iniciativa o propuesta"
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+              {((editData.tipo === docTypes[0] || editData.tipo === docTypes[1]) && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
+                <div className="space-y-2">
+                  <label className="form-label">Información adicional</label>
+                  <textarea
+                    value={editData.informacion_adicional}
+                    onChange={(e) => handleChange('informacion_adicional', e.target.value)}
+                    className="form-input h-24 resize-none"
+                  />
+                </div>
+              )}
               <div className="flex justify-end gap-2 mt-6 rounded-xl bg-white p-2">
                 <button
                   type="button"

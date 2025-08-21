@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import * as XLSX from 'xlsx'
+import { ESTATUS_DOC_OPTIONS } from './SelectOptions'
 
 // Interfaces para tipado
 interface Alerta {
@@ -34,8 +35,6 @@ interface Alerta {
   enviado_correo: boolean | null      // boolean nullable
   datetime_enviado_correo: string | null // timestamp nullable
   link_pdf_enviado?: string | null    // url del pdf enviado
-  asunto_email?: string | null        // asunto del correo
-  mensaje_email?: string | null       // mensaje del correo
   
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
@@ -56,6 +55,14 @@ interface Alerta {
     temas?: string
     personas?: string
     partidos?: string
+    fuente?: string
+    transitorios?: string
+    dependencia?: string
+    ultimo_doc_expediente?: string
+    ver_expediente?: string
+    analisis?: string
+    analizado?: boolean
+    informacion_adicional?: string
     [key: string]: any // Para campos adicionales
   } | null
 }
@@ -76,9 +83,9 @@ const AlertsManagement: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
-
+  console.log('📝 Alertas cargadas:', alertas)
   // Estados de navegación
-  const [activeTab, setActiveTab] = useState<'pendientes' | 'aprobadas' | 'enviadas' | 'rechazadas'>('pendientes')
+  const [activeTab, setActiveTab] = useState<'pendientes' | 'enviadas' | 'rechazadas'>('pendientes')
   
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState('')
@@ -87,6 +94,19 @@ const AlertsManagement: React.FC = () => {
 
   // Tipos de fuente disponibles
   type TipoFuente = 'Cámaras' | 'DOF' | 'CONAMER'
+
+  const sources = [
+    'Cámara de Diputados',
+    'Cámara de Senadores',
+    'CONAMER',
+    'Diario Oficial de la Federación'
+  ];
+
+  const docTypes: string[] = [
+    'PUNTO DE ACUERDO',
+    'INICIATIVA',
+  ];
+
 
   // Estados de paginación
   const [currentPage, setCurrentPage] = useState(1)
@@ -124,8 +144,16 @@ const AlertsManagement: React.FC = () => {
     objeto: '',
     correspondiente: '',
     tipo: '',
-    analizado: false
+    analizado: false,
+    transitorios: '',
+    fuente: '',
+    dependencia: '',
+    ultimo_doc_expediente: '',
+    ver_expediente: '',
+    informacion_adicional: '',
+    titulo: ''
   })
+  console.log('📝 Documento editable:', documentoEditable)
 
   // Estados para clientes (usados en validación) - ELIMINANDO VARIABLES NO USADAS
 
@@ -238,14 +266,14 @@ const AlertsManagement: React.FC = () => {
           enviado_correo,
           datetime_enviado_correo,
           link_pdf_enviado,
-          asunto_email,
-          mensaje_email,
           clientes (
             nombre_cliente,
             siglas,
             email
           ),
           senado (
+            fuente,
+            dependencia,
             sinopsis,
             Proponente,
             created_at,
@@ -262,8 +290,13 @@ const AlertsManagement: React.FC = () => {
             imagen_link,
             leyes,
             analisis,
+            transitorios,
             correspondiente,
-            analizado
+            analizado,
+            ultimo_doc_expediente,
+            ver_expediente,
+            informacion_adicional,
+            titulo
           )
         `)
         .order('created_at', { ascending: false })
@@ -274,7 +307,6 @@ const AlertsManagement: React.FC = () => {
       }
 
       console.log('🔍 Alertas encontradas:', alertasData?.length || 0)
-      console.log('🔍 Datos crudos de alertas:', alertasData)
       
       if (alertasData && alertasData.length > 0) {
         console.log('🔍 Ejemplo de alerta con estado:', {
@@ -287,8 +319,6 @@ const AlertsManagement: React.FC = () => {
         // Log de todos los estados únicos encontrados
         const estadosUnicos = [...new Set(alertasData.map(a => a.estado))]
         console.log('🔍 Estados únicos encontrados:', estadosUnicos)
-      } else {
-        console.log('⚠️ No se encontraron alertas en la base de datos')
       }
 
       // Procesar alertas con máxima tolerancia
@@ -335,28 +365,26 @@ const AlertsManagement: React.FC = () => {
           nombreCliente = alerta.clientes.siglas
         }
 
-                 // Normalizar estado - CLAVE PARA EL PROBLEMA
-         let estadoNormalizado = 'pendientes'
-         if (alerta.estado) {
-           const estadoOriginal = String(alerta.estado).trim()
-           const estado = estadoOriginal.toLowerCase()
-           
-           // Log para debug
-           console.log('Estado recibido:', estadoOriginal)
-           
-                       if (estado === 'pendiente' || estado === 'pendientes') {
-              estadoNormalizado = 'pendientes'
-            } else if (estado === 'aprobado pendiente de envio' || estado === 'aprobado pendiente de envío') {
-              estadoNormalizado = 'aprobadas' // Se muestra en la nueva pestaña de aprobadas
-            } else if (estado === 'enviada' || estado === 'enviadas' || estadoOriginal === 'Enviado al Correo') {
-              estadoNormalizado = 'enviadas'
-            } else if (estado === 'rechazada' || estado === 'rechazadas') {
-              estadoNormalizado = 'rechazadas'
-            } else {
-              console.log('Estado no reconocido, usando pendientes por defecto:', estadoOriginal)
-              estadoNormalizado = 'pendientes' // Valor por defecto
-            }
-         }
+        // Normalizar estado - CLAVE PARA EL PROBLEMA
+        let estadoNormalizado = 'pendientes'
+        if (alerta.estado) {
+          const estadoOriginal = String(alerta.estado).trim()
+          const estado = estadoOriginal.toLowerCase()
+          
+          // Log para debug
+          console.log('Estado recibido:', estadoOriginal)
+          
+          if (estado === 'pendiente' || estado === 'pendientes') {
+            estadoNormalizado = 'pendientes'
+          } else if (estado === 'enviada' || estado === 'enviadas' || estadoOriginal === 'Enviado al Correo') {
+            estadoNormalizado = 'enviadas'
+          } else if (estado === 'rechazada' || estado === 'rechazadas') {
+            estadoNormalizado = 'rechazadas'
+          } else {
+            console.log('Estado no reconocido, usando pendientes por defecto:', estadoOriginal)
+            estadoNormalizado = 'pendientes' // Valor por defecto
+          }
+        }
 
         return {
           id_alerta: alerta.id_alerta,
@@ -372,8 +400,6 @@ const AlertsManagement: React.FC = () => {
           enviado_correo: alerta.enviado_correo,
           datetime_enviado_correo: alerta.datetime_enviado_correo,
           link_pdf_enviado: alerta.link_pdf_enviado || null,
-          asunto_email: alerta.asunto_email || null,
-          mensaje_email: alerta.mensaje_email || null,
           
           // Campos derivados para UI (siempre arrays)
           nombre_cliente: nombreCliente,
@@ -399,15 +425,20 @@ const AlertsManagement: React.FC = () => {
             leyes: alerta.senado.leyes || null,
             analisis: alerta.senado.analisis || null,
             correspondiente: alerta.senado.correspondiente || null,
-            analizado: alerta.senado.analizado || false
+            analizado: alerta.senado.analizado || false,
+            transitorios: alerta.senado.transitorios || null,
+            fuente: alerta.senado.fuente || null,
+            dependencia: alerta.senado.dependencia || null,
+            ultimo_doc_expediente: alerta.senado.ultimo_doc_expediente || null,
+            titulo: alerta.senado.titulo || null,
+            ver_expediente: alerta.senado.ver_expediente || null,
+            informacion_adicional: alerta.senado.informacion_adicional || null
           } : null
         }
       })
 
       // Calcular listas de distribución para cada alerta
       const alertasConListasDistribucion = await calcularListasDistribucion(alertasProcesadas)
-      console.log('🔍 Alertas procesadas:', alertasProcesadas.length)
-      console.log('🔍 Alertas con listas de distribución:', alertasConListasDistribucion.length)
       setAlertas(alertasConListasDistribucion)
       
       // Log por estado DESPUÉS de normalización
@@ -453,12 +484,6 @@ const AlertsManagement: React.FC = () => {
 
   // Función para filtrar alertas
   const alertasFiltradas = useMemo(() => {
-    console.log('🔍 Iniciando filtrado de alertas:', {
-      alertasLength: alertas?.length || 0,
-      activeTab,
-      alertas: alertas
-    })
-    
     if (!alertas || alertas.length === 0) {
       console.log('🔍 No hay alertas para filtrar')
       return []
@@ -470,12 +495,11 @@ const AlertsManagement: React.FC = () => {
       estados: alertas.map(a => a.estado)
     })
 
-         const filtradas = alertas.filter(alerta => {
-       // Filtro por estado según la pestaña activa
-       if (activeTab === 'pendientes' && alerta.estado !== 'pendientes') return false
-       if (activeTab === 'aprobadas' && alerta.estado !== 'aprobadas') return false
-       if (activeTab === 'enviadas' && alerta.estado !== 'enviadas') return false
-       if (activeTab === 'rechazadas' && alerta.estado !== 'rechazadas') return false
+    const filtradas = alertas.filter(alerta => {
+      // Filtro por estado según la pestaña activa
+      if (activeTab === 'pendientes' && alerta.estado !== 'pendientes') return false
+      if (activeTab === 'enviadas' && alerta.estado !== 'enviadas') return false
+      if (activeTab === 'rechazadas' && alerta.estado !== 'rechazadas') return false
 
       // Filtro por fuente
       if (filterFuente && alerta.fuente !== filterFuente) return false
@@ -510,17 +534,7 @@ const AlertsManagement: React.FC = () => {
   const alertasPaginadas = useMemo(() => {
     const inicio = (currentPage - 1) * alertasPorPagina
     const fin = inicio + alertasPorPagina
-    const paginadas = alertasFiltradas.slice(inicio, fin)
-    console.log('🔍 Alertas paginadas:', {
-      totalFiltradas: alertasFiltradas.length,
-      currentPage,
-      alertasPorPagina,
-      inicio,
-      fin,
-      paginadasLength: paginadas.length,
-      paginadas: paginadas
-    })
-    return paginadas
+    return alertasFiltradas.slice(inicio, fin)
   }, [alertasFiltradas, currentPage, alertasPorPagina])
 
   const totalPaginas = Math.ceil(alertasFiltradas.length / alertasPorPagina)
@@ -531,29 +545,24 @@ const AlertsManagement: React.FC = () => {
     loadClientes()
   }, [])
 
-     // Debug para ver el estado de las alertas
-   useEffect(() => {
-     console.log('📊 Estado actual de alertas:', {
-       total: alertas.length,
-       filtradas: alertasFiltradas.length,
-       activeTab,
-       porEstado: {
-         pendientes: alertas.filter(a => a.estado === 'pendientes').length,
-         aprobadas: alertas.filter(a => a.estado === 'aprobadas').length,
-         enviadas: alertas.filter(a => a.estado === 'enviadas').length,
-         rechazadas: alertas.filter(a => a.estado === 'rechazadas').length
-       }
-     })
-   }, [alertas, alertasFiltradas, activeTab])
+  // Debug para ver el estado de las alertas
+  useEffect(() => {
+    console.log('📊 Estado actual de alertas:', {
+      total: alertas.length,
+      filtradas: alertasFiltradas.length,
+      activeTab,
+      porEstado: {
+        pendientes: alertas.filter(a => a.estado === 'pendientes').length,
+        enviadas: alertas.filter(a => a.estado === 'enviadas').length,
+        rechazadas: alertas.filter(a => a.estado === 'rechazadas').length
+      }
+    })
+  }, [alertas, alertasFiltradas, activeTab])
 
   // Funciones simplificadas para trabajar con los campos reales
   const validarAlerta = (alerta: Alerta) => {
     setAlertaSeleccionada(alerta)
-    
-    // Cargar valores de asunto y mensaje del correo desde la alerta
-    setAsuntoCorreo(alerta.asunto_email || '')
-    setMensajeAdjunto(alerta.mensaje_email || '')
-    
+    console.log('📝 Validando alerta:', alerta)
     // Inicializar datos del documento del senado para edición
     if (alerta.documento_senado) {
       setDocumentoEditable({
@@ -573,7 +582,14 @@ const AlertsManagement: React.FC = () => {
         objeto: alerta.documento_senado.objeto || '',
         correspondiente: alerta.documento_senado.correspondiente || '',
         tipo: alerta.documento_senado.tipo || '',
-        analizado: alerta.documento_senado.analizado || false
+        analizado: alerta.documento_senado.analizado || false,
+        transitorios: alerta.documento_senado.transitorios || '',
+        fuente: alerta.documento_senado.fuente || '',
+        dependencia: alerta.documento_senado.dependencia || '',
+        ultimo_doc_expediente: alerta.documento_senado.ultimo_doc_expediente || '',
+        ver_expediente: alerta.documento_senado.ver_expediente || '',
+        informacion_adicional: alerta.documento_senado.informacion_adicional || '',
+        titulo: alerta.documento_senado.titulo || '',
       })
     } else {
       // Inicializar con valores vacíos si no hay documento
@@ -594,7 +610,14 @@ const AlertsManagement: React.FC = () => {
         objeto: '',
         correspondiente: '',
         tipo: '',
-        analizado: false
+        analizado: false,
+        transitorios: '',
+        fuente: '',
+        dependencia: '',
+        ultimo_doc_expediente: '',
+        ver_expediente: '',
+        informacion_adicional: '',
+        titulo: ''
       })
     }
     
@@ -638,7 +661,14 @@ const AlertsManagement: React.FC = () => {
           objeto: documentoEditable.objeto || null,
           correspondiente: documentoEditable.correspondiente || null,
           tipo: documentoEditable.tipo || null,
-          analizado: documentoEditable.analizado
+          analizado: documentoEditable.analizado,
+          transitorios: documentoEditable.transitorios || null,
+          fuente: documentoEditable.fuente || null,
+          dependencia: documentoEditable.dependencia || null,
+          ultimo_doc_expediente: documentoEditable.ultimo_doc_expediente || null,
+          ver_expediente: documentoEditable.ver_expediente || null,
+          informacion_adicional: documentoEditable.informacion_adicional || null,
+          titulo: documentoEditable.titulo || null
         })
         .eq('id_senado_doc', alertaSeleccionada.id_doc_senado)
 
@@ -658,6 +688,44 @@ const AlertsManagement: React.FC = () => {
   const aprobarAlerta = async () => {
     if (!alertaSeleccionada) return
     
+    // Validaciones según la fuente del documento
+    switch(documentoEditable.fuente){
+      case sources[2]: // CONAMER
+        if(!documentoEditable.iniciativa_texto || !documentoEditable.fuente || !documentoEditable.dependencia || !documentoEditable.temas || !documentoEditable.resumen || !documentoEditable.analisis || !documentoEditable.ultimo_doc_expediente || !documentoEditable.ver_expediente) {
+          alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+          return
+        }
+        break
+      case sources[3]: // DOF
+        if(!documentoEditable.iniciativa_texto || !documentoEditable.fuente || !documentoEditable.temas || !documentoEditable.resumen || !documentoEditable.analisis) {
+          alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+          return
+        }
+        break
+      default: // Cámaras
+        if (!documentoEditable.iniciativa_texto || !documentoEditable.tipo || !documentoEditable.objeto) {
+          alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+          return
+        }
+        break
+    }
+
+    // Validaciones adicionales para tipos específicos con fuentes de Cámaras
+    if(documentoEditable.tipo === docTypes[0] && (documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1]) && (!documentoEditable.iniciativa_texto || !documentoEditable.tipo || !documentoEditable.personas || !documentoEditable.fuente || !documentoEditable.temas || !documentoEditable.objeto || !documentoEditable.analisis || !documentoEditable.resumen)) {
+      alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+      return
+    }
+    if(documentoEditable.tipo === docTypes[1] && (documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1]) && (!documentoEditable.iniciativa_texto || !documentoEditable.tipo || !documentoEditable.personas || !documentoEditable.fuente || !documentoEditable.temas || !documentoEditable.objeto || !documentoEditable.analisis)) {
+      alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+      return
+    }
+
+    // Validar que el asunto del correo esté presente
+    if (!asuntoCorreo.trim()) {
+      alert('El asunto del correo es obligatorio.')
+      return
+    }
+    
     setLoading(true)
     try {
       // Primero actualizar el documento del senado si hay cambios
@@ -673,22 +741,16 @@ const AlertsManagement: React.FC = () => {
       const { error } = await supabase
         .from('alertas_directorio')
         .update({
-          estado: 'aprobado pendiente de envio',
-          status_alerta: true,
-          enviado_correo: false,
-          datetime_enviado_correo: null,
-          asunto_email: asuntoCorreo,
-          mensaje_email: mensajeAdjunto
+          estado: 'Enviado al Correo',
+          enviado_correo: true,
+          datetime_enviado_correo: new Date().toISOString()
         })
         .eq('id_alerta', alertaSeleccionada.id_alerta)
       
       if (error) throw error
       
-      setSuccessMessage('Alerta aprobada correctamente. Pendiente de envío al cliente.')
+      setSuccessMessage('Alerta enviada correctamente al cliente.')
       setShowValidarModal(false)
-      // Limpiar campos después de enviar
-      setAsuntoCorreo('')
-      setMensajeAdjunto('')
       await loadAlertas()
       
       setTimeout(() => setSuccessMessage(''), 5000)
@@ -716,9 +778,6 @@ const AlertsManagement: React.FC = () => {
       
       setSuccessMessage('Alerta rechazada. No será enviada al cliente.')
       setShowValidarModal(false)
-      // Limpiar campos después de rechazar
-      setAsuntoCorreo('')
-      setMensajeAdjunto('')
       await loadAlertas()
       
       setTimeout(() => setSuccessMessage(''), 5000)
@@ -783,11 +842,11 @@ const AlertsManagement: React.FC = () => {
     setCurrentPage(nuevaPagina)
   }
 
-     // Cambiar de bandeja
-   const cambiarBandeja = (nuevaBandeja: 'pendientes' | 'aprobadas' | 'enviadas' | 'rechazadas') => {
-     setActiveTab(nuevaBandeja)
-     setCurrentPage(1)
-   }
+  // Cambiar de bandeja
+  const cambiarBandeja = (nuevaBandeja: 'pendientes' | 'enviadas' | 'rechazadas') => {
+    setActiveTab(nuevaBandeja)
+    setCurrentPage(1)
+  }
 
   // Limpiar filtros
   const limpiarFiltros = () => {
@@ -796,8 +855,6 @@ const AlertsManagement: React.FC = () => {
     setFilterFecha({ desde: '', hasta: '' })
     setCurrentPage(1)
   }
-
-
 
   return (
     <div className="p-6">
@@ -840,48 +897,38 @@ const AlertsManagement: React.FC = () => {
 
       {/* Bandejas (Tabs) */}
       <div className="mb-6">
-                 <div className="flex flex-wrap items-center gap-2 mb-4">
-           <button
-             onClick={() => cambiarBandeja('pendientes')}
-             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-               activeTab === 'pendientes'
-                 ? 'bg-orange-600 text-white'
-                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-             }`}
-           >
-             Pendientes ({alertas.filter(a => a.estado === 'pendientes').length})
-           </button>
-           <button
-             onClick={() => cambiarBandeja('aprobadas')}
-             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-               activeTab === 'aprobadas'
-                 ? 'bg-purple-600 text-white'
-                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-             }`}
-           >
-             Aprobadas ({alertas.filter(a => a.estado === 'aprobadas').length})
-           </button>
-           <button
-             onClick={() => cambiarBandeja('enviadas')}
-             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-               activeTab === 'enviadas'
-                 ? 'bg-green-600 text-white'
-                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-             }`}
-           >
-             Enviadas ({alertas.filter(a => a.estado === 'enviadas').length})
-           </button>
-           <button
-             onClick={() => cambiarBandeja('rechazadas')}
-             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-               activeTab === 'rechazadas'
-                 ? 'bg-blue-600 text-white'
-                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-             }`}
-           >
-             Rechazadas ({alertas.filter(a => a.estado === 'rechazadas').length})
-           </button>
-         </div>
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <button
+            onClick={() => cambiarBandeja('pendientes')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'pendientes'
+                ? 'bg-orange-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Pendientes ({alertas.filter(a => a.estado === 'pendientes').length})
+          </button>
+          <button
+            onClick={() => cambiarBandeja('enviadas')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'enviadas'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Enviadas ({alertas.filter(a => a.estado === 'enviadas').length})
+          </button>
+          <button
+            onClick={() => cambiarBandeja('rechazadas')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'rechazadas'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Rechazadas ({alertas.filter(a => a.estado === 'rechazadas').length})
+          </button>
+        </div>
 
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow-sm border p-4">
@@ -907,8 +954,9 @@ const AlertsManagement: React.FC = () => {
                 className="form-input pl-10 w-full"
               >
                 <option value="">Todas las fuentes</option>
-                <option value="Cámaras">Cámaras</option>
-                <option value="DOF">DOF</option>
+                <option value="Cámara de Diputados">Cámara de Diputados</option>
+                <option value="Cámara de Senadores">Cámara de Senadores</option>
+                <option value="Diario Oficial de la Federación">DOF</option>
                 <option value="CONAMER">CONAMER</option>
               </select>
             </div>
@@ -968,12 +1016,12 @@ const AlertsManagement: React.FC = () => {
           </div>
         ) : alertasPaginadas.length === 0 ? (
           <div className="p-8 text-center">
-                         <p className="text-gray-600">
-               {searchTerm || filterFuente || filterFecha.desde || filterFecha.hasta
-                 ? 'No se encontraron alertas que coincidan con tu búsqueda.'
-                 : `No hay alertas ${activeTab === 'pendientes' ? 'pendientes' : activeTab === 'aprobadas' ? 'aprobadas' : activeTab === 'enviadas' ? 'enviadas' : 'rechazadas'}.`
-               }
-             </p>
+            <p className="text-gray-600">
+              {searchTerm || filterFuente || filterFecha.desde || filterFecha.hasta
+                ? 'No se encontraron alertas que coincidan con tu búsqueda.'
+                : `No hay alertas ${activeTab === 'pendientes' ? 'pendientes' : activeTab === 'enviadas' ? 'enviadas' : 'rechazadas'}.`
+              }
+            </p>
           </div>
         ) : (
           <div>
@@ -1085,16 +1133,15 @@ const AlertsManagement: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                                                 <div className="flex flex-col space-y-1">
-                           <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                             alerta.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
-                             alerta.estado === 'aprobadas' ? 'bg-purple-100 text-purple-800' :
-                             alerta.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
-                             alerta.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
-                             'bg-gray-100 text-gray-800'
-                           }`}>
-                             {alerta.estado || 'Sin estado'}
-                           </span>
+                        <div className="flex flex-col space-y-1">
+                          <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                            alerta.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
+                            alerta.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
+                            alerta.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {alerta.estado || 'Sin estado'}
+                          </span>
                           {alerta.enviado_correo && (
                             <span className="text-xs text-green-600">
                               ✓ Correo enviado
@@ -1102,64 +1149,46 @@ const AlertsManagement: React.FC = () => {
                           )}
                         </div>
                       </td>
-                                             <td className="px-6 py-4">
-                         <div className="flex items-center space-x-2">
-                           {activeTab === 'pendientes' && (
-                             <button
-                               onClick={() => validarAlerta(alerta)}
-                               className="p-2 text-orange-600 hover:bg-orange-100 rounded-lg transition-colors"
-                               title="Validar alerta"
-                             >
-                               <CheckCircle size={16} />
-                             </button>
-                           )}
-                           {activeTab === 'aprobadas' && (
-                             <>
-                               <button
-                                 onClick={() => verAlerta(alerta)}
-                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                                 title="Ver detalles"
-                               >
-                                 <Eye size={16} />
-                               </button>
-                               <button
-                                 onClick={() => eliminarAlerta(alerta)}
-                                 className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                 title="Eliminar alerta"
-                               >
-                                 <Trash2 size={16} />
-                               </button>
-                             </>
-                           )}
-                           {alerta.estado === 'enviadas' && (
-                             <>
-                               <button
-                                 onClick={() => verAlerta(alerta)}
-                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                                 title="Ver detalles"
-                               >
-                                 <Eye size={16} />
-                               </button>
-                               <button
-                                 onClick={() => eliminarAlerta(alerta)}
-                                 className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                 title="Eliminar alerta"
-                               >
-                                 <Trash2 size={16} />
-                               </button>
-                             </>
-                           )}
-                           {activeTab === 'rechazadas' && (
-                             <button
-                               onClick={() => eliminarAlerta(alerta)}
-                               className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                               title="Eliminar alerta"
-                             >
-                               <Trash2 size={16} />
-                             </button>
-                           )}
-                         </div>
-                       </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          {activeTab === 'pendientes' && (
+                            <button
+                              onClick={() => validarAlerta(alerta)}
+                              className="p-2 text-orange-600 hover:bg-orange-100 rounded-lg transition-colors"
+                              title="Validar alerta"
+                            >
+                              <CheckCircle size={16} />
+                            </button>
+                          )}
+                          {alerta.estado === 'enviadas' && (
+                            <>
+                              <button
+                                onClick={() => verAlerta(alerta)}
+                                className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                title="Ver detalles"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button
+                                onClick={() => eliminarAlerta(alerta)}
+                                className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                title="Eliminar alerta"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          )}
+                          {activeTab === 'rechazadas' && (
+                            <button
+                              onClick={() => eliminarAlerta(alerta)}
+                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                              title="Eliminar alerta"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1252,7 +1281,7 @@ const AlertsManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
-
+{/* asdasd */}
               {/* Datos del Documento del Senado - NUEVA SECCIÓN */}
               {alertaSeleccionada.documento_senado && (
                 <div className="space-y-4">
@@ -1262,169 +1291,238 @@ const AlertsManagement: React.FC = () => {
                   </h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Sinopsis */}
-                    <div className="md:col-span-2">
+                    {/* Titulo */}
+                    <div className="col-span-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sinopsis
-                      </label>
-                      <textarea
-                        value={documentoEditable.sinopsis}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, sinopsis: e.target.value})}
-                        className="form-input w-full h-20 resize-none"
-                        placeholder="Sinopsis del documento"
-                      />
-                    </div>
-
-                    {/* Proponente */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Proponente
+                        Título *
                       </label>
                       <input
                         type="text"
-                        value={documentoEditable.Proponente}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, Proponente: e.target.value})}
+                        value={documentoEditable.titulo}
+                        onChange={(e) => setDocumentoEditable({...documentoEditable, titulo: e.target.value})}
                         className="form-input w-full"
-                        placeholder="Nombre del proponente"
+                        placeholder="Título del documento"
+                        required
                       />
                     </div>
+                    {/* Tipo de proyecto - Solo mostrar si no es fuente[3] - NO EDITABLE */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className="col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tipo de Proyecto
+                        </label>
+                        <div className="form-input w-full bg-gray-100 text-gray-600">
+                          {documentoEditable.tipo || 'No especificado'}
+                        </div>
+                      </div>
+                    )}
 
-                    {/* Tipo */}
-                    <div>
+                    {/* Proponente - Solo mostrar si no es fuente[3] */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className='col-span-1'>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Proponente
+                        </label>
+                        <input
+                          type="text"
+                          value={documentoEditable.Proponente || documentoEditable.personas}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, personas: e.target.value})}
+                          className="form-input w-full"
+                          placeholder="Nombre del proponente"
+                        />
+                      </div>
+                    )}
+
+                    {/* Camara de origen / Órgano de difusión - NO EDITABLE */}
+                    <div className='col-span-1'>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tipo de Documento
+                        {documentoEditable.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
                       </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.tipo}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, tipo: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Tipo de documento"
-                      />
+                      <div className="form-input w-full bg-gray-100 text-gray-600">
+                        {documentoEditable.fuente || 'No especificado'}
+                      </div>
                     </div>
 
-                    {/* Objeto */}
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Objeto
-                      </label>
-                      <textarea
-                        value={documentoEditable.objeto}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, objeto: e.target.value})}
-                        className="form-input w-full h-16 resize-none"
-                        placeholder="Objeto del documento"
-                      />
-                    </div>
+                    {/* Dependencia - Solo mostrar si no es fuente[3] */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className='md:col-span-2'>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Dependencia
+                        </label>
+                        <input
+                          type="text"
+                          value={documentoEditable.dependencia}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, dependencia: e.target.value})}
+                          className="form-input w-full"
+                          placeholder="Dependencia"
+                        />
+                      </div>
+                    )}
 
-                    {/* Link Iniciativa */}
-                    <div>
+                    {/* Temas/Subtemas */}
+                    <div className='md:col-span-2'>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Enlace de la Iniciativa
-                      </label>
-                      <input
-                        type="url"
-                        value={documentoEditable.link_iniciativa}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, link_iniciativa: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="https://..."
-                      />
-                    </div>
-
-                    {/* Gaceta */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Gaceta
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.gaceta}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, gaceta: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Información de gaceta"
-                      />
-                    </div>
-
-                    {/* Temas */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Temas
+                        Temas/Subtemas
                       </label>
                       <input
                         type="text"
                         value={documentoEditable.temas}
                         onChange={(e) => setDocumentoEditable({...documentoEditable, temas: e.target.value})}
                         className="form-input w-full"
-                        placeholder="Temas separados por coma"
+                        placeholder="Temas/Subtemas"
                       />
                     </div>
 
-                    {/* Personas */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Personas Involucradas
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.personas}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, personas: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Personas involucradas"
-                      />
-                    </div>
-
-                    {/* Partidos */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Partidos Políticos
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.partidos}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, partidos: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Partidos políticos"
-                      />
-                    </div>
-
-                    {/* Correspondiente */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Correspondiente
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.correspondiente}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, correspondiente: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Información correspondiente"
-                      />
-                    </div>
-
-                    {/* Resumen */}
+                    {/* Objeto o Resumen según fuente */}
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Resumen
-                      </label>
-                      <textarea
-                        value={documentoEditable.resumen}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
-                        className="form-input w-full h-20 resize-none"
-                        placeholder="Resumen del documento"
-                      />
+                      {documentoEditable.fuente === sources[3] ? (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Resumen *
+                          </label>
+                          <textarea
+                            value={documentoEditable.resumen}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Resumen del documento"
+                            required
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Objeto *
+                          </label>
+                          <textarea
+                            value={documentoEditable.objeto}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, objeto: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Objeto del documento"
+                            required
+                          />
+                        </>
+                      )}
                     </div>
 
-                    {/* Análisis */}
+                    {/* Análisis o Correspondiente según fuente */}
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Análisis
-                      </label>
-                      <textarea
-                        value={documentoEditable.analisis}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, analisis: e.target.value})}
-                        className="form-input w-full h-24 resize-none"
-                        placeholder="Análisis del documento"
-                      />
+                      {documentoEditable.fuente === sources[3] ? (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Análisis
+                          </label>
+                          <textarea
+                            value={documentoEditable.analisis}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, analisis: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Análisis del documento"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Correspondiente
+                          </label>
+                          <textarea
+                            value={documentoEditable.sinopsis}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, sinopsis: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Información correspondiente"
+                          />
+                        </>
+                      )}
                     </div>
+
+                    {/* Campos específicos para CONAMER */}
+                    {documentoEditable.fuente === sources[2] && (
+                      <>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Último Documento del Expediente
+                          </label>
+                          <textarea
+                            value={documentoEditable.ultimo_doc_expediente}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, ultimo_doc_expediente: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Último documento del expediente"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Link al enlace del expediente
+                          </label>
+                          <input
+                            type="text"
+                            value={documentoEditable.ver_expediente}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, ver_expediente: e.target.value})}
+                            className="form-input w-full"
+                            placeholder="URL del expediente"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Transitorios - Solo para fuentes que no sean DOF */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className="md:col-span-2">
+                        {documentoEditable.tipo !== docTypes[0] && (
+                          <>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Transitorios
+                            </label>
+                            <textarea
+                              value={documentoEditable.transitorios}
+                              onChange={(e) => setDocumentoEditable({...documentoEditable, transitorios: e.target.value})}
+                              className="form-input w-full h-24 resize-none"
+                              placeholder="Transitorios de la iniciativa o propuesta"
+                            />
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Estatus */}
+                    <div className="md:col-span-2">
+                      <label className="form-label">Estatus</label>
+                      {(documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1] || documentoEditable.tipo === docTypes[0]) ? (
+                        <select
+                          value={documentoEditable.resumen}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                          className="form-input"
+                          title="Seleccionar estatus del documento"
+                        >
+                          <option value="">Sin estatus</option>
+                          {ESTATUS_DOC_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={documentoEditable.resumen}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                          className="form-input"
+                          placeholder="Estatus de la iniciativa o propuesta"
+                        />
+                      )}
+                    </div>
+
+                    {/* Información adicional - Solo para tipos específicos con fuentes de Cámaras */}
+                    {((documentoEditable.tipo === docTypes[0] || documentoEditable.tipo === docTypes[1]) && (documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1])) && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Información adicional
+                        </label>
+                        <textarea
+                          value={documentoEditable.informacion_adicional}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, informacion_adicional: e.target.value})}
+                          className="form-input w-full h-24 resize-none"
+                          placeholder="Información adicional del documento"
+                        />
+                      </div>
+                    )}
 
                     {/* Campo de estado analizado */}
                     <div className="md:col-span-2">
@@ -1489,12 +1587,7 @@ const AlertsManagement: React.FC = () => {
 
               <div className="flex justify-end space-x-3 pt-6 border-t">
                 <button
-                  onClick={() => {
-                    setShowValidarModal(false)
-                    // Limpiar campos cuando se cierra el modal
-                    setAsuntoCorreo('')
-                    setMensajeAdjunto('')
-                  }}
+                  onClick={() => setShowValidarModal(false)}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancelar
@@ -1513,7 +1606,7 @@ const AlertsManagement: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Send size={16} />
-                  {loading ? 'Aprobando...' : 'Aprobar'}
+                  {loading ? 'Enviando...' : 'Aprobar y Enviar'}
                 </button>
               </div>
             </div>
@@ -1556,17 +1649,16 @@ const AlertsManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Estado</label>
-                                     <div className="text-gray-900">
-                     <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                       alertaSeleccionada.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
-                       alertaSeleccionada.estado === 'aprobadas' ? 'bg-purple-100 text-purple-800' :
-                       alertaSeleccionada.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
-                       alertaSeleccionada.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
-                       'bg-gray-100 text-gray-800'
-                     }`}>
-                       {alertaSeleccionada.estado}
-                     </span>
-                   </div>
+                  <div className="text-gray-900">
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                      alertaSeleccionada.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
+                      alertaSeleccionada.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
+                      alertaSeleccionada.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {alertaSeleccionada.estado}
+                    </span>
+                  </div>
                 </div>
                 {alertaSeleccionada.datetime_enviado_correo && (
                   <div>
@@ -1609,28 +1701,20 @@ const AlertsManagement: React.FC = () => {
                   </h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Sinopsis */}
-                    {alertaSeleccionada.documento_senado.sinopsis && (
+                    {/* Título */}
+                    {alertaSeleccionada.documento_senado.titulo && (
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Sinopsis</label>
+                        <label className="block text-sm font-medium text-gray-700">Título</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.sinopsis}
+                          {alertaSeleccionada.documento_senado.titulo}
                         </div>
                       </div>
                     )}
 
-                    {/* Proponente */}
-                    {alertaSeleccionada.documento_senado.Proponente && (
+                    {/* Tipo de Proyecto - Solo mostrar si no es DOF */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.tipo && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Proponente</label>
-                        <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.Proponente}</div>
-                      </div>
-                    )}
-
-                    {/* Tipo */}
-                    {alertaSeleccionada.documento_senado.tipo && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                        <label className="block text-sm font-medium text-gray-700">Tipo de Proyecto</label>
                         <div className="text-gray-900">
                           <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
                             {alertaSeleccionada.documento_senado.tipo}
@@ -1639,31 +1723,148 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Objeto */}
-                    {alertaSeleccionada.documento_senado.objeto && (
+                    {/* Proponente - Solo mostrar si no es DOF */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && (alertaSeleccionada.documento_senado.Proponente || alertaSeleccionada.documento_senado.personas) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Proponente</label>
+                        <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.Proponente || alertaSeleccionada.documento_senado.personas}</div>
+                      </div>
+                    )}
+
+                    {/* Cámara de origen / Órgano de difusión */}
+                    {alertaSeleccionada.documento_senado.fuente && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {alertaSeleccionada.documento_senado.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
+                        </label>
+                        <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.fuente}</div>
+                      </div>
+                    )}
+
+                    {/* Dependencia - Solo mostrar si no es DOF */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.dependencia && (
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Objeto</label>
+                        <label className="block text-sm font-medium text-gray-700">Dependencia</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.objeto}
+                          {alertaSeleccionada.documento_senado.dependencia}
                         </div>
                       </div>
                     )}
 
-                    {/* ID de Iniciativa */}
-                    {alertaSeleccionada.documento_senado.iniciativa_id && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">ID de Iniciativa</label>
-                        <div className="text-gray-900">
-                          <span className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                            {alertaSeleccionada.documento_senado.iniciativa_id}
-                          </span>
+                    {/* Temas/Subtemas */}
+                    {alertaSeleccionada.documento_senado.temas && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Temas/Subtemas</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.temas}
                         </div>
                       </div>
                     )}
 
-                    {/* Enlaces */}
+                    {/* Objeto o Resumen según fuente */}
+                    {alertaSeleccionada.documento_senado.fuente === sources[3] ? (
+                      alertaSeleccionada.documento_senado.resumen && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Resumen</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.resumen}
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      alertaSeleccionada.documento_senado.objeto && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Objeto</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.objeto}
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    {/* Análisis o Correspondiente según fuente */}
+                    {alertaSeleccionada.documento_senado.fuente === sources[3] ? (
+                      alertaSeleccionada.documento_senado.analisis && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Análisis</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.analisis}
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      alertaSeleccionada.documento_senado.correspondiente && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">Correspondiente</label>
+                          <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                            {alertaSeleccionada.documento_senado.correspondiente}
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    {/* Campos específicos para CONAMER */}
+                    {alertaSeleccionada.documento_senado.fuente === sources[2] && (
+                      <>
+                        {alertaSeleccionada.documento_senado.ultimo_doc_expediente && (
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">Último Documento del Expediente</label>
+                            <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                              {alertaSeleccionada.documento_senado.ultimo_doc_expediente}
+                            </div>
+                          </div>
+                        )}
+                        {alertaSeleccionada.documento_senado.ver_expediente && (
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">Link al enlace del expediente</label>
+                            <div className="mt-1">
+                              <a 
+                                href={alertaSeleccionada.documento_senado.ver_expediente}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline break-all"
+                              >
+                                {alertaSeleccionada.documento_senado.ver_expediente}
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Transitorios - Solo para fuentes que no sean DOF y tipos que no sean PUNTO DE ACUERDO */}
+                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.tipo !== docTypes[0] && alertaSeleccionada.documento_senado.transitorios && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Transitorios</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.transitorios}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Estatus */}
+                    {(alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.resumen) && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Estatus</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.resumen}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Información adicional - Solo para tipos específicos con fuentes de Cámaras */}
+                    {((alertaSeleccionada.documento_senado.tipo === docTypes[0] || alertaSeleccionada.documento_senado.tipo === docTypes[1]) && (alertaSeleccionada.documento_senado.fuente === sources[0] || alertaSeleccionada.documento_senado.fuente === sources[1])) && alertaSeleccionada.documento_senado.informacion_adicional && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Información adicional</label>
+                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
+                          {alertaSeleccionada.documento_senado.informacion_adicional}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Enlaces adicionales */}
                     {alertaSeleccionada.documento_senado.link_iniciativa && (
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Enlace Iniciativa</label>
                         <div className="mt-1">
                           <a 
@@ -1678,24 +1879,7 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Imagen Link */}
-                    {alertaSeleccionada.documento_senado.imagen_link && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Enlace de Imagen</label>
-                        <div className="mt-1">
-                          <a 
-                            href={alertaSeleccionada.documento_senado.imagen_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 underline break-all"
-                          >
-                            Ver imagen del documento
-                          </a>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Gaceta */}
+                    {/* Campos adicionales */}
                     {alertaSeleccionada.documento_senado.gaceta && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Gaceta</label>
@@ -1703,23 +1887,17 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Temas del documento */}
-                    {alertaSeleccionada.documento_senado.temas && (
+                    {alertaSeleccionada.documento_senado.iniciativa_id && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Temas del Documento</label>
-                        <div className="text-gray-900">{alertaSeleccionada.documento_senado.temas}</div>
+                        <label className="block text-sm font-medium text-gray-700">ID de Iniciativa</label>
+                        <div className="text-gray-900">
+                          <span className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                            {alertaSeleccionada.documento_senado.iniciativa_id}
+                          </span>
+                        </div>
                       </div>
                     )}
 
-                    {/* Personas */}
-                    {alertaSeleccionada.documento_senado.personas && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Personas Involucradas</label>
-                        <div className="text-gray-900">{alertaSeleccionada.documento_senado.personas}</div>
-                      </div>
-                    )}
-
-                    {/* Partidos */}
                     {alertaSeleccionada.documento_senado.partidos && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Partidos</label>
@@ -1727,49 +1905,10 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Leyes */}
                     {alertaSeleccionada.documento_senado.leyes && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Leyes</label>
                         <div className="text-gray-900">{alertaSeleccionada.documento_senado.leyes}</div>
-                      </div>
-                    )}
-
-                    {/* Correspondiente */}
-                    {alertaSeleccionada.documento_senado.correspondiente && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Correspondiente</label>
-                        <div className="text-gray-900">{alertaSeleccionada.documento_senado.correspondiente}</div>
-                      </div>
-                    )}
-
-                    {/* Resumen */}
-                    {alertaSeleccionada.documento_senado.resumen && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Resumen</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.resumen}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Iniciativa Texto */}
-                    {alertaSeleccionada.documento_senado.iniciativa_texto && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Texto de la Iniciativa</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg max-h-32 overflow-y-auto">
-                          {alertaSeleccionada.documento_senado.iniciativa_texto}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Análisis */}
-                    {alertaSeleccionada.documento_senado.analisis && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Análisis</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.analisis}
-                        </div>
                       </div>
                     )}
 
@@ -1796,6 +1935,16 @@ const AlertsManagement: React.FC = () => {
                         </span>
                       </div>
                     </div>
+
+                    {/* Fecha de Creación del Documento */}
+                    {alertaSeleccionada.documento_senado.created_at && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Fecha de Creación del Documento</label>
+                        <div className="text-gray-900">
+                          {new Date(alertaSeleccionada.documento_senado.created_at).toLocaleDateString('es-MX')}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

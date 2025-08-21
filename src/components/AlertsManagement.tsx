@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import * as XLSX from 'xlsx'
+import { ESTATUS_DOC_OPTIONS } from './SelectOptions'
 
 // Interfaces para tipado
 interface Alerta {
@@ -54,6 +55,14 @@ interface Alerta {
     temas?: string
     personas?: string
     partidos?: string
+    fuente?: string
+    transitorios?: string
+    dependencia?: string
+    ultimo_doc_expediente?: string
+    ver_expediente?: string
+    analisis?: string
+    analizado?: boolean
+    informacion_adicional?: string
     [key: string]: any // Para campos adicionales
   } | null
 }
@@ -85,6 +94,19 @@ const AlertsManagement: React.FC = () => {
 
   // Tipos de fuente disponibles
   type TipoFuente = 'Cámaras' | 'DOF' | 'CONAMER'
+
+  const sources = [
+    'Cámara de Diputados',
+    'Cámara de Senadores',
+    'CONAMER',
+    'Diario Oficial de la Federación'
+  ];
+
+  const docTypes: string[] = [
+    'PUNTO DE ACUERDO',
+    'INICIATIVA',
+  ];
+
 
   // Estados de paginación
   const [currentPage, setCurrentPage] = useState(1)
@@ -122,7 +144,13 @@ const AlertsManagement: React.FC = () => {
     objeto: '',
     correspondiente: '',
     tipo: '',
-    analizado: false
+    analizado: false,
+    transitorios: '',
+    fuente: '',
+    dependencia: '',
+    ultimo_doc_expediente: '',
+    ver_expediente: '',
+    informacion_adicional: ''
   })
 
   // Estados para clientes (usados en validación) - ELIMINANDO VARIABLES NO USADAS
@@ -242,6 +270,8 @@ const AlertsManagement: React.FC = () => {
             email
           ),
           senado (
+            fuente,
+            dependencia,
             sinopsis,
             Proponente,
             created_at,
@@ -258,8 +288,12 @@ const AlertsManagement: React.FC = () => {
             imagen_link,
             leyes,
             analisis,
+            transitorios,
             correspondiente,
-            analizado
+            analizado,
+            ultimo_doc_expediente,
+            ver_expediente,
+            informacion_adicional
           )
         `)
         .order('created_at', { ascending: false })
@@ -388,7 +422,10 @@ const AlertsManagement: React.FC = () => {
             leyes: alerta.senado.leyes || null,
             analisis: alerta.senado.analisis || null,
             correspondiente: alerta.senado.correspondiente || null,
-            analizado: alerta.senado.analizado || false
+            analizado: alerta.senado.analizado || false,
+            transitorios: alerta.senado.transitorios || null,
+            fuente: alerta.senado.fuente || null,
+            dependencia: alerta.senado.dependencia || null
           } : null
         }
       })
@@ -538,7 +575,13 @@ const AlertsManagement: React.FC = () => {
         objeto: alerta.documento_senado.objeto || '',
         correspondiente: alerta.documento_senado.correspondiente || '',
         tipo: alerta.documento_senado.tipo || '',
-        analizado: alerta.documento_senado.analizado || false
+        analizado: alerta.documento_senado.analizado || false,
+        transitorios: alerta.documento_senado.transitorios || '',
+        fuente: alerta.documento_senado.fuente || '',
+        dependencia: alerta.documento_senado.dependencia || '',
+        ultimo_doc_expediente: alerta.documento_senado.ultimo_doc_expediente || '',
+        ver_expediente: alerta.documento_senado.ver_expediente || '',
+        informacion_adicional: alerta.documento_senado.informacion_adicional || ''
       })
     } else {
       // Inicializar con valores vacíos si no hay documento
@@ -559,7 +602,13 @@ const AlertsManagement: React.FC = () => {
         objeto: '',
         correspondiente: '',
         tipo: '',
-        analizado: false
+        analizado: false,
+        transitorios: '',
+        fuente: '',
+        dependencia: '',
+        ultimo_doc_expediente: '',
+        ver_expediente: '',
+        informacion_adicional: ''
       })
     }
     
@@ -603,7 +652,13 @@ const AlertsManagement: React.FC = () => {
           objeto: documentoEditable.objeto || null,
           correspondiente: documentoEditable.correspondiente || null,
           tipo: documentoEditable.tipo || null,
-          analizado: documentoEditable.analizado
+          analizado: documentoEditable.analizado,
+          transitorios: documentoEditable.transitorios || null,
+          fuente: documentoEditable.fuente || null,
+          dependencia: documentoEditable.dependencia || null,
+          ultimo_doc_expediente: documentoEditable.ultimo_doc_expediente || null,
+          ver_expediente: documentoEditable.ver_expediente || null,
+          informacion_adicional: documentoEditable.informacion_adicional || null
         })
         .eq('id_senado_doc', alertaSeleccionada.id_doc_senado)
 
@@ -622,6 +677,44 @@ const AlertsManagement: React.FC = () => {
 
   const aprobarAlerta = async () => {
     if (!alertaSeleccionada) return
+    
+    // Validaciones según la fuente del documento
+    switch(documentoEditable.fuente){
+      case sources[2]: // CONAMER
+        if(!documentoEditable.iniciativa_texto || !documentoEditable.fuente || !documentoEditable.dependencia || !documentoEditable.temas || !documentoEditable.resumen || !documentoEditable.analisis || !documentoEditable.ultimo_doc_expediente || !documentoEditable.ver_expediente) {
+          alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+          return
+        }
+        break
+      case sources[3]: // DOF
+        if(!documentoEditable.iniciativa_texto || !documentoEditable.fuente || !documentoEditable.temas || !documentoEditable.resumen || !documentoEditable.analisis) {
+          alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+          return
+        }
+        break
+      default: // Cámaras
+        if (!documentoEditable.iniciativa_texto || !documentoEditable.tipo || !documentoEditable.objeto) {
+          alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+          return
+        }
+        break
+    }
+
+    // Validaciones adicionales para tipos específicos con fuentes de Cámaras
+    if(documentoEditable.tipo === docTypes[0] && (documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1]) && (!documentoEditable.iniciativa_texto || !documentoEditable.tipo || !documentoEditable.personas || !documentoEditable.fuente || !documentoEditable.temas || !documentoEditable.objeto || !documentoEditable.analisis || !documentoEditable.resumen)) {
+      alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+      return
+    }
+    if(documentoEditable.tipo === docTypes[1] && (documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1]) && (!documentoEditable.iniciativa_texto || !documentoEditable.tipo || !documentoEditable.personas || !documentoEditable.fuente || !documentoEditable.temas || !documentoEditable.objeto || !documentoEditable.analisis)) {
+      alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+      return
+    }
+
+    // Validar que el asunto del correo esté presente
+    if (!asuntoCorreo.trim()) {
+      alert('El asunto del correo es obligatorio.')
+      return
+    }
     
     setLoading(true)
     try {
@@ -1178,7 +1271,7 @@ const AlertsManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
-
+{/* asdasd */}
               {/* Datos del Documento del Senado - NUEVA SECCIÓN */}
               {alertaSeleccionada.documento_senado && (
                 <div className="space-y-4">
@@ -1188,169 +1281,247 @@ const AlertsManagement: React.FC = () => {
                   </h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Sinopsis */}
-                    <div className="md:col-span-2">
+                    {/* Titulo */}
+                    <div className="col-span-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sinopsis
-                      </label>
-                      <textarea
-                        value={documentoEditable.sinopsis}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, sinopsis: e.target.value})}
-                        className="form-input w-full h-20 resize-none"
-                        placeholder="Sinopsis del documento"
-                      />
-                    </div>
-
-                    {/* Proponente */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Proponente
+                        Título *
                       </label>
                       <input
                         type="text"
-                        value={documentoEditable.Proponente}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, Proponente: e.target.value})}
+                        value={documentoEditable.iniciativa_texto}
+                        onChange={(e) => setDocumentoEditable({...documentoEditable, iniciativa_texto: e.target.value})}
                         className="form-input w-full"
-                        placeholder="Nombre del proponente"
+                        placeholder="Título del documento"
+                        required
                       />
                     </div>
+                    {/* Tipo de proyecto - Solo mostrar si no es fuente[3] */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className="col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tipo de Proyecto *
+                        </label>
+                        <input
+                          type="text"
+                          value={documentoEditable.tipo}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, tipo: e.target.value})}
+                          className="form-input w-full"
+                          placeholder="Tipo de proyecto"
+                          required
+                        />
+                      </div>
+                    )}
 
-                    {/* Tipo */}
-                    <div>
+                    {/* Proponente - Solo mostrar si no es fuente[3] */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className='col-span-1'>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Proponente
+                        </label>
+                        <input
+                          type="text"
+                          value={documentoEditable.Proponente || documentoEditable.personas}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, personas: e.target.value})}
+                          className="form-input w-full"
+                          placeholder="Nombre del proponente"
+                        />
+                      </div>
+                    )}
+
+                    {/* Camara de origen / Órgano de difusión */}
+                    <div className='col-span-1'>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tipo de Documento
+                        {documentoEditable.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
                       </label>
                       <input
                         type="text"
-                        value={documentoEditable.tipo}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, tipo: e.target.value})}
+                        value={documentoEditable.fuente}
+                        onChange={(e) => setDocumentoEditable({...documentoEditable, fuente: e.target.value})}
                         className="form-input w-full"
-                        placeholder="Tipo de documento"
+                        placeholder={documentoEditable.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
                       />
                     </div>
 
-                    {/* Objeto */}
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Objeto
-                      </label>
-                      <textarea
-                        value={documentoEditable.objeto}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, objeto: e.target.value})}
-                        className="form-input w-full h-16 resize-none"
-                        placeholder="Objeto del documento"
-                      />
-                    </div>
+                    {/* Dependencia - Solo mostrar si no es fuente[3] */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className='md:col-span-2'>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Dependencia
+                        </label>
+                        <input
+                          type="text"
+                          value={documentoEditable.dependencia}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, dependencia: e.target.value})}
+                          className="form-input w-full"
+                          placeholder="Dependencia"
+                        />
+                      </div>
+                    )}
 
-                    {/* Link Iniciativa */}
-                    <div>
+                    {/* Temas/Subtemas */}
+                    <div className='md:col-span-2'>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Enlace de la Iniciativa
-                      </label>
-                      <input
-                        type="url"
-                        value={documentoEditable.link_iniciativa}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, link_iniciativa: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="https://..."
-                      />
-                    </div>
-
-                    {/* Gaceta */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Gaceta
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.gaceta}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, gaceta: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Información de gaceta"
-                      />
-                    </div>
-
-                    {/* Temas */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Temas
+                        Temas/Subtemas
                       </label>
                       <input
                         type="text"
                         value={documentoEditable.temas}
                         onChange={(e) => setDocumentoEditable({...documentoEditable, temas: e.target.value})}
                         className="form-input w-full"
-                        placeholder="Temas separados por coma"
+                        placeholder="Temas/Subtemas"
                       />
                     </div>
 
-                    {/* Personas */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Personas Involucradas
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.personas}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, personas: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Personas involucradas"
-                      />
-                    </div>
-
-                    {/* Partidos */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Partidos Políticos
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.partidos}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, partidos: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Partidos políticos"
-                      />
-                    </div>
-
-                    {/* Correspondiente */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Correspondiente
-                      </label>
-                      <input
-                        type="text"
-                        value={documentoEditable.correspondiente}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, correspondiente: e.target.value})}
-                        className="form-input w-full"
-                        placeholder="Información correspondiente"
-                      />
-                    </div>
-
-                    {/* Resumen */}
+                    {/* Objeto o Resumen según fuente */}
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Resumen
-                      </label>
-                      <textarea
-                        value={documentoEditable.resumen}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
-                        className="form-input w-full h-20 resize-none"
-                        placeholder="Resumen del documento"
-                      />
+                      {documentoEditable.fuente === sources[3] ? (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Resumen *
+                          </label>
+                          <textarea
+                            value={documentoEditable.resumen}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Resumen del documento"
+                            required
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Objeto *
+                          </label>
+                          <textarea
+                            value={documentoEditable.objeto}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, objeto: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Objeto del documento"
+                            required
+                          />
+                        </>
+                      )}
                     </div>
 
-                    {/* Análisis */}
+                    {/* Análisis o Correspondiente según fuente */}
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Análisis
-                      </label>
-                      <textarea
-                        value={documentoEditable.analisis}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, analisis: e.target.value})}
-                        className="form-input w-full h-24 resize-none"
-                        placeholder="Análisis del documento"
-                      />
+                      {documentoEditable.fuente === sources[3] ? (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Análisis
+                          </label>
+                          <textarea
+                            value={documentoEditable.analisis}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, analisis: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Análisis del documento"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Correspondiente
+                          </label>
+                          <textarea
+                            value={documentoEditable.sinopsis}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, sinopsis: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Información correspondiente"
+                          />
+                        </>
+                      )}
                     </div>
+
+                    {/* Campos específicos para CONAMER */}
+                    {documentoEditable.fuente === sources[2] && (
+                      <>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Último Documento del Expediente
+                          </label>
+                          <textarea
+                            value={documentoEditable.ultimo_doc_expediente}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, ultimo_doc_expediente: e.target.value})}
+                            className="form-input w-full h-24 resize-none"
+                            placeholder="Último documento del expediente"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Link al enlace del expediente
+                          </label>
+                          <input
+                            type="text"
+                            value={documentoEditable.ver_expediente}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, ver_expediente: e.target.value})}
+                            className="form-input w-full"
+                            placeholder="URL del expediente"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Transitorios - Solo para fuentes que no sean DOF */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className="md:col-span-2">
+                        {documentoEditable.tipo !== docTypes[0] && (
+                          <>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Transitorios
+                            </label>
+                            <textarea
+                              value={documentoEditable.transitorios}
+                              onChange={(e) => setDocumentoEditable({...documentoEditable, transitorios: e.target.value})}
+                              className="form-input w-full h-24 resize-none"
+                              placeholder="Transitorios de la iniciativa o propuesta"
+                            />
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Estatus */}
+                    <div className="md:col-span-2">
+                      <label className="form-label">Estatus</label>
+                      {(documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1] || documentoEditable.tipo === docTypes[0]) ? (
+                        <select
+                          value={documentoEditable.resumen}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                          className="form-input"
+                          title="Seleccionar estatus del documento"
+                        >
+                          <option value="">Sin estatus</option>
+                          {ESTATUS_DOC_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={documentoEditable.resumen}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                          className="form-input"
+                          placeholder="Estatus de la iniciativa o propuesta"
+                        />
+                      )}
+                    </div>
+
+                    {/* Información adicional - Solo para tipos específicos con fuentes de Cámaras */}
+                    {((documentoEditable.tipo === docTypes[0] || documentoEditable.tipo === docTypes[1]) && (documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1])) && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Información adicional
+                        </label>
+                        <textarea
+                          value={documentoEditable.informacion_adicional}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, informacion_adicional: e.target.value})}
+                          className="form-input w-full h-24 resize-none"
+                          placeholder="Información adicional del documento"
+                        />
+                      </div>
+                    )}
 
                     {/* Campo de estado analizado */}
                     <div className="md:col-span-2">

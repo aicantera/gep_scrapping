@@ -658,7 +658,7 @@ const DocumentManagement: React.FC = () => {
                 )}
                 <div className="space-y-2">
                   <label className="form-label">
-                    {editData.fuente === sources[3] ? "órgano de difusión" : "Cámara de origen"}
+                    {editData.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
                   </label>
                   <input
                     type="text"
@@ -733,16 +733,6 @@ const DocumentManagement: React.FC = () => {
                   </>
                 )}
               </div>
-              {((editData.tipo === docTypes[0] || editData.tipo === docTypes[1]) && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
-                <div className="space-y-2">
-                  <label className="form-label">Información adicional</label>
-                  <textarea
-                    value={editData.informacion_adicional}
-                    onChange={(e) => handleChange('informacion_adicional', e.target.value)}
-                    className="form-input h-24 resize-none"
-                  />
-                </div>
-              )}
               { editData.fuente === sources[2] ? (
                 <>
                   <div className="space-y-2 md:col-span-2">
@@ -765,25 +755,18 @@ const DocumentManagement: React.FC = () => {
                 </>
               ) : editData.fuente !== sources[3] && (
                 <>
-                  {editData.tipo !== docTypes[0] && (
-                    <div className="space-y-2">
-                      <label className="form-label">Transitorios</label>
-                      <textarea
-                        value={editData.transitorios}
-                        onChange={(e) => handleChange('transitorios', e.target.value)}
-                        className="form-input h-24 resize-none"
-                        placeholder="Links al perfil del proponente"
-                      />
-                    </div>                
-                  )}
                   <div className="space-y-2">
-                    <label className="form-label">Información Adicional</label>
-                    <textarea
-                      value={editData.analisis}
-                      onChange={(e) => handleChange('analisis', e.target.value)}
-                      className="form-input h-24 resize-none"
-                      placeholder="Links al perfil del proponente"
-                    />
+                    {editData.tipo !== docTypes[0] && (
+                      <>
+                        <label className="form-label">Transitorios</label>
+                        <textarea
+                          value={editData.transitorios}
+                          onChange={(e) => handleChange('transitorios', e.target.value)}
+                          className="form-input h-24 resize-none"
+                          placeholder="Transitorios de la iniciativa o propuesta"
+                        />
+                      </>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className="form-label">Estatus</label>
@@ -811,6 +794,16 @@ const DocumentManagement: React.FC = () => {
                     )}
                   </div>
                 </>
+              )}
+              {((editData.tipo === docTypes[0] || editData.tipo === docTypes[1]) && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
+                <div className="space-y-2">
+                  <label className="form-label">Información adicional</label>
+                  <textarea
+                    value={editData.informacion_adicional}
+                    onChange={(e) => handleChange('informacion_adicional', e.target.value)}
+                    className="form-input h-24 resize-none"
+                  />
+                </div>
               )}
               <div className="flex justify-end gap-2 mt-6 rounded-xl bg-white p-2">
                 <button

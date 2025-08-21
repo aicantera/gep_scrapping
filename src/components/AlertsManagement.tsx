@@ -83,7 +83,7 @@ const AlertsManagement: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
-
+  console.log('📝 Alertas cargadas:', alertas)
   // Estados de navegación
   const [activeTab, setActiveTab] = useState<'pendientes' | 'enviadas' | 'rechazadas'>('pendientes')
   
@@ -150,8 +150,10 @@ const AlertsManagement: React.FC = () => {
     dependencia: '',
     ultimo_doc_expediente: '',
     ver_expediente: '',
-    informacion_adicional: ''
+    informacion_adicional: '',
+    titulo: ''
   })
+  console.log('📝 Documento editable:', documentoEditable)
 
   // Estados para clientes (usados en validación) - ELIMINANDO VARIABLES NO USADAS
 
@@ -293,7 +295,8 @@ const AlertsManagement: React.FC = () => {
             analizado,
             ultimo_doc_expediente,
             ver_expediente,
-            informacion_adicional
+            informacion_adicional,
+            titulo
           )
         `)
         .order('created_at', { ascending: false })
@@ -425,7 +428,11 @@ const AlertsManagement: React.FC = () => {
             analizado: alerta.senado.analizado || false,
             transitorios: alerta.senado.transitorios || null,
             fuente: alerta.senado.fuente || null,
-            dependencia: alerta.senado.dependencia || null
+            dependencia: alerta.senado.dependencia || null,
+            ultimo_doc_expediente: alerta.senado.ultimo_doc_expediente || null,
+            titulo: alerta.senado.titulo || null,
+            ver_expediente: alerta.senado.ver_expediente || null,
+            informacion_adicional: alerta.senado.informacion_adicional || null
           } : null
         }
       })
@@ -555,7 +562,7 @@ const AlertsManagement: React.FC = () => {
   // Funciones simplificadas para trabajar con los campos reales
   const validarAlerta = (alerta: Alerta) => {
     setAlertaSeleccionada(alerta)
-    
+    console.log('📝 Validando alerta:', alerta)
     // Inicializar datos del documento del senado para edición
     if (alerta.documento_senado) {
       setDocumentoEditable({
@@ -581,7 +588,8 @@ const AlertsManagement: React.FC = () => {
         dependencia: alerta.documento_senado.dependencia || '',
         ultimo_doc_expediente: alerta.documento_senado.ultimo_doc_expediente || '',
         ver_expediente: alerta.documento_senado.ver_expediente || '',
-        informacion_adicional: alerta.documento_senado.informacion_adicional || ''
+        informacion_adicional: alerta.documento_senado.informacion_adicional || '',
+        titulo: alerta.documento_senado.titulo || '',
       })
     } else {
       // Inicializar con valores vacíos si no hay documento
@@ -608,7 +616,8 @@ const AlertsManagement: React.FC = () => {
         dependencia: '',
         ultimo_doc_expediente: '',
         ver_expediente: '',
-        informacion_adicional: ''
+        informacion_adicional: '',
+        titulo: ''
       })
     }
     
@@ -658,7 +667,8 @@ const AlertsManagement: React.FC = () => {
           dependencia: documentoEditable.dependencia || null,
           ultimo_doc_expediente: documentoEditable.ultimo_doc_expediente || null,
           ver_expediente: documentoEditable.ver_expediente || null,
-          informacion_adicional: documentoEditable.informacion_adicional || null
+          informacion_adicional: documentoEditable.informacion_adicional || null,
+          titulo: documentoEditable.titulo || null
         })
         .eq('id_senado_doc', alertaSeleccionada.id_doc_senado)
 
@@ -946,7 +956,7 @@ const AlertsManagement: React.FC = () => {
                 <option value="">Todas las fuentes</option>
                 <option value="Cámara de Diputados">Cámara de Diputados</option>
                 <option value="Cámara de Senadores">Cámara de Senadores</option>
-                <option value="DOF">DOF</option>
+                <option value="Diario Oficial de la Federación">DOF</option>
                 <option value="CONAMER">CONAMER</option>
               </select>
             </div>
@@ -1288,8 +1298,8 @@ const AlertsManagement: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        value={documentoEditable.iniciativa_texto}
-                        onChange={(e) => setDocumentoEditable({...documentoEditable, iniciativa_texto: e.target.value})}
+                        value={documentoEditable.titulo}
+                        onChange={(e) => setDocumentoEditable({...documentoEditable, titulo: e.target.value})}
                         className="form-input w-full"
                         placeholder="Título del documento"
                         required
@@ -1692,11 +1702,11 @@ const AlertsManagement: React.FC = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Título */}
-                    {alertaSeleccionada.documento_senado.iniciativa_texto && (
+                    {alertaSeleccionada.documento_senado.titulo && (
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Título</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.iniciativa_texto}
+                          {alertaSeleccionada.documento_senado.titulo}
                         </div>
                       </div>
                     )}

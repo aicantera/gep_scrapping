@@ -51,6 +51,7 @@ interface Document {
   ultimo_doc_expediente?: string // Nueva columna opcional
   transitorios?: string      // Nueva columna opcional
   informacion_adicional?: string // Nueva columna opcional
+  titulo?: string // Nueva columna opcional
 }
 
 interface Filters {
@@ -481,7 +482,8 @@ const DocumentManagement: React.FC = () => {
             ver_expediente: editedDocument.ver_expediente,
             ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
             transitorios: editedDocument.transitorios,
-            informacion_adicional: editedDocument.informacion_adicional
+            informacion_adicional: editedDocument.informacion_adicional,
+            titulo: editedDocument.titulo
           })
           .eq('id_senado_doc', editedDocument.id_senado_doc)
         
@@ -513,7 +515,8 @@ const DocumentManagement: React.FC = () => {
               ver_expediente: editedDocument.ver_expediente,
               ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
               transitorios: editedDocument.transitorios,
-              informacion_adicional: editedDocument.informacion_adicional
+              informacion_adicional: editedDocument.informacion_adicional,
+              titulo: editedDocument.titulo
             })
             .eq('id_senado_doc', editedDocument.id_senado_doc)
           
@@ -624,8 +627,8 @@ const DocumentManagement: React.FC = () => {
                   <label className="form-label">Título *</label>
                   <input
                     type="text"
-                    value={editData.iniciativa_texto}
-                    onChange={(e) => handleChange('iniciativa_texto', e.target.value)}
+                    value={editData.titulo}
+                    onChange={(e) => handleChange('titulo', e.target.value)}
                     className="form-input"
                     required
                   />

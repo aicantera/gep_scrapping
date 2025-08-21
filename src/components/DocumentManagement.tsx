@@ -577,7 +577,7 @@ const DocumentManagement: React.FC = () => {
       switch(editData.fuente){
         case sources[2]:
           if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
-            alert('Todos los campos obligatorios deben estar c1ompletos para guardar los cambios.')
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
             return
           }
           break
@@ -708,7 +708,7 @@ const DocumentManagement: React.FC = () => {
               <div className="space-y-2">
                 {editData.fuente === sources[3] ? (
                   <>
-                    <label className="form-label">Ánalisis</label>
+                    <label className="form-label">Análisis</label>
                     <textarea
                       value={editData.analisis}
                       onChange={(e) => handleChange('analisis', e.target.value)}

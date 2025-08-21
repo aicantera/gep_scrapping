@@ -46,6 +46,11 @@ interface Document {
   tipo: string
   analizado?: string        // Nueva columna opcional
   Proponente?: string       // Nueva columna opcional
+  dependencia?: string      // Nueva columna opcional
+  ver_expediente?: string   // Nueva columna opcional
+  ultimo_doc_expediente?: string // Nueva columna opcional
+  transitorios?: string      // Nueva columna opcional
+  informacion_adicional?: string // Nueva columna opcional
 }
 
 interface Filters {
@@ -83,6 +88,11 @@ const DocumentManagement: React.FC = () => {
     'CONAMER',
     'Diario Oficial de la Federación'
   ]
+  
+  const docTypes: string[] = [
+    'PUNTO DE ACUERDO',
+    'INICIATIVA',
+  ];
 
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
@@ -466,7 +476,12 @@ const DocumentManagement: React.FC = () => {
             link_iniciativa: editedDocument.link_iniciativa,
             sinopsis: editedDocument.sinopsis,
             resumen: editedDocument.resumen,
-            analisis: editedDocument.analisis
+            analisis: editedDocument.analisis,
+            dependencia: editedDocument.dependencia,
+            ver_expediente: editedDocument.ver_expediente,
+            ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
+            transitorios: editedDocument.transitorios,
+            informacion_adicional: editedDocument.informacion_adicional
           })
           .eq('id_senado_doc', editedDocument.id_senado_doc)
         
@@ -493,7 +508,12 @@ const DocumentManagement: React.FC = () => {
               link_iniciativa: editedDocument.link_iniciativa,
               sinopsis: editedDocument.sinopsis,
               resumen: editedDocument.resumen,
-              analisis: editedDocument.analisis
+              analisis: editedDocument.analisis,
+              dependencia: editedDocument.dependencia,
+              ver_expediente: editedDocument.ver_expediente,
+              ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
+              transitorios: editedDocument.transitorios,
+              informacion_adicional: editedDocument.informacion_adicional
             })
             .eq('id_senado_doc', editedDocument.id_senado_doc)
           
@@ -553,13 +573,13 @@ const DocumentManagement: React.FC = () => {
       e.preventDefault()
       switch(editData.fuente){
         case sources[2]:
-          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
+          if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
             alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
             return
           }
           break
         case sources[3]:
-          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
+          if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
             alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
             return
           }
@@ -572,11 +592,11 @@ const DocumentManagement: React.FC = () => {
           break
         }
 
-      if(editData.tipo === docTypes[0] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
+      if(editData.tipo === docTypes[0] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
         alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
         return;
       }
-      if(editData.tipo === docTypes[1] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis)) {
+      if(editData.tipo === docTypes[1] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis)) {
         alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
         return;
       }

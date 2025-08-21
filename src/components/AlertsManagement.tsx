@@ -34,6 +34,8 @@ interface Alerta {
   enviado_correo: boolean | null      // boolean nullable
   datetime_enviado_correo: string | null // timestamp nullable
   link_pdf_enviado?: string | null    // url del pdf enviado
+  asunto_email?: string | null        // asunto del correo
+  mensaje_email?: string | null       // mensaje del correo
   
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
@@ -76,7 +78,7 @@ const AlertsManagement: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('')
 
   // Estados de navegación
-  const [activeTab, setActiveTab] = useState<'pendientes' | 'enviadas' | 'rechazadas'>('pendientes')
+  const [activeTab, setActiveTab] = useState<'pendientes' | 'aprobadas' | 'enviadas' | 'rechazadas'>('pendientes')
   
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState('')
@@ -236,6 +238,8 @@ const AlertsManagement: React.FC = () => {
           enviado_correo,
           datetime_enviado_correo,
           link_pdf_enviado,
+          asunto_email,
+          mensaje_email,
           clientes (
             nombre_cliente,
             siglas,
@@ -270,6 +274,7 @@ const AlertsManagement: React.FC = () => {
       }
 
       console.log('🔍 Alertas encontradas:', alertasData?.length || 0)
+      console.log('🔍 Datos crudos de alertas:', alertasData)
       
       if (alertasData && alertasData.length > 0) {
         console.log('🔍 Ejemplo de alerta con estado:', {
@@ -282,6 +287,8 @@ const AlertsManagement: React.FC = () => {
         // Log de todos los estados únicos encontrados
         const estadosUnicos = [...new Set(alertasData.map(a => a.estado))]
         console.log('🔍 Estados únicos encontrados:', estadosUnicos)
+      } else {
+        console.log('⚠️ No se encontraron alertas en la base de datos')
       }
 
       // Procesar alertas con máxima tolerancia
@@ -328,26 +335,28 @@ const AlertsManagement: React.FC = () => {
           nombreCliente = alerta.clientes.siglas
         }
 
-        // Normalizar estado - CLAVE PARA EL PROBLEMA
-        let estadoNormalizado = 'pendientes'
-        if (alerta.estado) {
-          const estadoOriginal = String(alerta.estado).trim()
-          const estado = estadoOriginal.toLowerCase()
-          
-          // Log para debug
-          console.log('Estado recibido:', estadoOriginal)
-          
-          if (estado === 'pendiente' || estado === 'pendientes') {
-            estadoNormalizado = 'pendientes'
-          } else if (estado === 'enviada' || estado === 'enviadas' || estadoOriginal === 'Enviado al Correo') {
-            estadoNormalizado = 'enviadas'
-          } else if (estado === 'rechazada' || estado === 'rechazadas') {
-            estadoNormalizado = 'rechazadas'
-          } else {
-            console.log('Estado no reconocido, usando pendientes por defecto:', estadoOriginal)
-            estadoNormalizado = 'pendientes' // Valor por defecto
-          }
-        }
+                 // Normalizar estado - CLAVE PARA EL PROBLEMA
+         let estadoNormalizado = 'pendientes'
+         if (alerta.estado) {
+           const estadoOriginal = String(alerta.estado).trim()
+           const estado = estadoOriginal.toLowerCase()
+           
+           // Log para debug
+           console.log('Estado recibido:', estadoOriginal)
+           
+                       if (estado === 'pendiente' || estado === 'pendientes') {
+              estadoNormalizado = 'pendientes'
+            } else if (estado === 'aprobado pendiente de envio' || estado === 'aprobado pendiente de envío') {
+              estadoNormalizado = 'aprobadas' // Se muestra en la nueva pestaña de aprobadas
+            } else if (estado === 'enviada' || estado === 'enviadas' || estadoOriginal === 'Enviado al Correo') {
+              estadoNormalizado = 'enviadas'
+            } else if (estado === 'rechazada' || estado === 'rechazadas') {
+              estadoNormalizado = 'rechazadas'
+            } else {
+              console.log('Estado no reconocido, usando pendientes por defecto:', estadoOriginal)
+              estadoNormalizado = 'pendientes' // Valor por defecto
+            }
+         }
 
         return {
           id_alerta: alerta.id_alerta,
@@ -363,6 +372,8 @@ const AlertsManagement: React.FC = () => {
           enviado_correo: alerta.enviado_correo,
           datetime_enviado_correo: alerta.datetime_enviado_correo,
           link_pdf_enviado: alerta.link_pdf_enviado || null,
+          asunto_email: alerta.asunto_email || null,
+          mensaje_email: alerta.mensaje_email || null,
           
           // Campos derivados para UI (siempre arrays)
           nombre_cliente: nombreCliente,
@@ -395,6 +406,8 @@ const AlertsManagement: React.FC = () => {
 
       // Calcular listas de distribución para cada alerta
       const alertasConListasDistribucion = await calcularListasDistribucion(alertasProcesadas)
+      console.log('🔍 Alertas procesadas:', alertasProcesadas.length)
+      console.log('🔍 Alertas con listas de distribución:', alertasConListasDistribucion.length)
       setAlertas(alertasConListasDistribucion)
       
       // Log por estado DESPUÉS de normalización
@@ -440,6 +453,12 @@ const AlertsManagement: React.FC = () => {
 
   // Función para filtrar alertas
   const alertasFiltradas = useMemo(() => {
+    console.log('🔍 Iniciando filtrado de alertas:', {
+      alertasLength: alertas?.length || 0,
+      activeTab,
+      alertas: alertas
+    })
+    
     if (!alertas || alertas.length === 0) {
       console.log('🔍 No hay alertas para filtrar')
       return []
@@ -451,11 +470,12 @@ const AlertsManagement: React.FC = () => {
       estados: alertas.map(a => a.estado)
     })
 
-    const filtradas = alertas.filter(alerta => {
-      // Filtro por estado según la pestaña activa
-      if (activeTab === 'pendientes' && alerta.estado !== 'pendientes') return false
-      if (activeTab === 'enviadas' && alerta.estado !== 'enviadas') return false
-      if (activeTab === 'rechazadas' && alerta.estado !== 'rechazadas') return false
+         const filtradas = alertas.filter(alerta => {
+       // Filtro por estado según la pestaña activa
+       if (activeTab === 'pendientes' && alerta.estado !== 'pendientes') return false
+       if (activeTab === 'aprobadas' && alerta.estado !== 'aprobadas') return false
+       if (activeTab === 'enviadas' && alerta.estado !== 'enviadas') return false
+       if (activeTab === 'rechazadas' && alerta.estado !== 'rechazadas') return false
 
       // Filtro por fuente
       if (filterFuente && alerta.fuente !== filterFuente) return false
@@ -490,7 +510,17 @@ const AlertsManagement: React.FC = () => {
   const alertasPaginadas = useMemo(() => {
     const inicio = (currentPage - 1) * alertasPorPagina
     const fin = inicio + alertasPorPagina
-    return alertasFiltradas.slice(inicio, fin)
+    const paginadas = alertasFiltradas.slice(inicio, fin)
+    console.log('🔍 Alertas paginadas:', {
+      totalFiltradas: alertasFiltradas.length,
+      currentPage,
+      alertasPorPagina,
+      inicio,
+      fin,
+      paginadasLength: paginadas.length,
+      paginadas: paginadas
+    })
+    return paginadas
   }, [alertasFiltradas, currentPage, alertasPorPagina])
 
   const totalPaginas = Math.ceil(alertasFiltradas.length / alertasPorPagina)
@@ -501,23 +531,28 @@ const AlertsManagement: React.FC = () => {
     loadClientes()
   }, [])
 
-  // Debug para ver el estado de las alertas
-  useEffect(() => {
-    console.log('📊 Estado actual de alertas:', {
-      total: alertas.length,
-      filtradas: alertasFiltradas.length,
-      activeTab,
-      porEstado: {
-        pendientes: alertas.filter(a => a.estado === 'pendientes').length,
-        enviadas: alertas.filter(a => a.estado === 'enviadas').length,
-        rechazadas: alertas.filter(a => a.estado === 'rechazadas').length
-      }
-    })
-  }, [alertas, alertasFiltradas, activeTab])
+     // Debug para ver el estado de las alertas
+   useEffect(() => {
+     console.log('📊 Estado actual de alertas:', {
+       total: alertas.length,
+       filtradas: alertasFiltradas.length,
+       activeTab,
+       porEstado: {
+         pendientes: alertas.filter(a => a.estado === 'pendientes').length,
+         aprobadas: alertas.filter(a => a.estado === 'aprobadas').length,
+         enviadas: alertas.filter(a => a.estado === 'enviadas').length,
+         rechazadas: alertas.filter(a => a.estado === 'rechazadas').length
+       }
+     })
+   }, [alertas, alertasFiltradas, activeTab])
 
   // Funciones simplificadas para trabajar con los campos reales
   const validarAlerta = (alerta: Alerta) => {
     setAlertaSeleccionada(alerta)
+    
+    // Cargar valores de asunto y mensaje del correo desde la alerta
+    setAsuntoCorreo(alerta.asunto_email || '')
+    setMensajeAdjunto(alerta.mensaje_email || '')
     
     // Inicializar datos del documento del senado para edición
     if (alerta.documento_senado) {
@@ -638,16 +673,22 @@ const AlertsManagement: React.FC = () => {
       const { error } = await supabase
         .from('alertas_directorio')
         .update({
-          estado: 'Enviado al Correo',
-          enviado_correo: true,
-          datetime_enviado_correo: new Date().toISOString()
+          estado: 'aprobado pendiente de envio',
+          status_alerta: true,
+          enviado_correo: false,
+          datetime_enviado_correo: null,
+          asunto_email: asuntoCorreo,
+          mensaje_email: mensajeAdjunto
         })
         .eq('id_alerta', alertaSeleccionada.id_alerta)
       
       if (error) throw error
       
-      setSuccessMessage('Alerta enviada correctamente al cliente.')
+      setSuccessMessage('Alerta aprobada correctamente. Pendiente de envío al cliente.')
       setShowValidarModal(false)
+      // Limpiar campos después de enviar
+      setAsuntoCorreo('')
+      setMensajeAdjunto('')
       await loadAlertas()
       
       setTimeout(() => setSuccessMessage(''), 5000)
@@ -675,6 +716,9 @@ const AlertsManagement: React.FC = () => {
       
       setSuccessMessage('Alerta rechazada. No será enviada al cliente.')
       setShowValidarModal(false)
+      // Limpiar campos después de rechazar
+      setAsuntoCorreo('')
+      setMensajeAdjunto('')
       await loadAlertas()
       
       setTimeout(() => setSuccessMessage(''), 5000)
@@ -739,11 +783,11 @@ const AlertsManagement: React.FC = () => {
     setCurrentPage(nuevaPagina)
   }
 
-  // Cambiar de bandeja
-  const cambiarBandeja = (nuevaBandeja: 'pendientes' | 'enviadas' | 'rechazadas') => {
-    setActiveTab(nuevaBandeja)
-    setCurrentPage(1)
-  }
+     // Cambiar de bandeja
+   const cambiarBandeja = (nuevaBandeja: 'pendientes' | 'aprobadas' | 'enviadas' | 'rechazadas') => {
+     setActiveTab(nuevaBandeja)
+     setCurrentPage(1)
+   }
 
   // Limpiar filtros
   const limpiarFiltros = () => {
@@ -752,6 +796,8 @@ const AlertsManagement: React.FC = () => {
     setFilterFecha({ desde: '', hasta: '' })
     setCurrentPage(1)
   }
+
+
 
   return (
     <div className="p-6">
@@ -794,38 +840,48 @@ const AlertsManagement: React.FC = () => {
 
       {/* Bandejas (Tabs) */}
       <div className="mb-6">
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <button
-            onClick={() => cambiarBandeja('pendientes')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'pendientes'
-                ? 'bg-orange-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Pendientes ({alertas.filter(a => a.estado === 'pendientes').length})
-          </button>
-          <button
-            onClick={() => cambiarBandeja('enviadas')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'enviadas'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Enviadas ({alertas.filter(a => a.estado === 'enviadas').length})
-          </button>
-          <button
-            onClick={() => cambiarBandeja('rechazadas')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'rechazadas'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Rechazadas ({alertas.filter(a => a.estado === 'rechazadas').length})
-          </button>
-        </div>
+                 <div className="flex flex-wrap items-center gap-2 mb-4">
+           <button
+             onClick={() => cambiarBandeja('pendientes')}
+             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+               activeTab === 'pendientes'
+                 ? 'bg-orange-600 text-white'
+                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+             }`}
+           >
+             Pendientes ({alertas.filter(a => a.estado === 'pendientes').length})
+           </button>
+           <button
+             onClick={() => cambiarBandeja('aprobadas')}
+             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+               activeTab === 'aprobadas'
+                 ? 'bg-purple-600 text-white'
+                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+             }`}
+           >
+             Aprobadas ({alertas.filter(a => a.estado === 'aprobadas').length})
+           </button>
+           <button
+             onClick={() => cambiarBandeja('enviadas')}
+             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+               activeTab === 'enviadas'
+                 ? 'bg-green-600 text-white'
+                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+             }`}
+           >
+             Enviadas ({alertas.filter(a => a.estado === 'enviadas').length})
+           </button>
+           <button
+             onClick={() => cambiarBandeja('rechazadas')}
+             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+               activeTab === 'rechazadas'
+                 ? 'bg-blue-600 text-white'
+                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+             }`}
+           >
+             Rechazadas ({alertas.filter(a => a.estado === 'rechazadas').length})
+           </button>
+         </div>
 
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow-sm border p-4">
@@ -912,12 +968,12 @@ const AlertsManagement: React.FC = () => {
           </div>
         ) : alertasPaginadas.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-gray-600">
-              {searchTerm || filterFuente || filterFecha.desde || filterFecha.hasta
-                ? 'No se encontraron alertas que coincidan con tu búsqueda.'
-                : `No hay alertas ${activeTab === 'pendientes' ? 'pendientes' : activeTab === 'enviadas' ? 'enviadas' : 'rechazadas'}.`
-              }
-            </p>
+                         <p className="text-gray-600">
+               {searchTerm || filterFuente || filterFecha.desde || filterFecha.hasta
+                 ? 'No se encontraron alertas que coincidan con tu búsqueda.'
+                 : `No hay alertas ${activeTab === 'pendientes' ? 'pendientes' : activeTab === 'aprobadas' ? 'aprobadas' : activeTab === 'enviadas' ? 'enviadas' : 'rechazadas'}.`
+               }
+             </p>
           </div>
         ) : (
           <div>
@@ -1029,15 +1085,16 @@ const AlertsManagement: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col space-y-1">
-                          <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                            alerta.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
-                            alerta.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
-                            alerta.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {alerta.estado || 'Sin estado'}
-                          </span>
+                                                 <div className="flex flex-col space-y-1">
+                           <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                             alerta.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
+                             alerta.estado === 'aprobadas' ? 'bg-purple-100 text-purple-800' :
+                             alerta.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
+                             alerta.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
+                             'bg-gray-100 text-gray-800'
+                           }`}>
+                             {alerta.estado || 'Sin estado'}
+                           </span>
                           {alerta.enviado_correo && (
                             <span className="text-xs text-green-600">
                               ✓ Correo enviado
@@ -1045,46 +1102,64 @@ const AlertsManagement: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          {activeTab === 'pendientes' && (
-                            <button
-                              onClick={() => validarAlerta(alerta)}
-                              className="p-2 text-orange-600 hover:bg-orange-100 rounded-lg transition-colors"
-                              title="Validar alerta"
-                            >
-                              <CheckCircle size={16} />
-                            </button>
-                          )}
-                          {alerta.estado === 'enviadas' && (
-                            <>
-                              <button
-                                onClick={() => verAlerta(alerta)}
-                                className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                                title="Ver detalles"
-                              >
-                                <Eye size={16} />
-                              </button>
-                              <button
-                                onClick={() => eliminarAlerta(alerta)}
-                                className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                title="Eliminar alerta"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </>
-                          )}
-                          {activeTab === 'rechazadas' && (
-                            <button
-                              onClick={() => eliminarAlerta(alerta)}
-                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                              title="Eliminar alerta"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                                             <td className="px-6 py-4">
+                         <div className="flex items-center space-x-2">
+                           {activeTab === 'pendientes' && (
+                             <button
+                               onClick={() => validarAlerta(alerta)}
+                               className="p-2 text-orange-600 hover:bg-orange-100 rounded-lg transition-colors"
+                               title="Validar alerta"
+                             >
+                               <CheckCircle size={16} />
+                             </button>
+                           )}
+                           {activeTab === 'aprobadas' && (
+                             <>
+                               <button
+                                 onClick={() => verAlerta(alerta)}
+                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                 title="Ver detalles"
+                               >
+                                 <Eye size={16} />
+                               </button>
+                               <button
+                                 onClick={() => eliminarAlerta(alerta)}
+                                 className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                 title="Eliminar alerta"
+                               >
+                                 <Trash2 size={16} />
+                               </button>
+                             </>
+                           )}
+                           {alerta.estado === 'enviadas' && (
+                             <>
+                               <button
+                                 onClick={() => verAlerta(alerta)}
+                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                 title="Ver detalles"
+                               >
+                                 <Eye size={16} />
+                               </button>
+                               <button
+                                 onClick={() => eliminarAlerta(alerta)}
+                                 className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                 title="Eliminar alerta"
+                               >
+                                 <Trash2 size={16} />
+                               </button>
+                             </>
+                           )}
+                           {activeTab === 'rechazadas' && (
+                             <button
+                               onClick={() => eliminarAlerta(alerta)}
+                               className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                               title="Eliminar alerta"
+                             >
+                               <Trash2 size={16} />
+                             </button>
+                           )}
+                         </div>
+                       </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1414,7 +1489,12 @@ const AlertsManagement: React.FC = () => {
 
               <div className="flex justify-end space-x-3 pt-6 border-t">
                 <button
-                  onClick={() => setShowValidarModal(false)}
+                  onClick={() => {
+                    setShowValidarModal(false)
+                    // Limpiar campos cuando se cierra el modal
+                    setAsuntoCorreo('')
+                    setMensajeAdjunto('')
+                  }}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancelar
@@ -1433,7 +1513,7 @@ const AlertsManagement: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Send size={16} />
-                  {loading ? 'Enviando...' : 'Aprobar y Enviar'}
+                  {loading ? 'Aprobando...' : 'Aprobar'}
                 </button>
               </div>
             </div>
@@ -1476,16 +1556,17 @@ const AlertsManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Estado</label>
-                  <div className="text-gray-900">
-                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                      alertaSeleccionada.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
-                      alertaSeleccionada.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
-                      alertaSeleccionada.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {alertaSeleccionada.estado}
-                    </span>
-                  </div>
+                                     <div className="text-gray-900">
+                     <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                       alertaSeleccionada.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
+                       alertaSeleccionada.estado === 'aprobadas' ? 'bg-purple-100 text-purple-800' :
+                       alertaSeleccionada.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
+                       alertaSeleccionada.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
+                       'bg-gray-100 text-gray-800'
+                     }`}>
+                       {alertaSeleccionada.estado}
+                     </span>
+                   </div>
                 </div>
                 {alertaSeleccionada.datetime_enviado_correo && (
                   <div>

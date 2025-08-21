@@ -1,9 +1,9 @@
-# 🚀 GEP AI - Sistema de Gestión Empresarial aja23cc
+# 🚀 GEP AI - Sistema de Gestión Empresarial
 
-**Versión 1.3.9** | Un CRM completo y moderno desarrollado con tecnologías de vanguardia
+**Versión 1.4.0** | Un CRM completo y moderno desarrollado con tecnologías de vanguardia
 
 ![Estado del Proyecto](https://img.shields.io/badge/Estado-Producción-brightgreen)
-![Versión](https://img.shields.io/badge/Versión-1.3.9-blue)
+![Versión](https://img.shields.io/badge/Versión-1.4.0-blue)
 ![Usuarios Activos](https://img.shields.io/badge/Usuarios%20Activos-80-orange)
 ![Tecnología](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ![Tecnología](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript)
@@ -70,6 +70,7 @@ El sistema utiliza las siguientes tablas principales:
 - `empresas` - Registro de empresas
 - `senado` - Documentos y contenido
 - `temas` - Categorización temática
+- `alertas_directorio` - Sistema de alertas y notificaciones (NUEVO)
 
 ### 5. Iniciar el Proyecto
 ```bash
@@ -99,6 +100,14 @@ npm run dev
 - Sistema de alertas y análisis de contenido
 - Control de versiones
 
+### Gestión de Alertas (NUEVO)
+- Sistema completo de gestión de alertas con bandejas de trabajo
+- Estados: Pendientes, Aprobadas, Enviadas, Rechazadas
+- Validación y aprobación de alertas con campos editables
+- Configuración de asunto y mensaje de correo
+- Listas de distribución automáticas basadas en temas
+- Exportación a Excel de alertas enviadas
+
 ### Gestión de Usuarios
 - Administración de roles y perfiles
 - Auditoría de actividad y configuración de acceso
@@ -114,6 +123,7 @@ src/
 ├── components/                 # Componentes React
 │   ├── ui/                    # Componentes base de UI
 │   ├── AdminPanel.tsx         # Panel de administración
+│   ├── AlertsManagement.tsx   # Gestión de alertas (NUEVO)
 │   ├── ChartsSection.tsx      # Sección de gráficos
 │   ├── ClientsManagement.tsx  # Gestión de clientes
 │   ├── CompaniesManagement.tsx # Gestión de empresas
@@ -147,6 +157,35 @@ Para soporte técnico o consultas:
 - Documentación: [Enlace a documentación]
 - Issues: [GitHub Issues]
 
+## 🔄 Historial de Cambios
+
+### v1.4.0 (2024-12-19)
+#### ✨ Nuevas Funcionalidades
+- **Sistema de Gestión de Alertas**: Implementación completa del módulo de alertas
+- **Bandejas de Trabajo**: Sistema de 4 bandejas (Pendientes, Aprobadas, Enviadas, Rechazadas)
+- **Validación de Alertas**: Proceso de aprobación con campos editables
+- **Configuración de Correos**: Campos para asunto y mensaje de correo
+- **Listas de Distribución**: Cálculo automático basado en temas de clientes
+- **Exportación a Excel**: Funcionalidad para exportar alertas enviadas
+
+#### 🔧 Mejoras Técnicas
+- **Normalización de Estados**: Sistema robusto de normalización de estados de alertas
+- **Interfaz Responsive**: Diseño adaptativo para todas las pantallas
+- **Filtros Avanzados**: Búsqueda por texto, fuente, fechas y estados
+- **Paginación**: Sistema de paginación para grandes volúmenes de datos
+- **Logs de Debug**: Sistema completo de logging para diagnóstico
+
+#### 🐛 Correcciones
+- **Corrección de Campos**: Ajuste de nombres de columnas en base de datos (`mensaje_email`)
+- **Carga de Datos**: Solución a problemas de carga de alertas
+- **Estados de Alerta**: Corrección en la gestión de estados "aprobado pendiente de envio"
+- **Interfaz de Usuario**: Mejoras en la experiencia de usuario
+
+#### 📊 Base de Datos
+- **Nuevas Columnas**: `asunto_email`, `mensaje_email` en tabla `alertas_directorio`
+- **Relaciones FK**: Mejoras en las relaciones entre tablas
+- **Consultas Optimizadas**: Mejora en el rendimiento de consultas
+
 ---
 
-**GEP AI v1.3.9** - Transformando la gestión empresarial con tecnología de vanguardia.
+**GEP AI v1.4.0** - Transformando la gestión empresarial con tecnología de vanguardia.

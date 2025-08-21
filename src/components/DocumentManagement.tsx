@@ -633,27 +633,33 @@ const DocumentManagement: React.FC = () => {
                     required
                   />
                 </div>
+                { editData.fuente !== sources[3] && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="form-label">Tipo de Proyecto *</label>
+                      <input
+                        type="text"
+                        value={editData.tipo}
+                        onChange={(e) => handleChange('tipo', e.target.value)}
+                        className="form-input"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="form-label">Proponente</label>
+                      <input
+                        type="text"
+                        value={editData.personas}
+                        onChange={(e) => handleChange('personas', e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
-                  <label className="form-label">Tipo de Proyecto *</label>
-                  <input
-                    type="text"
-                    value={editData.tipo}
-                    onChange={(e) => handleChange('tipo', e.target.value)}
-                    className="form-input"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="form-label">Proponente</label>
-                  <input
-                    type="text"
-                    value={editData.personas}
-                    onChange={(e) => handleChange('personas', e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="form-label">Cámara de origen</label>
+                  <label className="form-label">
+                    {editData.fuente === sources[3] ? "órgano de difusión" : "Cámara de origen"}
+                  </label>
                   <input
                     type="text"
                     value={editData.fuente}
@@ -661,6 +667,17 @@ const DocumentManagement: React.FC = () => {
                     className="form-input"
                   />
                 </div>
+                {editData.fuente !== sources[3] && (
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Dependencia</label>
+                    <input
+                      type="text"
+                      value={editData.dependencia}
+                      onChange={(e) => handleChange('dependencia', e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2 md:col-span-2">
                   <label className="form-label">Temas/Subtemas</label>
                   <input
@@ -673,30 +690,48 @@ const DocumentManagement: React.FC = () => {
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
               </div>
               <div className="space-y-2">
-                <label className="form-label">Objeto *</label>
-                <textarea
-                  value={editData.objeto}
-                  onChange={(e) => handleChange('objeto', e.target.value)}
-                  className="form-input h-24 resize-none"
-                  required
-                />
+                {editData.fuente === sources[3] ? (
+                  <>
+                    <label className="form-label">Resumen *</label>
+                    <textarea
+                      value={editData.resumen}
+                      onChange={(e) => handleChange('resumen', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      required
+                    />
+                  </>
+                ) : (
+                  <>
+                    <label className="form-label">Objeto *</label>
+                    <textarea
+                      value={editData.objeto}
+                      onChange={(e) => handleChange('objeto', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      required
+                    />
+                  </>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="form-label">Correspondiente</label>
-                <textarea
-                  value={editData.sinopsis}
-                  onChange={(e) => handleChange('sinopsis', e.target.value)}
-                  className="form-input h-24 resize-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="form-label">Información Adicional</label>
-                <textarea
-                  value={editData.analisis}
-                  onChange={(e) => handleChange('analisis', e.target.value)}
-                  className="form-input h-24 resize-none"
-                  placeholder="Links al perfil del proponente"
-                />
+                {editData.fuente === sources[3] ? (
+                  <>
+                    <label className="form-label">Ánalisis</label>
+                    <textarea
+                      value={editData.analisis}
+                      onChange={(e) => handleChange('analisis', e.target.value)}
+                      className="form-input h-24 resize-none"
+                    />
+                  </>
+                ) : ( 
+                  <>
+                    <label className="form-label">Correspondiente</label>
+                    <textarea
+                      value={editData.sinopsis}
+                      onChange={(e) => handleChange('sinopsis', e.target.value)}
+                      className="form-input h-24 resize-none"
+                    />
+                  </>
+                )}
               </div>
               {((editData.tipo === docTypes[0] || editData.tipo === docTypes[1]) && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
                 <div className="space-y-2">
@@ -730,17 +765,26 @@ const DocumentManagement: React.FC = () => {
                 </>
               ) : editData.fuente !== sources[3] && (
                 <>
-                {editData.tipo !== docTypes[0] && (
+                  {editData.tipo !== docTypes[0] && (
+                    <div className="space-y-2">
+                      <label className="form-label">Transitorios</label>
+                      <textarea
+                        value={editData.transitorios}
+                        onChange={(e) => handleChange('transitorios', e.target.value)}
+                        className="form-input h-24 resize-none"
+                        placeholder="Links al perfil del proponente"
+                      />
+                    </div>                
+                  )}
                   <div className="space-y-2">
-                    <label className="form-label">Transitorios</label>
+                    <label className="form-label">Información Adicional</label>
                     <textarea
-                      value={editData.transitorios}
-                      onChange={(e) => handleChange('transitorios', e.target.value)}
+                      value={editData.analisis}
+                      onChange={(e) => handleChange('analisis', e.target.value)}
                       className="form-input h-24 resize-none"
                       placeholder="Links al perfil del proponente"
                     />
-                  </div>                
-                )}
+                  </div>
                   <div className="space-y-2">
                     <label className="form-label">Estatus</label>
                     {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
@@ -749,7 +793,7 @@ const DocumentManagement: React.FC = () => {
                         onChange={(e) => handleChange('resumen', e.target.value)}
                         className="form-input"
                       >
-                        <option value=""></option>
+                        <option value="">Sin estatus</option>
                         {ESTATUS_DOC_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}

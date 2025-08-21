@@ -851,7 +851,8 @@ const AlertsManagement: React.FC = () => {
                 className="form-input pl-10 w-full"
               >
                 <option value="">Todas las fuentes</option>
-                <option value="Cámaras">Cámaras</option>
+                <option value="Cámara de Diputados">Cámara de Diputados</option>
+                <option value="Cámara de Senadores">Cámara de Senadores</option>
                 <option value="DOF">DOF</option>
                 <option value="CONAMER">CONAMER</option>
               </select>

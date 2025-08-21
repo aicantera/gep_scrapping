@@ -1639,7 +1639,7 @@ const Dashboard: React.FC = () => {
                 GEP AI
               </p>
               <p className="text-xs text-gray-400 font-mono">
-                v1.3.9
+                v1.4.0
               </p>
             </div>
           )}

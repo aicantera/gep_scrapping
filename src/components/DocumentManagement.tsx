@@ -42,16 +42,10 @@ interface Document {
   resumen: string
   analisis: string
   objeto: string
-  correspondiente: string
+  correspondier: string
   tipo: string
   analizado?: string        // Nueva columna opcional
   Proponente?: string       // Nueva columna opcional
-  transitorios?: string     // Nueva columna opcional
-  dependencia?: string      // Nueva columna opcional
-  titulo?: string           // Nueva columna opcional
-  ultimo_doc_expediente?: string // Nueva columna opcional
-  ver_expediente?: string  // Nueva columna opcional
-  informacion_adicional?: string // Nueva columna opcional
 }
 
 interface Filters {
@@ -88,12 +82,7 @@ const DocumentManagement: React.FC = () => {
     'Cámara de Senadores',
     'CONAMER',
     'Diario Oficial de la Federación'
-  ];
-
-  const docTypes: string[] = [
-    'PUNTO DE ACUERDO',
-    'INICIATIVA',
-  ];
+  ]
 
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
@@ -471,19 +460,13 @@ const DocumentManagement: React.FC = () => {
             tipo: editedDocument.tipo,
             personas: editedDocument.personas,
             objeto: editedDocument.objeto,
-            correspondiente: editedDocument.correspondiente,
+            correspondier: editedDocument.correspondier,
             temas: editedDocument.temas,
             gaceta: editedDocument.gaceta,
             link_iniciativa: editedDocument.link_iniciativa,
             sinopsis: editedDocument.sinopsis,
             resumen: editedDocument.resumen,
-            analisis: editedDocument.analisis,
-            transitorios: editedDocument.transitorios,
-            dependencia: editedDocument.dependencia,
-            titulo: editedDocument.titulo,
-            ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
-            ver_expediente: editedDocument.ver_expediente,
-            informacion_adicional: editedDocument.informacion_adicional
+            analisis: editedDocument.analisis
           })
           .eq('id_senado_doc', editedDocument.id_senado_doc)
         
@@ -504,19 +487,13 @@ const DocumentManagement: React.FC = () => {
               tipo: editedDocument.tipo,
               personas: editedDocument.personas,
               objeto: editedDocument.objeto,
-              correspondiente: editedDocument.correspondiente,
+              correspondier: editedDocument.correspondier,
               temas: editedDocument.temas,
               gaceta: editedDocument.gaceta,
               link_iniciativa: editedDocument.link_iniciativa,
               sinopsis: editedDocument.sinopsis,
               resumen: editedDocument.resumen,
-              analisis: editedDocument.analisis,
-              transitorios: editedDocument.transitorios,
-              dependencia: editedDocument.dependencia,
-              titulo: editedDocument.titulo,
-              ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
-              ver_expediente: editedDocument.ver_expediente,
-              informacion_adicional: editedDocument.informacion_adicional
+              analisis: editedDocument.analisis
             })
             .eq('id_senado_doc', editedDocument.id_senado_doc)
           
@@ -683,7 +660,7 @@ const DocumentManagement: React.FC = () => {
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
               </div>
               <div className="space-y-2">
-                {editData.fuente === sources[3] ? (
+              {editData.fuente === sources[3] ? (
                   <>
                     <label className="form-label">Resumen *</label>
                     <textarea
@@ -1012,7 +989,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.correspondiente || 'Sin proponente', 40)}
+                            {truncateText(document.correspondier || 'Sin proponente', 40)}
                           </div>
                         </td>
                         <td className="px-6 py-4">

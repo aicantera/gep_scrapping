@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase, supabaseAdmin } from '../lib/supabase'
 
+
 // Importar configuración de Supabase
 const supabaseUrl = 'https://masterd.gepdigital.ai'
 const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q'
@@ -22,7 +23,7 @@ import {
   X,
   Save
 } from 'lucide-react'
-import { ESTATUS_DOC_OPTIONS } from './SelectOptions'
+import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
 
 interface Document {
   id_senado_doc: number
@@ -32,7 +33,6 @@ interface Document {
   iniciativa_id: string
   gaceta: string
   link_iniciativa: string
-  link_documento?: string   // Campo para el enlace al documento PDF
   fuente: string
   imagen_link: string
   temas: string
@@ -42,10 +42,16 @@ interface Document {
   resumen: string
   analisis: string
   objeto: string
-  correspondier: string
+  correspondiente: string
   tipo: string
   analizado?: string        // Nueva columna opcional
   Proponente?: string       // Nueva columna opcional
+  transitorios?: string     // Nueva columna opcional
+  dependencia?: string      // Nueva columna opcional
+  titulo?: string           // Nueva columna opcional
+  ultimo_doc_expediente?: string // Nueva columna opcional
+  ver_expediente?: string  // Nueva columna opcional
+  informacion_adicional?: string // Nueva columna opcional
 }
 
 interface Filters {
@@ -82,7 +88,12 @@ const DocumentManagement: React.FC = () => {
     'Cámara de Senadores',
     'CONAMER',
     'Diario Oficial de la Federación'
-  ]
+  ];
+
+  const docTypes: string[] = [
+    'PUNTO DE ACUERDO',
+    'INICIATIVA',
+  ];
 
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
@@ -231,33 +242,14 @@ const DocumentManagement: React.FC = () => {
     fetchDocuments()
   }, [])
 
-  // Efecto para cambios en filtros y paginación
+  // Efecto para cambios en filtros (excepto búsqueda)
   useEffect(() => {
-    console.log('🔄 Filtros o página cambiaron, recargando documentos...', { currentPage, filters })
-    // Ejecutar fetchDocuments siempre que cambien estos valores
-    fetchDocuments()
+    console.log('🔄 Filtros cambiaron, recargando documentos...', filters)
+    // Solo ejecutar fetchDocuments si no es un cambio de búsqueda (que se maneja con debounce)
+    if (!searchTimeout && !filters.busqueda) {
+      fetchDocuments()
+    }
   }, [currentPage, filters.fuente, filters.fechaDesde, filters.fechaHasta])
-  
-  // Efecto separado para la búsqueda con debounce
-  useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout)
-      setSearchTimeout(null)
-    }
-    
-    if (filters.busqueda !== undefined) {
-      console.log('🔍 Búsqueda cambió, aplicando debounce...', filters.busqueda)
-      setIsSearching(true)
-      
-      const newTimeout = setTimeout(() => {
-        console.log('🔍 Ejecutando búsqueda con debounce para:', filters.busqueda)
-        fetchDocuments()
-        setIsSearching(false)
-      }, 500)
-      
-      setSearchTimeout(newTimeout)
-    }
-  }, [filters.busqueda])
 
   // Cleanup del timeout cuando el componente se desmonte
   useEffect(() => {
@@ -271,7 +263,30 @@ const DocumentManagement: React.FC = () => {
   const handleFilterChange = (key: keyof Filters, value: string) => {
     console.log('🔄 Cambiando filtro:', key, '→', value)
     setFilters(prev => ({ ...prev, [key]: value }))
-    setCurrentPage(1) // Siempre resetear a página 1 cuando cambien los filtros
+    setCurrentPage(1)
+    
+    // Limpiar timeout anterior si existe
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+      setSearchTimeout(null)
+    }
+    
+    // Aplicar debounce solo para la búsqueda
+    if (key === 'busqueda') {
+      setIsSearching(true)
+      
+      const newTimeout = setTimeout(() => {
+        console.log('🔍 Ejecutando búsqueda con debounce para:', value)
+        fetchDocuments()
+        setIsSearching(false)
+      }, 500) // 500ms de delay
+      
+      setSearchTimeout(newTimeout)
+    } else {
+      // Para otros filtros, ejecutar inmediatamente
+      console.log('⚡ Ejecutando fetchDocuments inmediatamente para filtro:', key)
+      fetchDocuments()
+    }
   }
 
   const clearFilters = () => {
@@ -296,19 +311,9 @@ const DocumentManagement: React.FC = () => {
     }, 100)
   }
 
-
-
-
-
-
-
-
-
-
-
   const handleDownload = (document: Document) => {
-    if (document.link_documento) {
-      window.open(document.link_documento, '_blank')
+    if (document.link_iniciativa) {
+      window.open(document.link_iniciativa, '_blank')
     } else {
       alert('No hay enlace de descarga disponible para este documento.')
     }
@@ -460,13 +465,19 @@ const DocumentManagement: React.FC = () => {
             tipo: editedDocument.tipo,
             personas: editedDocument.personas,
             objeto: editedDocument.objeto,
-            correspondier: editedDocument.correspondier,
+            correspondiente: editedDocument.correspondiente,
             temas: editedDocument.temas,
             gaceta: editedDocument.gaceta,
             link_iniciativa: editedDocument.link_iniciativa,
             sinopsis: editedDocument.sinopsis,
             resumen: editedDocument.resumen,
-            analisis: editedDocument.analisis
+            analisis: editedDocument.analisis,
+            transitorios: editedDocument.transitorios,
+            dependencia: editedDocument.dependencia,
+            titulo: editedDocument.titulo,
+            ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
+            ver_expediente: editedDocument.ver_expediente,
+            informacion_adicional: editedDocument.informacion_adicional
           })
           .eq('id_senado_doc', editedDocument.id_senado_doc)
         
@@ -487,13 +498,19 @@ const DocumentManagement: React.FC = () => {
               tipo: editedDocument.tipo,
               personas: editedDocument.personas,
               objeto: editedDocument.objeto,
-              correspondier: editedDocument.correspondier,
+              correspondiente: editedDocument.correspondiente,
               temas: editedDocument.temas,
               gaceta: editedDocument.gaceta,
               link_iniciativa: editedDocument.link_iniciativa,
               sinopsis: editedDocument.sinopsis,
               resumen: editedDocument.resumen,
-              analisis: editedDocument.analisis
+              analisis: editedDocument.analisis,
+              transitorios: editedDocument.transitorios,
+              dependencia: editedDocument.dependencia,
+              titulo: editedDocument.titulo,
+              ultimo_doc_expediente: editedDocument.ultimo_doc_expediente,
+              ver_expediente: editedDocument.ver_expediente,
+              informacion_adicional: editedDocument.informacion_adicional
             })
             .eq('id_senado_doc', editedDocument.id_senado_doc)
           
@@ -541,7 +558,7 @@ const DocumentManagement: React.FC = () => {
     if (!text) return 'Sin información'
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
   }
-
+//
   const EditModal: React.FC = () => {
     const [editData, setEditData] = useState<Document>(selectedDocument!)
 
@@ -551,11 +568,33 @@ const DocumentManagement: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
-      
-      // Validar campos obligatorios
-      if (!editData.iniciativa_texto || !editData.tipo || !editData.objeto) {
-        alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-        return
+      switch(editData.fuente){
+        case sources[2]:
+          if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return;
+          }
+          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
+            alert('Todos los campos obligatorios deben estar c1ompletos para guardar los cambios.')
+            return
+          }
+          break
+        case sources[3]:
+          if(editData.tipo === docTypes[0] && (!editData.titulo || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return;
+          }
+          if(!editData.titulo || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return
+          }
+          break
+        default:
+          if (!editData.iniciativa_texto || !editData.tipo || !editData.objeto) {
+            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
+            return
+          }
+          break
       }
 
       handleSaveEdit(editData)
@@ -579,93 +618,179 @@ const DocumentManagement: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="form-label">Título *</label>
-                  <input
-                    type="text"
-                    value={editData.iniciativa_texto}
-                    onChange={(e) => handleChange('iniciativa_texto', e.target.value)}
-                    className="form-input"
-                    required
-                  />
+                  {(editData.fuente === sources[3] || editData.fuente === sources[2] || editData.tipo === docTypes[0]) ? (
+                    <textarea
+                      value={editData.titulo}
+                      onChange={(e) => handleChange('titulo', e.target.value)}
+                      className="form-input resize-none uppercase h-[50px]"
+                      required
+                    />
+                  ) : (
+                    <textarea
+                      value={editData.iniciativa_texto}
+                      onChange={(e) => handleChange('iniciativa_texto', e.target.value)}
+                      className="form-input resize-none uppercase h-[50px]"
+                      required
+                    />
+                  )}
                 </div>
+                {(editData.fuente !== sources[3] && editData.fuente !== sources[2]) && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="form-label">Tipo de Proyecto *</label>
+                      <input
+                        type="text"
+                        value={editData.tipo}
+                        onChange={(e) => handleChange('tipo', e.target.value)}
+                        className="form-input"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="form-label">Proponente *</label>
+                      <textarea
+                        value={editData.personas}
+                        onChange={(e) => handleChange('personas', e.target.value)}
+                        className="form-input resize-none h-[50px]"
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
-                  <label className="form-label">Tipo de Proyecto *</label>
+                  <label className="form-label">
+                    {(editData.tipo === docTypes[0] && (editData.fuente === sources[0] || editData.fuente === sources[1])) ? "Fuente" :
+                    (editData.fuente === sources[3] || editData.fuente === sources[2]) ? 'Órgano de difusión' : 
+                    'Cámara de origen'
+                    } *
+                  </label>
                   <input
                     type="text"
-                    value={editData.tipo}
-                    onChange={(e) => handleChange('tipo', e.target.value)}
-                    className="form-input"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="form-label">Proponente</label>
-                  <input
-                    type="text"
-                    value={editData.personas}
-                    onChange={(e) => handleChange('personas', e.target.value)}
+                    value={editData.fuente}
+                    onChange={(e) => handleChange('fuente', e.target.value)}
                     className="form-input"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="form-label">Cámara de origen</label>
-                  <input
-                    type="text"
-                    value={editData.correspondier}
-                    onChange={(e) => handleChange('correspondier', e.target.value)}
-                    className="form-input"
-                  />
-                </div>
+                {(editData.fuente === sources[3] || editData.fuente === sources[2]) && (
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Dependencia *</label>
+                    <input
+                      type="text"
+                      value={editData.dependencia}
+                      onChange={(e) => handleChange('dependencia', e.target.value)}
+                      className="form-input resize-none"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2 md:col-span-2">
-                  <label className="form-label">Temas/Subtemas</label>
-                  <input
-                    type="text"
+                  <label className="form-label">Temas/Subtemas *</label>
+                  <textarea
                     value={editData.temas}
                     onChange={(e) => handleChange('temas', e.target.value)}
-                    className="form-input"
+                    className="form-input resize-none"
                   />
                 </div>
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
               </div>
               <div className="space-y-2">
-                <label className="form-label">Objeto *</label>
-                <textarea
-                  value={editData.objeto}
-                  onChange={(e) => handleChange('objeto', e.target.value)}
-                  className="form-input h-24 resize-none"
-                  required
-                />
+                {(editData.fuente === sources[3] || editData.fuente === sources[2]) ? (
+                  <>
+                    <label className="form-label">Resumen *</label>
+                    <textarea
+                      value={editData.resumen}
+                      onChange={(e) => handleChange('resumen', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      required
+                    />
+                  </>
+                ) : (
+                  <>
+                    <label className="form-label">Objeto *</label>
+                    <textarea
+                      value={editData.objeto}
+                      onChange={(e) => handleChange('objeto', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      required
+                    />
+                  </>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="form-label">Correspondiente</label>
-                <textarea
-                  value={editData.sinopsis}
-                  onChange={(e) => handleChange('sinopsis', e.target.value)}
-                  className="form-input h-24 resize-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="form-label">Información Adicional</label>
+                <label className="form-label">Análisis *</label>
                 <textarea
                   value={editData.analisis}
                   onChange={(e) => handleChange('analisis', e.target.value)}
                   className="form-input h-24 resize-none"
-                  placeholder="Links al perfil del proponente"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="form-label">Estatus</label>
-                <select
-                  value={editData.resumen}
-                  onChange={(e) => handleChange('resumen', e.target.value)}
-                  className="form-input"
-                >
-                  {ESTATUS_DOC_OPTIONS.map((option: { value: string; label: string }) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {((editData.tipo === docTypes[0] || editData.tipo === docTypes[1]) && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
+                <div className="space-y-2">
+                  <label className="form-label">Información adicional</label>
+                  <textarea
+                    value={editData.informacion_adicional}
+                    onChange={(e) => handleChange('informacion_adicional', e.target.value)}
+                    className="form-input h-24 resize-none"
+                  />
+                </div>
+              )}
+              { editData.fuente === sources[2] ? (
+                <>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Último Documento del Expediente</label>
+                    <textarea
+                      value={editData.ultimo_doc_expediente}
+                      onChange={(e) => handleChange('ultimo_doc_expediente', e.target.value)}
+                      className="form-input resize-none"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="form-label">Link al enlace del expediente</label>
+                    <input
+                      type="text"
+                      value={editData.ver_expediente}
+                      onChange={(e) => handleChange('ver_expediente', e.target.value)}
+                      className="form-input resize-none"
+                    />
+                  </div>
+                </>
+              ) : editData.fuente !== sources[3] && (
+                <>
+                {editData.tipo !== docTypes[0] && (
+                  <div className="space-y-2">
+                    <label className="form-label">Transitorios</label>
+                    <textarea
+                      value={editData.transitorios}
+                      onChange={(e) => handleChange('transitorios', e.target.value)}
+                      className="form-input h-24 resize-none"
+                      placeholder="Links al perfil del proponente"
+                    />
+                  </div>                
+                )}
+                  <div className="space-y-2">
+                    <label className="form-label">Estatus</label>
+                    {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
+                      <select
+                        value={editData.resumen}
+                        onChange={(e) => handleChange('resumen', e.target.value)}
+                        className="form-input"
+                      >
+                        {ESTATUS_DOC_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={editData.resumen}
+                        onChange={(e) => handleChange('resumen', e.target.value)}
+                        className="form-input"
+                        placeholder="Estatus de la iniciativa o propuesta"
+                      />
+                    )}
+                  </div>
+                </>
+              )}
               <div className="flex justify-end gap-2 mt-6 rounded-xl bg-white p-2">
                 <button
                   type="button"
@@ -880,7 +1005,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.correspondier || 'Sin proponente', 40)}
+                            {truncateText(document.correspondiente || 'Sin proponente', 40)}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -914,15 +1039,13 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
-                            {document.link_documento && (
-                              <button
-                                onClick={() => handleDownload(document)}
-                                className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                                title="Descargar PDF"
-                              >
-                                <Download className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleDownload(document)}
+                              className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                              title="Descargar PDF"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => handleEdit(document)}
                               className="p-2 text-gray-400 hover:text-green-600 transition-colors"
@@ -961,7 +1084,6 @@ const DocumentManagement: React.FC = () => {
                     Mostrando {((currentPage - 1) * documentsPerPage) + 1} a {Math.min(currentPage * documentsPerPage, totalDocuments)} de {totalDocuments} documentos
                   </div>
                   <div className="flex items-center space-x-2">
-                    {/* Botón Anterior */}
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
@@ -971,104 +1093,24 @@ const DocumentManagement: React.FC = () => {
                     </button>
                     
                     <div className="flex items-center space-x-1">
-                      {/* Lógica de paginación inteligente */}
-                      {(() => {
-                        const pages = []
-                        const maxVisiblePages = 7
-                        
-                        if (totalPages <= maxVisiblePages) {
-                          // Si hay pocas páginas, mostrar todas
-                          for (let i = 1; i <= totalPages; i++) {
-                            pages.push(
-                              <button
-                                key={i}
-                                onClick={() => setCurrentPage(i)}
-                                className={`px-3 py-1 text-sm rounded ${
-                                  currentPage === i
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                                }`}
-                              >
-                                {i}
-                              </button>
-                            )
-                          }
-                        } else {
-                          // Lógica para muchas páginas
-                          // Siempre mostrar página 1
-                          pages.push(
-                            <button
-                              key={1}
-                              onClick={() => setCurrentPage(1)}
-                              className={`px-3 py-1 text-sm rounded ${
-                                currentPage === 1
-                                  ? 'bg-blue-600 text-white'
-                                  : 'text-gray-700 hover:bg-gray-100'
-                              }`}
-                            >
-                              1
-                            </button>
-                          )
-                          
-                          // Puntos suspensivos si hay gap
-                          if (currentPage > 4) {
-                            pages.push(
-                              <span key="ellipsis1" className="px-2 text-gray-500">...</span>
-                            )
-                          }
-                          
-                          // Páginas alrededor de la actual
-                          const start = Math.max(2, currentPage - 1)
-                          const end = Math.min(totalPages - 1, currentPage + 1)
-                          
-                          for (let i = start; i <= end; i++) {
-                            if (i !== 1 && i !== totalPages) {
-                              pages.push(
-                                <button
-                                  key={i}
-                                  onClick={() => setCurrentPage(i)}
-                                  className={`px-3 py-1 text-sm rounded ${
-                                    currentPage === i
-                                      ? 'bg-blue-600 text-white'
-                                      : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
-                                >
-                                  {i}
-                                </button>
-                              )
-                            }
-                          }
-                          
-                          // Puntos suspensivos si hay gap
-                          if (currentPage < totalPages - 3) {
-                            pages.push(
-                              <span key="ellipsis2" className="px-2 text-gray-500">...</span>
-                            )
-                          }
-                          
-                          // Siempre mostrar última página
-                          if (totalPages > 1) {
-                            pages.push(
-                              <button
-                                key={totalPages}
-                                onClick={() => setCurrentPage(totalPages)}
-                                className={`px-3 py-1 text-sm rounded ${
-                                  currentPage === totalPages
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                                }`}
-                              >
-                                {totalPages}
-                              </button>
-                            )
-                          }
-                        }
-                        
-                        return pages
-                      })()}
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const page = i + 1
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-1 text-sm rounded ${
+                              currentPage === page
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      })}
                     </div>
 
-                    {/* Botón Siguiente */}
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}

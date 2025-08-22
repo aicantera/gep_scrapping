@@ -891,7 +891,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.correspondier || 'Sin proponente', 40)}
+                            {truncateText(document.correspondier || document.personas || 'Sin proponente', 40)}
                           </div>
                         </td>
                         <td className="px-6 py-4">

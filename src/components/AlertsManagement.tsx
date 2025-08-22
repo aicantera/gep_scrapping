@@ -1343,8 +1343,8 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Dependencia - Solo mostrar si no es fuente[3] */}
-                    {documentoEditable.fuente !== sources[3] && (
+                    {/* Dependencia - Solo mostrar si es fuente[3] (DOF) */}
+                    {documentoEditable.fuente === sources[3] && (
                       <div className='md:col-span-2'>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Dependencia
@@ -1406,7 +1406,7 @@ const AlertsManagement: React.FC = () => {
 
                     {/* Análisis o Correspondiente según fuente */}
                     <div className="md:col-span-2">
-                      {documentoEditable.fuente === sources[3] ? (
+                      {documentoEditable.fuente === sources[3] || ((documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1]) && (documentoEditable.tipo === docTypes[0] || documentoEditable.tipo === docTypes[1])) ? (
                         <>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Análisis
@@ -1481,33 +1481,35 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Estatus */}
-                    <div className="md:col-span-2">
-                      <label className="form-label">Estatus</label>
-                      {(documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1] || documentoEditable.tipo === docTypes[0]) ? (
-                        <select
-                          value={documentoEditable.resumen}
-                          onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
-                          className="form-input"
-                          title="Seleccionar estatus del documento"
-                        >
-                          <option value="">Sin estatus</option>
-                          {ESTATUS_DOC_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={documentoEditable.resumen}
-                          onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
-                          className="form-input"
-                          placeholder="Estatus de la iniciativa o propuesta"
-                        />
-                      )}
-                    </div>
+                    {/* Estatus - Solo mostrar si no es fuente[3] (DOF) */}
+                    {documentoEditable.fuente !== sources[3] && (
+                      <div className="md:col-span-2">
+                        <label className="form-label">Estatus</label>
+                        {(documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1] || documentoEditable.tipo === docTypes[0]) ? (
+                          <select
+                            value={documentoEditable.resumen}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                            className="form-input"
+                            title="Seleccionar estatus del documento"
+                          >
+                            <option value="">Sin estatus</option>
+                            {ESTATUS_DOC_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={documentoEditable.resumen}
+                            onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
+                            className="form-input"
+                            placeholder="Estatus de la iniciativa o propuesta"
+                          />
+                        )}
+                      </div>
+                    )}
 
                     {/* Información adicional - Solo para tipos específicos con fuentes de Cámaras */}
                     {((documentoEditable.tipo === docTypes[0] || documentoEditable.tipo === docTypes[1]) && (documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1])) && (
@@ -1741,8 +1743,8 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Dependencia - Solo mostrar si no es DOF */}
-                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.dependencia && (
+                    {/* Dependencia - Solo mostrar si es DOF */}
+                    {alertaSeleccionada.documento_senado.fuente === sources[3] && alertaSeleccionada.documento_senado.dependencia && (
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Dependencia</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
@@ -1783,7 +1785,7 @@ const AlertsManagement: React.FC = () => {
                     )}
 
                     {/* Análisis o Correspondiente según fuente */}
-                    {alertaSeleccionada.documento_senado.fuente === sources[3] ? (
+                    {alertaSeleccionada.documento_senado.fuente === sources[3] || ((alertaSeleccionada.documento_senado.fuente === sources[0] || alertaSeleccionada.documento_senado.fuente === sources[1]) && (alertaSeleccionada.documento_senado.tipo === docTypes[0] || alertaSeleccionada.documento_senado.tipo === docTypes[1])) ? (
                       alertaSeleccionada.documento_senado.analisis && (
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700">Análisis</label>
@@ -1842,7 +1844,7 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Estatus */}
+                    {/* Estatus - Solo mostrar si no es DOF */}
                     {(alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.resumen) && (
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Estatus</label>

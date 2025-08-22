@@ -539,11 +539,6 @@ const AlertsManagement: React.FC = () => {
 
   const totalPaginas = Math.ceil(alertasFiltradas.length / alertasPorPagina)
 
-  // Resetear página al cambiar filtros
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, filterFuente, filterFecha.desde, filterFecha.hasta])
-
   useEffect(() => {
     console.log('🚀 Iniciando carga de datos...')
     loadAlertas()

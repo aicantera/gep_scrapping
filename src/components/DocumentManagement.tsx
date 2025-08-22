@@ -24,6 +24,14 @@ import {
 } from 'lucide-react'
 import { ESTATUS_DOC_OPTIONS } from './SelectOptions'
 
+// Función para normalizar texto removiendo acentos
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
 interface Document {
   id_senado_doc: number
   created_at: string
@@ -174,11 +182,22 @@ const DocumentManagement: React.FC = () => {
       // Aplicar búsqueda de texto
       if (filters.busqueda && filters.busqueda.trim()) {
         const searchTerm = filters.busqueda.toLowerCase()
-        console.log('🔍 Aplicando búsqueda de texto:', searchTerm)
+        const normalizedTerm = normalizeText(filters.busqueda)
+        console.log('🔍 Aplicando búsqueda de texto:', searchTerm, 'normalizado:', normalizedTerm)
         
-        // Usar or() para buscar en múltiples campos
-        query = query.or(`iniciativa_texto.ilike.%${searchTerm}%,sinopsis.ilike.%${searchTerm}%,temas.ilike.%${searchTerm}%,personas.ilike.%${searchTerm}%,leyes.ilike.%${searchTerm}%`)
-        console.log('✅ Búsqueda de texto aplicada')
+        // Crear patrones de búsqueda tanto para el término original como normalizado
+        const searchPatterns = [searchTerm]
+        if (normalizedTerm !== searchTerm) {
+          searchPatterns.push(normalizedTerm)
+        }
+        
+        // Buscar en múltiples campos con ambos patrones
+        const searchQueries = searchPatterns.map(pattern => 
+          `iniciativa_texto.ilike.%${pattern}%,sinopsis.ilike.%${pattern}%,temas.ilike.%${pattern}%,personas.ilike.%${pattern}%,leyes.ilike.%${pattern}%`
+        ).join(',')
+        
+        query = query.or(searchQueries)
+        console.log('✅ Búsqueda de texto aplicada con normalización')
       }
 
       console.log('🔍 Query final construida, ejecutando...')

@@ -168,14 +168,6 @@ const BotsExecution: React.FC = () => {
 
   const bots: BotConfig[] = [
     {
-      id: 'conamer',
-      name: 'CONAMER',
-      description: 'Extracción de documentos de CONAMER',
-      webhookUrl: 'https://dbd.gepdigital.ai/webhook/conamer',
-      icon: <FileText className="w-6 h-6" />,
-      color: 'bg-[#999996] hover:bg-[#A1A3A5]'
-    },
-    {
       id: 'diputados',
       name: 'Cámara de Diputados',
       description: 'Extracción de documentos de Cámara de Diputados',

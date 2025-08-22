@@ -95,6 +95,14 @@ const DocumentManagement: React.FC = () => {
     'INICIATIVA',
   ];
 
+  // Función para normalizar texto removiendo acentos
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  }
+
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
     const sourceMap: { [key: string]: string } = {
@@ -180,11 +188,70 @@ const DocumentManagement: React.FC = () => {
       // Aplicar búsqueda de texto
       if (filters.busqueda && filters.busqueda.trim()) {
         const searchTerm = filters.busqueda.toLowerCase()
-        console.log('🔍 Aplicando búsqueda de texto:', searchTerm)
+        const normalizedSearchTerm = normalizeText(searchTerm)
+        console.log('🔍 Aplicando búsqueda de texto:', searchTerm, '→ normalizado:', normalizedSearchTerm)
         
-        // Usar or() para buscar en múltiples campos
-        query = query.or(`iniciativa_texto.ilike.%${searchTerm}%,sinopsis.ilike.%${searchTerm}%,temas.ilike.%${searchTerm}%,personas.ilike.%${searchTerm}%,leyes.ilike.%${searchTerm}%`)
-        console.log('✅ Búsqueda de texto aplicada')
+        // Crear múltiples patrones de búsqueda para manejar acentos
+        const searchPatterns = []
+        
+        // 1. Término original tal como lo escribió el usuario
+        searchPatterns.push(searchTerm)
+        
+        // 2. Término sin acentos (normalizado)
+        if (normalizedSearchTerm !== searchTerm) {
+          searchPatterns.push(normalizedSearchTerm)
+        }
+        
+        // 3. Crear variantes con acentos para cada vocal
+        const createAccentVariants = (text: string) => {
+          return text.replace(/[aeiou]/g, (match) => {
+            const accentMap: { [key: string]: string[] } = {
+              'a': ['a', 'á', 'à', 'ã', 'â', 'ä'],
+              'e': ['e', 'é', 'è', 'ê', 'ë'],
+              'i': ['i', 'í', 'ì', 'î', 'ï'],
+              'o': ['o', 'ó', 'ò', 'õ', 'ô', 'ö'],
+              'u': ['u', 'ú', 'ù', 'û', 'ü']
+            }
+            return `[${accentMap[match]?.join('') || match}]`
+          })
+        }
+        
+        const accentVariants = createAccentVariants(searchTerm)
+        if (accentVariants !== searchTerm) {
+          searchPatterns.push(accentVariants)
+        }
+        
+        // 4. También crear variantes con acentos para el término normalizado
+        const normalizedAccentVariants = createAccentVariants(normalizedSearchTerm)
+        if (normalizedAccentVariants !== normalizedSearchTerm && normalizedAccentVariants !== accentVariants) {
+          searchPatterns.push(normalizedAccentVariants)
+        }
+        
+        console.log('🔍 Patrones de búsqueda generados:', searchPatterns)
+        
+                 // Buscar en TODOS los campos de la tabla con todos los patrones
+         const searchFields = [
+           'iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 
+           'tipo', 'objeto', 'correspondier', 'resumen', 'analisis', 
+           'dependencia', 'ver_expediente', 'ultimo_doc_expediente', 
+           'transitorios', 'informacion_adicional', 'titulo', 'gaceta',
+           'iniciativa_id', 'partidos', 'fuente'
+         ]
+         
+         // Crear condiciones de búsqueda para cada campo con cada patrón
+         const searchConditions = []
+         for (const field of searchFields) {
+           for (const pattern of searchPatterns) {
+             searchConditions.push(`${field}.ilike.%${pattern}%`)
+           }
+         }
+        
+        // Usar or() con todas las condiciones
+        if (searchConditions.length > 0) {
+          query = query.or(searchConditions.join(','))
+        }
+        
+        console.log('✅ Búsqueda de texto aplicada con normalización de acentos')
       }
 
       console.log('🔍 Query final construida, ejecutando...')

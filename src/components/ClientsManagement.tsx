@@ -12,8 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
-  UserCheck,
-  UserX,
+  Power,
+  PowerOff,
   Download
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -990,7 +990,7 @@ const ClientsManagement: React.FC = () => {
                             }`}
                             title={client.estado === 'activo' ? 'Desactivar' : 'Activar'}
                           >
-                            {client.estado === 'activo' ? <UserX size={16} /> : <UserCheck size={16} />}
+                            {client.estado === 'activo' ? <PowerOff size={16} /> : <Power size={16} />}
                           </button>
                           <button
                             onClick={() => openModal('delete', client)}
@@ -1243,15 +1243,15 @@ const ClientsManagement: React.FC = () => {
                             <div className="text-sm text-blue-800">Listas de Distribución</div>
                           </div>
                           
-                          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                            <div className="text-2xl font-bold text-green-600">
+                          <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                            <div className="text-2xl font-bold text-orange-600">
                               {formData.listas_distribucion.reduce((acc, lista) => acc + lista.correos.length, 0)}
                             </div>
-                            <div className="text-sm text-green-800">Total de Correos</div>
+                            <div className="text-sm text-orange-800">Total de Correos</div>
                           </div>
                           
-                          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                            <div className="text-2xl font-bold text-purple-600">
+                          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                            <div className="text-2xl font-bold text-red-600">
                               {(() => {
                                 // Obtener todos los temas/subtemas únicos de las listas de distribución
                                 const todosLosTemas = formData.listas_distribucion.flatMap(lista => lista.temas_subtemas);
@@ -1259,7 +1259,7 @@ const ClientsManagement: React.FC = () => {
                                 return [...new Set(todosLosTemas)].length;
                               })()}
                             </div>
-                            <div className="text-sm text-purple-800">Temas y Subtemas</div>
+                            <div className="text-sm text-red-800">Temas y Subtemas</div>
                           </div>
                         </div>
                       </div>

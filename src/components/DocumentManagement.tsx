@@ -95,6 +95,14 @@ const DocumentManagement: React.FC = () => {
     'INICIATIVA',
   ];
 
+  // Función para normalizar texto removiendo acentos
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  }
+
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
     const sourceMap: { [key: string]: string } = {
@@ -182,9 +190,47 @@ const DocumentManagement: React.FC = () => {
         const searchTerm = filters.busqueda.toLowerCase()
         console.log('🔍 Aplicando búsqueda de texto:', searchTerm)
         
-        // Usar or() para buscar en múltiples campos
-        query = query.or(`iniciativa_texto.ilike.%${searchTerm}%,sinopsis.ilike.%${searchTerm}%,temas.ilike.%${searchTerm}%,personas.ilike.%${searchTerm}%,leyes.ilike.%${searchTerm}%`)
-        console.log('✅ Búsqueda de texto aplicada')
+        // Crear una consulta de búsqueda más robusta
+        // Buscar en múltiples campos usando una estrategia de consulta única
+        const searchQuery = supabase
+          .from('senado')
+          .select('*', { count: 'exact' })
+          .or(`iniciativa_texto.ilike.%${searchTerm}%,correspondier.ilike.%${searchTerm}%,temas.ilike.%${searchTerm}%,objeto.ilike.%${searchTerm}%,sinopsis.ilike.%${searchTerm}%`)
+          .order('created_at', { ascending: false })
+        
+        // Aplicar filtros adicionales si existen
+        if (filters.fechaDesde) {
+          searchQuery.gte('created_at', `${filters.fechaDesde}T00:00:00`)
+        }
+        if (filters.fechaHasta) {
+          searchQuery.lte('created_at', `${filters.fechaHasta}T23:59:59`)
+        }
+        if (filters.fuente) {
+          const normalizedSource = normalizeSource(filters.fuente)
+          const patterns = getFuentePatterns(normalizedSource)
+          if (patterns.length <= 1) {
+            searchQuery.ilike('fuente', `%${patterns[0]}%`)
+          }
+        }
+        
+        // Aplicar paginación
+        const from = (currentPage - 1) * documentsPerPage
+        const to = from + documentsPerPage - 1
+        
+        const { data, error: fetchError, count } = await searchQuery.range(from, to)
+        
+        if (fetchError) {
+          console.error('❌ Error en la consulta de búsqueda:', fetchError)
+          throw fetchError
+        }
+        
+        console.log('✅ Búsqueda de texto aplicada en múltiples campos')
+        
+        setDocuments(data || [])
+        setTotalDocuments(count || 0)
+        setTotalPages(Math.ceil((count || 0) / documentsPerPage))
+        setLoading(false)
+        return
       }
 
       console.log('🔍 Query final construida, ejecutando...')

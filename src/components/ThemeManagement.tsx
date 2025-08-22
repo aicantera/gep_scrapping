@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Power,
+  PowerOff,
   Eye,
   AlertTriangle
 } from 'lucide-react'
@@ -944,7 +945,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                             }`}
                             title={theme.activo ? 'Desactivar' : 'Activar'}
                           >
-                            <Power size={14} />
+                            {theme.activo ? <PowerOff size={16} /> : <Power size={16} />}
                           </button>
                         </div>
                       </td>

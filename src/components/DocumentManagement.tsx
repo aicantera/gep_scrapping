@@ -83,6 +83,11 @@ const DocumentManagement: React.FC = () => {
     'CONAMER',
     'Diario Oficial de la Federación'
   ]
+  
+  const docTypes: string[] = [
+    'PUNTO DE ACUERDO',
+    'INICIATIVA',
+  ]
 
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {

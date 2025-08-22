@@ -35,8 +35,6 @@ interface Alerta {
   enviado_correo: boolean | null      // boolean nullable
   datetime_enviado_correo: string | null // timestamp nullable
   link_pdf_enviado?: string | null    // url del pdf enviado
-  asunto_email?: string | null        // asunto del correo electrónico
-  mensaje_email?: string | null       // mensaje adjunto del correo electrónico
   
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
@@ -743,25 +741,22 @@ const AlertsManagement: React.FC = () => {
       const { error } = await supabase
         .from('alertas_directorio')
         .update({
-          estado: 'aprobado pendiente de envio',
-          status_alerta: true,
+          estado: 'Enviado al Correo',
           enviado_correo: true,
-          datetime_enviado_correo: new Date().toISOString(),
-          asunto_email: asuntoCorreo.trim(),
-          mensaje_email: mensajeAdjunto.trim() || null
+          datetime_enviado_correo: new Date().toISOString()
         })
         .eq('id_alerta', alertaSeleccionada.id_alerta)
       
       if (error) throw error
       
-      setSuccessMessage('Alerta aprobada correctamente.')
+      setSuccessMessage('Alerta enviada correctamente al cliente.')
       setShowValidarModal(false)
       await loadAlertas()
       
       setTimeout(() => setSuccessMessage(''), 5000)
     } catch (error) {
       console.error('Error aprobando alerta:', error)
-      setError('No se pudo aprobar la alerta.')
+      setError('No se pudo enviar la alerta.')
     } finally {
       setLoading(false)
     }

@@ -776,11 +776,11 @@ const Dashboard: React.FC = () => {
       console.log('📊 Valores únicos de fuente encontrados:', [...new Set(documentsTodayBySource?.map(d => d.fuente) || [])])
       console.log('📊 Valores únicos de fuente normalizados:', [...new Set(documentsTodayBySource?.map(d => normalizarFuente(d.fuente || '')) || [])])
       
-      // 4. Alertas enviadas hoy (desde alertas_directorio con enviado_correo = true)
+      // 4. Alertas enviadas hoy (desde alertas_log con status_alerta = 1)
       const { data: alertasEnviadasHoy, error: alertasEnviadasError } = await supabase
-        .from('alertas_directorio')
+        .from('alertas_log')
         .select('id_alerta, created_at')
-        .eq('enviado_correo', true)
+        .eq('status_alerta', 1)
         .gte('created_at', todayStr)
         .lt('created_at', todayStr + 'T23:59:59.999Z')
       
@@ -788,11 +788,11 @@ const Dashboard: React.FC = () => {
         console.error('Error obteniendo alertas enviadas del día:', alertasEnviadasError)
       }
       
-      // 5. Alertas pendientes hoy (desde alertas_directorio con enviado_correo = false o null)
+      // 5. Alertas pendientes hoy (desde alertas_log con status_alerta = 0)
       const { data: alertasPendientesHoy, error: alertasPendientesError } = await supabase
-        .from('alertas_directorio')
+        .from('alertas_log')
         .select('id_alerta, created_at')
-        .or('enviado_correo.is.null,enviado_correo.eq.false')
+        .eq('status_alerta', 0)
         .gte('created_at', todayStr)
         .lt('created_at', todayStr + 'T23:59:59.999Z')
       
@@ -1344,8 +1344,15 @@ const Dashboard: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border p-4 md:p-6">
               <div className="flex items-center justify-between mb-4 md:mb-6">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  Documentos recientes
+                  documentos recientes
                 </h3>
+                <button
+                  onClick={loadDashboardData}
+                  className="flex items-center gap-2 px-3 py-2 bg-[#999996] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors text-sm"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Recargar datos</span>
+                </button>
               </div>
               {loading ? (
                 <div className="text-center py-8">
@@ -1393,7 +1400,7 @@ const Dashboard: React.FC = () => {
                 </h3>
                 <div className="flex items-center space-x-4">
                    <div className="text-sm text-gray-500">
-                     Mostrando Documentos recientes
+                     Mostrando documentos recientes
                    </div>
                   {documentsToday.length > 0 && (
                     <button
@@ -1632,7 +1639,7 @@ const Dashboard: React.FC = () => {
                 GEP AI
               </p>
               <p className="text-xs text-gray-400 font-mono">
-                v1.4.2
+                v1.4.1
               </p>
             </div>
           )}

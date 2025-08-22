@@ -188,70 +188,49 @@ const DocumentManagement: React.FC = () => {
       // Aplicar búsqueda de texto
       if (filters.busqueda && filters.busqueda.trim()) {
         const searchTerm = filters.busqueda.toLowerCase()
-        const normalizedSearchTerm = normalizeText(searchTerm)
-        console.log('🔍 Aplicando búsqueda de texto:', searchTerm, '→ normalizado:', normalizedSearchTerm)
+        console.log('🔍 Aplicando búsqueda de texto:', searchTerm)
         
-        // Crear múltiples patrones de búsqueda para manejar acentos
-        const searchPatterns = []
+        // Crear una consulta de búsqueda más robusta
+        // Buscar en múltiples campos usando una estrategia de consulta única
+        const searchQuery = supabase
+          .from('senado')
+          .select('*', { count: 'exact' })
+          .or(`iniciativa_texto.ilike.%${searchTerm}%,correspondier.ilike.%${searchTerm}%,temas.ilike.%${searchTerm}%,objeto.ilike.%${searchTerm}%,sinopsis.ilike.%${searchTerm}%`)
+          .order('created_at', { ascending: false })
         
-        // 1. Término original tal como lo escribió el usuario
-        searchPatterns.push(searchTerm)
-        
-        // 2. Término sin acentos (normalizado)
-        if (normalizedSearchTerm !== searchTerm) {
-          searchPatterns.push(normalizedSearchTerm)
+        // Aplicar filtros adicionales si existen
+        if (filters.fechaDesde) {
+          searchQuery.gte('created_at', `${filters.fechaDesde}T00:00:00`)
+        }
+        if (filters.fechaHasta) {
+          searchQuery.lte('created_at', `${filters.fechaHasta}T23:59:59`)
+        }
+        if (filters.fuente) {
+          const normalizedSource = normalizeSource(filters.fuente)
+          const patterns = getFuentePatterns(normalizedSource)
+          if (patterns.length <= 1) {
+            searchQuery.ilike('fuente', `%${patterns[0]}%`)
+          }
         }
         
-        // 3. Crear variantes con acentos para cada vocal
-        const createAccentVariants = (text: string) => {
-          return text.replace(/[aeiou]/g, (match) => {
-            const accentMap: { [key: string]: string[] } = {
-              'a': ['a', 'á', 'à', 'ã', 'â', 'ä'],
-              'e': ['e', 'é', 'è', 'ê', 'ë'],
-              'i': ['i', 'í', 'ì', 'î', 'ï'],
-              'o': ['o', 'ó', 'ò', 'õ', 'ô', 'ö'],
-              'u': ['u', 'ú', 'ù', 'û', 'ü']
-            }
-            return `[${accentMap[match]?.join('') || match}]`
-          })
+        // Aplicar paginación
+        const from = (currentPage - 1) * documentsPerPage
+        const to = from + documentsPerPage - 1
+        
+        const { data, error: fetchError, count } = await searchQuery.range(from, to)
+        
+        if (fetchError) {
+          console.error('❌ Error en la consulta de búsqueda:', fetchError)
+          throw fetchError
         }
         
-        const accentVariants = createAccentVariants(searchTerm)
-        if (accentVariants !== searchTerm) {
-          searchPatterns.push(accentVariants)
-        }
+        console.log('✅ Búsqueda de texto aplicada en múltiples campos')
         
-        // 4. También crear variantes con acentos para el término normalizado
-        const normalizedAccentVariants = createAccentVariants(normalizedSearchTerm)
-        if (normalizedAccentVariants !== normalizedSearchTerm && normalizedAccentVariants !== accentVariants) {
-          searchPatterns.push(normalizedAccentVariants)
-        }
-        
-        console.log('🔍 Patrones de búsqueda generados:', searchPatterns)
-        
-                 // Buscar en TODOS los campos de la tabla con todos los patrones
-         const searchFields = [
-           'iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 
-           'tipo', 'objeto', 'correspondier', 'resumen', 'analisis', 
-           'dependencia', 'ver_expediente', 'ultimo_doc_expediente', 
-           'transitorios', 'informacion_adicional', 'titulo', 'gaceta',
-           'iniciativa_id', 'partidos', 'fuente'
-         ]
-         
-         // Crear condiciones de búsqueda para cada campo con cada patrón
-         const searchConditions = []
-         for (const field of searchFields) {
-           for (const pattern of searchPatterns) {
-             searchConditions.push(`${field}.ilike.%${pattern}%`)
-           }
-         }
-        
-        // Usar or() con todas las condiciones
-        if (searchConditions.length > 0) {
-          query = query.or(searchConditions.join(','))
-        }
-        
-        console.log('✅ Búsqueda de texto aplicada con normalización de acentos')
+        setDocuments(data || [])
+        setTotalDocuments(count || 0)
+        setTotalPages(Math.ceil((count || 0) / documentsPerPage))
+        setLoading(false)
+        return
       }
 
       console.log('🔍 Query final construida, ejecutando...')

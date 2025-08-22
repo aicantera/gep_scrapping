@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
@@ -56,15 +56,37 @@ export const moduleLabels: Record<string, string> = {
   'bots': 'Ejecución de Bots'
 }
 
+// Configuración de timeout de sesión (30 minutos)
+const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutos en milisegundos
+const ACTIVITY_CHECK_INTERVAL = 5 * 60 * 1000 // Verificar actividad cada 5 minutos
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
+  
+  // Referencias para manejo de timeout
+  const lastActivityRef = useRef<number>(Date.now())
+  const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const activityCheckRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const userInfoCacheRef = useRef<Map<string, { role: UserRole; activo: boolean; nombre?: string; apellido?: string }>>(new Map())
 
-  // Función para obtener información del usuario desde la tabla usuarios
+  // Función para actualizar la actividad del usuario
+  const updateUserActivity = () => {
+    lastActivityRef.current = Date.now()
+  }
+
+  // Función para obtener información del usuario desde la tabla usuarios (con cache)
   const getUserInfo = async (email: string): Promise<{ role: UserRole; activo: boolean; nombre?: string; apellido?: string } | null> => {
     try {
+      // Verificar cache primero
+      const cachedInfo = userInfoCacheRef.current.get(email)
+      if (cachedInfo) {
+        console.log('📋 Usando información cacheada para:', email)
+        return cachedInfo
+      }
+
       console.log('🔍 getUserInfo para:', email)
       // Timeout de 5 segundos para la consulta
       const timeoutPromise = new Promise((_, reject) =>
@@ -92,7 +114,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         nombre: data.nombre,
         apellido: data.apellido
       }
-      console.log('✅ getUserInfo exitoso:', result)
+      
+      // Guardar en cache
+      userInfoCacheRef.current.set(email, result)
+      console.log('✅ getUserInfo exitoso y cacheado:', result)
       return result
     } catch (error) {
       console.error('❌ Error obteniendo información del usuario:', error)
@@ -104,6 +129,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🔄 Usando fallback:', fallbackResult)
       return fallbackResult
     }
+  }
+
+  // Función para verificar si la sesión ha expirado por inactividad
+  const checkSessionTimeout = () => {
+    const now = Date.now()
+    const timeSinceLastActivity = now - lastActivityRef.current
+    
+    if (timeSinceLastActivity >= SESSION_TIMEOUT) {
+      console.log('⏰ Sesión expirada por inactividad (30 minutos)')
+      handleSessionExpiration()
+    }
+  }
+
+  // Función para manejar la expiración de sesión
+  const handleSessionExpiration = async () => {
+    console.log('🔒 Cerrando sesión por expiración de timeout')
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      setUserRole(null)
+      // Limpiar cache
+      userInfoCacheRef.current.clear()
+      // Limpiar timeouts
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current)
+        sessionTimeoutRef.current = null
+      }
+      if (activityCheckRef.current) {
+        clearInterval(activityCheckRef.current)
+        activityCheckRef.current = null
+      }
+    } catch (error) {
+      console.error('Error al cerrar sesión por timeout:', error)
+    }
+  }
+
+  // Función para iniciar el monitoreo de actividad
+  const startActivityMonitoring = () => {
+    // Limpiar timeouts existentes
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current)
+    }
+    if (activityCheckRef.current) {
+      clearInterval(activityCheckRef.current)
+    }
+
+    // Configurar timeout de sesión
+    sessionTimeoutRef.current = setTimeout(() => {
+      checkSessionTimeout()
+    }, SESSION_TIMEOUT)
+
+    // Configurar verificación periódica de actividad
+    activityCheckRef.current = setInterval(() => {
+      checkSessionTimeout()
+    }, ACTIVITY_CHECK_INTERVAL)
+
+    // Configurar listeners de actividad del usuario
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+    activityEvents.forEach(event => {
+      document.addEventListener(event, updateUserActivity, true)
+    })
+
+    console.log('👁️ Monitoreo de actividad iniciado')
+  }
+
+  // Función para detener el monitoreo de actividad
+  const stopActivityMonitoring = () => {
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current)
+      sessionTimeoutRef.current = null
+    }
+    if (activityCheckRef.current) {
+      clearInterval(activityCheckRef.current)
+      activityCheckRef.current = null
+    }
+
+    // Remover listeners de actividad
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+    activityEvents.forEach(event => {
+      document.removeEventListener(event, updateUserActivity, true)
+    })
+
+    console.log('👁️ Monitoreo de actividad detenido')
   }
 
   // Verificar si el usuario tiene acceso a un módulo
@@ -120,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: NodeJS.Timeout
+    let timeoutId: ReturnType<typeof setTimeout>
 
     const initializeAuth = async () => {
       try {
@@ -173,6 +281,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('✅ Usuario configurado con rol:', userWithRole.role)
             setUser(userWithRole)
             setUserRole(userWithRole.role || null)
+            
+            // Iniciar monitoreo de actividad
+            startActivityMonitoring()
           } catch (userError) {
             console.error('❌ Error obteniendo info del usuario:', userError)
             // En caso de error, usar valores por defecto
@@ -183,6 +294,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             setUser(defaultUserWithRole)
             setUserRole('Analista GEP')
+            startActivityMonitoring()
           }
         } else {
           console.log('👤 No hay sesión activa')
@@ -211,9 +323,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Escuchar cambios de autenticación
     console.log('👂 Configurando listener de auth...')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: any) => {
         if (!isMounted) return
         console.log('🔔 Auth state change:', event, !!session?.user)
+        
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
           // En cada refresh de token o login, garantizamos que user/rol sigan válidos
           const userInfo = await getUserInfo(session.user.email || '')
@@ -222,6 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await supabase.auth.signOut()
             setUser(null)
             setUserRole(null)
+            stopActivityMonitoring()
             return
           }
           const userWithRole: UserProfile = {
@@ -233,10 +347,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           setUser(userWithRole)
           setUserRole(userWithRole.role || null)
+          
+          // Reiniciar monitoreo de actividad
+          startActivityMonitoring()
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 Usuario cerrando sesión')
           setUser(null)
           setUserRole(null)
+          stopActivityMonitoring()
+          // Limpiar cache
+          userInfoCacheRef.current.clear()
         }
         setLoading(false)
       }
@@ -248,52 +368,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
+      stopActivityMonitoring()
       subscription.unsubscribe()
-    }
-  }, [])
-
-  // Keep-alive/auto-refresh defensivo: cada 4 minutos y al volver al foco
-  useEffect(() => {
-    let cancelled = false
-
-    const ensureSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession()
-        if (!data?.session) {
-          // Intentar refrescar; si no hay sesión válida, cerrar completamente
-          try {
-            const { data: refreshed } = await supabase.auth.refreshSession()
-            if (!refreshed?.session && !cancelled) {
-              await supabase.auth.signOut()
-              setUser(null)
-              setUserRole(null)
-            }
-          } catch {
-            if (!cancelled) {
-              await supabase.auth.signOut()
-              setUser(null)
-              setUserRole(null)
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('⚠️ Error verificando sesión, forzando cierre seguro:', e)
-        if (!cancelled) {
-          await supabase.auth.signOut()
-          setUser(null)
-          setUserRole(null)
-        }
-      }
-    }
-
-    const intervalId = setInterval(ensureSession, 4 * 60 * 1000) // 4 min
-    const onFocus = () => ensureSession()
-    window.addEventListener('focus', onFocus)
-
-    return () => {
-      cancelled = true
-      clearInterval(intervalId)
-      window.removeEventListener('focus', onFocus)
     }
   }, [])
 
@@ -351,6 +427,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(userWithRole)
         setUserRole(userWithRole.role || null)
+        
+        // Iniciar monitoreo de actividad después del login
+        startActivityMonitoring()
       }
       return { success: true }
     } catch {
@@ -372,6 +451,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setUser(null)
       setUserRole(null)
+      stopActivityMonitoring()
+      // Limpiar cache
+      userInfoCacheRef.current.clear()
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
     } finally {

@@ -95,7 +95,9 @@ const DocumentManagement: React.FC = () => {
   const docTypes: string[] = [
     'PUNTO DE ACUERDO',
     'INICIATIVA',
-  ]
+
+  ];
+
 
   // Función para normalizar nombres de fuentes
   const normalizeSource = (source: string): string => {
@@ -182,6 +184,7 @@ const DocumentManagement: React.FC = () => {
       // Aplicar búsqueda de texto
       if (filters.busqueda && filters.busqueda.trim()) {
         const searchTerm = filters.busqueda.toLowerCase()
+
         const normalizedTerm = normalizeText(filters.busqueda)
         console.log('🔍 Aplicando búsqueda de texto:', searchTerm, 'normalizado:', normalizedTerm)
         
@@ -198,6 +201,7 @@ const DocumentManagement: React.FC = () => {
         
         query = query.or(searchQueries)
         console.log('✅ Búsqueda de texto aplicada con normalización')
+ 
       }
 
       console.log('🔍 Query final construida, ejecutando...')

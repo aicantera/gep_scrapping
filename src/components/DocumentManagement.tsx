@@ -660,7 +660,8 @@ const DocumentManagement: React.FC = () => {
                     {editData.fuente || 'No especificado'}
                   </div>
                 </div>
-                {editData.fuente !== sources[3] && (
+                {/* Eliminados los campos de Gaceta y Enlace PDF */}
+                {editData.fuente === sources[3] && (
                   <div className="space-y-2 md:col-span-2">
                     <label className="form-label">Dependencia</label>
                     <input
@@ -706,7 +707,7 @@ const DocumentManagement: React.FC = () => {
                 )}
               </div>
               <div className="space-y-2">
-                {editData.fuente === sources[3] ? (
+                {editData.fuente === sources[3] || ((editData.fuente === sources[0] || editData.fuente === sources[1]) && (editData.tipo === docTypes[0] || editData.tipo === docTypes[1])) ? (
                   <>
                     <label className="form-label">Análisis</label>
                     <textarea

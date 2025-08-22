@@ -3,6 +3,7 @@ import { cn } from '../lib/utils'
 import { Button } from './ui/button'
 import { useAuth } from '../contexts/AuthContext'
 import { Link, useLocation } from 'react-router-dom'
+import SessionTimer from './SessionTimer'
 import {
   Home,
   Users,
@@ -184,6 +185,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
               <p className="text-xs text-slate-400 truncate">
                 {userRole || 'Sin rol asignado'}
               </p>
+              {/* Timer de sesión */}
+              <div className="mt-2">
+                <SessionTimer className="text-slate-300" />
+              </div>
             </div>
           )}
         </div>

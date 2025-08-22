@@ -1,9 +1,9 @@
 # 🚀 GEP AI - Sistema de Gestión Empresarial
 
-**Versión 1.4.0** | Un CRM completo y moderno desarrollado con tecnologías de vanguardia
+**Versión 1.4.1** | Un CRM completo y moderno desarrollado con tecnologías de vanguardia
 
 ![Estado del Proyecto](https://img.shields.io/badge/Estado-Producción-brightgreen)
-![Versión](https://img.shields.io/badge/Versión-1.4.0-blue)
+![Versión](https://img.shields.io/badge/Versión-1.4.1-blue)
 ![Usuarios Activos](https://img.shields.io/badge/Usuarios%20Activos-80-orange)
 ![Tecnología](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ![Tecnología](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript)
@@ -159,7 +159,7 @@ Para soporte técnico o consultas:
 
 ## 🔄 Historial de Cambios
 
-### v1.4.0 (2024-12-19)
+### v1.4.1 (2024-12-19)
 #### ✨ Nuevas Funcionalidades
 - **Sistema de Gestión de Alertas**: Implementación completa del módulo de alertas
 - **Bandejas de Trabajo**: Sistema de 4 bandejas (Pendientes, Aprobadas, Enviadas, Rechazadas)
@@ -188,4 +188,4 @@ Para soporte técnico o consultas:
 
 ---
 
-**GEP AI v1.4.0** - Transformando la gestión empresarial con tecnología de vanguardia.
+**GEP AI v1.4.1** - Transformando la gestión empresarial con tecnología de vanguardia.

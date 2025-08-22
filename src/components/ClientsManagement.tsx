@@ -1182,14 +1182,7 @@ const ClientsManagement: React.FC = () => {
                             </div>
                           </div>
                           
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              ID UUID del Cliente
-                            </label>
-                            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                              <span className="text-xs font-mono text-gray-600 break-all">{selectedClient.id_cliente}</span>
-                            </div>
-                          </div>
+
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">

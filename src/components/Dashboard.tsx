@@ -370,10 +370,10 @@ const BotsExecution: React.FC = () => {
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex items-center space-x-3 mb-4">
-          <Bot className="text-indigo-600" size={32} />
+          <Bot className="text-[#1F2937]" size={32} />
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Ejecución de Bots AI</h2>
-            <p className="text-gray-600">Ejecuta los bots de extracción de documentos</p>
+            <h2 className="text-2xl font-bold text-[#1F2937]">Ejecución de Bots AI</h2>
+            <p className="text-[#1F2937]">Ejecuta los bots de extracción de documentos</p>
           </div>
         </div>
       </div>
@@ -425,14 +425,14 @@ const BotsExecution: React.FC = () => {
                   {bot.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-800 text-sm leading-tight">
+                  <h3 className="font-semibold text-[#1F2937] text-sm leading-tight">
                     {bot.name}
                   </h3>
                 </div>
               </div>
               {/* Descripción */}
               <div className="flex-1 mb-4">
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-[#1F2937] text-sm leading-relaxed">
                   {bot.description}
                 </p>
               </div>
@@ -468,56 +468,56 @@ const BotsExecution: React.FC = () => {
         ))}
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 flex flex-wrap gap-4 items-end">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Fuente</label>
-          <select className="border rounded px-2 py-1" value={filters.fuente} onChange={e => setFilters(f => ({ ...f, fuente: e.target.value }))}>
-            <option value="todas">Todas</option>
-            <option value="Cámara de Diputados">Cámara de Diputados</option>
-            <option value="Senado">Senado</option>
-            <option value="DOF">DOF</option>
-            <option value="CONAMER">CONAMER</option>
-          </select>
+                           {/* Filtros */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-xs font-medium text-[#1F2937] mb-1">Fuente</label>
+            <select className="border rounded px-2 py-1 text-[#1F2937]" value={filters.fuente} onChange={e => setFilters(f => ({ ...f, fuente: e.target.value }))}>
+              <option value="todas">Todas</option>
+              <option value="Cámara de Diputados">Cámara de Diputados</option>
+              <option value="Senado">Senado</option>
+              <option value="DOF">DOF</option>
+              <option value="CONAMER">CONAMER</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#1F2937] mb-1">Tipo</label>
+            <select className="border rounded px-2 py-1 text-[#1F2937]" value={filters.tipo} onChange={e => setFilters(f => ({ ...f, tipo: e.target.value }))}>
+              <option value="todos">Todos</option>
+              <option value="Manual">Manual</option>
+              <option value="Automática">Automática</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#1F2937] mb-1">Estatus</label>
+            <select className="border rounded px-2 py-1 text-[#1F2937]" value={filters.estatus} onChange={e => setFilters(f => ({ ...f, estatus: e.target.value }))}>
+              <option value="todos">Todos</option>
+              <option value="éxito">Éxito</option>
+              <option value="falla">Falla</option>
+              <option value="en proceso">En proceso</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#1F2937] mb-1">Desde</label>
+            <input type="date" className="border rounded px-2 py-1 text-[#1F2937]" value={filters.desde} onChange={e => setFilters(f => ({ ...f, desde: e.target.value }))} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#1F2937] mb-1">Hasta</label>
+            <input type="date" className="border rounded px-2 py-1 text-[#1F2937]" value={filters.hasta} onChange={e => setFilters(f => ({ ...f, hasta: e.target.value }))} />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
-          <select className="border rounded px-2 py-1" value={filters.tipo} onChange={e => setFilters(f => ({ ...f, tipo: e.target.value }))}>
-            <option value="todos">Todos</option>
-            <option value="Manual">Manual</option>
-            <option value="Automática">Automática</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Estatus</label>
-          <select className="border rounded px-2 py-1" value={filters.estatus} onChange={e => setFilters(f => ({ ...f, estatus: e.target.value }))}>
-            <option value="todos">Todos</option>
-            <option value="éxito">Éxito</option>
-            <option value="falla">Falla</option>
-            <option value="en proceso">En proceso</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Desde</label>
-          <input type="date" className="border rounded px-2 py-1" value={filters.desde} onChange={e => setFilters(f => ({ ...f, desde: e.target.value }))} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Hasta</label>
-          <input type="date" className="border rounded px-2 py-1" value={filters.hasta} onChange={e => setFilters(f => ({ ...f, hasta: e.target.value }))} />
-        </div>
-      </div>
 
       {/* Tabla de historial */}
       <div className="bg-white rounded-lg shadow-sm border p-4 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="bg-gray-50">
-              <th className="px-3 py-2 text-left">ID</th>
-              <th className="px-3 py-2 text-left">Fuente</th>
-              <th className="px-3 py-2 text-left">Fecha y hora</th>
-              <th className="px-3 py-2 text-left">Tipo</th>
-              <th className="px-3 py-2 text-left">Ejecutado por</th>
-              <th className="px-3 py-2 text-left">Estatus</th>
+              <th className="px-3 py-2 text-left text-[#1F2937]">ID</th>
+              <th className="px-3 py-2 text-left text-[#1F2937]">Fuente</th>
+              <th className="px-3 py-2 text-left text-[#1F2937]">Fecha y hora</th>
+              <th className="px-3 py-2 text-left text-[#1F2937]">Tipo</th>
+              <th className="px-3 py-2 text-left text-[#1F2937]">Ejecutado por</th>
+              <th className="px-3 py-2 text-left text-[#1F2937]">Estatus</th>
             </tr>
           </thead>
           <tbody>
@@ -525,19 +525,19 @@ const BotsExecution: React.FC = () => {
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center">
                   <div className="flex items-center justify-center space-x-2">
-                    <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
-                    <span className="text-gray-500">Cargando historial de ejecuciones...</span>
+                    <RefreshCw className="h-5 w-5 animate-spin text-[#1F2937]" />
+                    <span className="text-[#1F2937]">Cargando historial de ejecuciones...</span>
                   </div>
                 </td>
               </tr>
             ) : (
               paginated.map(row => (
                 <tr key={row.id} className="border-b last:border-0">
-                  <td className="px-3 py-2">{row.id}</td>
-                  <td className="px-3 py-2">{row.fuente}</td>
-                  <td className="px-3 py-2">{new Date(row.fecha).toLocaleString('es-MX')}</td>
-                  <td className="px-3 py-2">{row.tipo}</td>
-                  <td className="px-3 py-2">{row.tipo === 'Manual' ? (row.ejecutado_por || '-') : '-'}</td>
+                  <td className="px-3 py-2 text-[#1F2937]">{row.id}</td>
+                  <td className="px-3 py-2 text-[#1F2937]">{row.fuente}</td>
+                  <td className="px-3 py-2 text-[#1F2937]">{new Date(row.fecha).toLocaleString('es-MX')}</td>
+                  <td className="px-3 py-2 text-[#1F2937]">{row.tipo}</td>
+                  <td className="px-3 py-2 text-[#1F2937]">{row.tipo === 'Manual' ? (row.ejecutado_por || '-') : '-'}</td>
                   <td className="px-3 py-2">
                     <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
                       row.estatus === 'éxito' ? 'bg-green-100 text-green-700' :
@@ -553,28 +553,28 @@ const BotsExecution: React.FC = () => {
             )}
             {!loading && paginated.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center text-gray-400 py-6">No hay ejecuciones registradas</td>
+                <td colSpan={6} className="text-center text-[#1F2937] py-6">Sin registros</td>
               </tr>
             )}
           </tbody>
         </table>
-        {/* Paginación */}
-        <div className="flex justify-between items-center mt-4">
-          <span className="text-xs text-gray-500">Página {page} de {totalPages || 1}</span>
-          <div className="space-x-2">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2 py-1 border rounded text-xs disabled:opacity-50">Anterior</button>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages || totalPages === 0} className="px-2 py-1 border rounded text-xs disabled:opacity-50">Siguiente</button>
+                                   {/* Paginación */}
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-xs text-[#1F2937]">Página {page} de {totalPages || 1}</span>
+            <div className="space-x-2">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2 py-1 border rounded text-xs disabled:opacity-50 text-[#1F2937] border-[#1F2937]">Anterior</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages || totalPages === 0} className="px-2 py-1 border rounded text-xs disabled:opacity-50 text-[#1F2937] border-[#1F2937]">Siguiente</button>
+            </div>
           </div>
-        </div>
       </div>
 
       {/* Información adicional */}
               <div className="bg-[#A1A3A5]/20 border border-[#A1A3A5] rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <Bot className="text-[#999996] flex-shrink-0 mt-0.5" size={20} />
+          <Bot className="text-[#1F2937] flex-shrink-0 mt-0.5" size={20} />
           <div>
-            <p className="text-[#999996] font-medium">Información importante</p>
-            <ul className="text-[#999996] text-sm mt-2 space-y-1">
+            <p className="text-[#1F2937] font-medium">Información importante</p>
+            <ul className="text-[#1F2937] text-sm mt-2 space-y-1">
               <li>• Los bots se ejecutan de forma asíncrona en segundo plano</li>
               <li>• Los datos actualizados estarán disponibles en aproximadamente 30 minutos</li>
               <li>• Solo los administradores pueden ejecutar los bots</li>
@@ -1639,7 +1639,7 @@ const Dashboard: React.FC = () => {
                 GEP AI
               </p>
               <p className="text-xs text-gray-400 font-mono">
-                v1.4.0
+                v1.4.1
               </p>
             </div>
           )}

@@ -4,6 +4,7 @@ import { LoginForm } from './components/LoginForm'
 import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import AlertsManagement from './components/AlertsManagement'
+import SessionWarning from './components/SessionWarning'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 const AppContent: React.FC = () => {
@@ -83,11 +84,14 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/alertas" element={<ProtectedRoute><AlertsManagement /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <SessionWarning />
+      <Routes>
+        <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/alertas" element={<ProtectedRoute><AlertsManagement /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }
 

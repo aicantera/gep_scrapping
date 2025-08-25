@@ -17,7 +17,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import * as XLSX from 'xlsx'
-import { ESTATUS_DOC_OPTIONS } from './SelectOptions'
+import { ESTATUS_DOC_OPTIONS } from '../utils/SelectOptions'
+import Select2 from './ui/select2'
 
 // Interfaces para tipado
 interface Alerta {
@@ -1452,19 +1453,13 @@ const AlertsManagement: React.FC = () => {
                       <div className="md:col-span-2">
                         <label className="form-label">Estatus</label>
                         {(documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1] || documentoEditable.tipo === docTypes[0]) ? (
-                          <select
+                          <Select2
                             value={documentoEditable.resumen}
-                            onChange={(e) => setDocumentoEditable({...documentoEditable, resumen: e.target.value})}
-                            className="form-input"
+                            onChange={(value) => setDocumentoEditable({...documentoEditable, resumen: value})}
+                            options={ESTATUS_DOC_OPTIONS}
                             title="Seleccionar estatus del documento"
-                          >
-                            <option value="">Sin estatus</option>
-                            {ESTATUS_DOC_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
+                            emptyOptionLabel="Sin estatus"
+                          />
                         ) : (
                           <input
                             type="text"
@@ -1788,7 +1783,12 @@ const AlertsManagement: React.FC = () => {
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Estatus</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alertaSeleccionada.documento_senado.resumen}
+                          {(() => {
+                            const resumen = alertaSeleccionada.documento_senado?.resumen;
+                            if (!resumen) return '';
+                            const matchedStatus = ESTATUS_DOC_OPTIONS.find(option => option.value === resumen);
+                            return matchedStatus ? matchedStatus.label : resumen;
+                          })()}
                         </div>
                       </div>
                     )}

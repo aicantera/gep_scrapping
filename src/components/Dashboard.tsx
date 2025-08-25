@@ -1111,8 +1111,8 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center mt-4">
-                  <TrendingUp className="text-green-500 mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-green-600 truncate">Capturados el día de hoy</span>
+                  <TrendingUp className="text-black mr-1 flex-shrink-0" size={14} />
+                  <span className="text-xs md:text-sm text-black truncate">Capturados el día de hoy</span>
                 </div>
               </button>
 
@@ -1128,13 +1128,13 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.general}</p>
-                  <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
-                    <AlertTriangle className="text-[#FEBD3F]" size={20} />
+                  <div className="p-3 bg-[#D4133D]/25 rounded-full flex-shrink-0">
+                    <AlertTriangle className="text-[#B52244]" size={20} />
                   </div>
                 </div>
                 <div className="flex items-center mt-4">
-                  <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
+                  <Calendar className="text-black mr-1 flex-shrink-0" size={14} />
+                  <span className="text-xs md:text-sm text-black truncate">Requieren atención</span>
                 </div>
               </button>
 
@@ -1149,13 +1149,13 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.diputados}</p>
-                  <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
-                    <Building className="text-[#FEBD3F]" size={20} />
+                  <div className="p-3 bg-[#A1A3A5]/25 rounded-full flex-shrink-0">
+                    <Building className="text-[#999996]" size={20} />
                   </div>
                 </div>
                 <div className="flex items-center mt-4">
-                  <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
+                  <Calendar className="text-black mr-1 flex-shrink-0" size={14} />
+                  <span className="text-xs md:text-sm text-black truncate">Requieren atención</span>
                 </div>
               </button>
 
@@ -1170,13 +1170,13 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.senado}</p>
-                  <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
-                    <Gavel className="text-[#FEBD3F]" size={20} />
+                  <div className="p-3 bg-[#D4133D]/25 rounded-full flex-shrink-0">
+                    <Gavel className="text-[#B52244]" size={20} />
                   </div>
                 </div>
                 <div className="flex items-center mt-4">
-                  <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
+                  <Calendar className="text-black mr-1 flex-shrink-0" size={14} />
+                  <span className="text-xs md:text-sm text-black truncate">Requieren atención</span>
                 </div>
               </button>
 
@@ -1191,13 +1191,13 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.dof}</p>
-                  <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
-                    <Newspaper className="text-[#FEBD3F]" size={20} />
+                  <div className="p-3 bg-[#A1A3A5]/25 rounded-full flex-shrink-0">
+                    <Newspaper className="text-[#999996]" size={20} />
                   </div>
                 </div>
                 <div className="flex items-center mt-4">
-                  <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
+                  <Calendar className="text-black mr-1 flex-shrink-0" size={14} />
+                  <span className="text-xs md:text-sm text-black truncate">Requieren atención</span>
                 </div>
               </button>
 

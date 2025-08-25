@@ -22,7 +22,8 @@ import {
   X,
   Save
 } from 'lucide-react'
-import { ESTATUS_DOC_OPTIONS } from './SelectOptions'
+import { ESTATUS_DOC_OPTIONS } from '../utils/SelectOptions'
+import Select2 from './ui/select2'
 
 interface Document {
   id_senado_doc: number
@@ -761,18 +762,12 @@ const DocumentManagement: React.FC = () => {
                   <div className="space-y-2">
                     <label className="form-label">Estatus</label>
                     {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
-                      <select
+                      <Select2
                         value={editData.resumen}
-                        onChange={(e) => handleChange('resumen', e.target.value)}
-                        className="form-input"
-                      >
-                        <option value="">Sin estatus</option>
-                        {ESTATUS_DOC_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(value: string) => handleChange('resumen', value)}
+                        options={ESTATUS_DOC_OPTIONS}
+                        emptyOptionLabel="Sin estatus"
+                      />
                     ) : (
                       <input
                         type="text"

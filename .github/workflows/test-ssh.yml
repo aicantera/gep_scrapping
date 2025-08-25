@@ -1,0 +1,24 @@
+name: Test SSH
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.SSH_PORT || 22 }}" -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: SSH check
+        env:
+          PORT: ${{ secrets.SSH_PORT || 22 }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -x
+          ssh -p "$PORT" "$USER@$HOST" 'bash -lc "whoami; hostname -f; pwd; which bash; echo SHELL=$SHELL; node -v || echo no-node; npm -v || echo no-npm; ls -ld /usr/local/bin/deploy-gepdash.sh || true; ls -ld /var/www/gepdash || true"'

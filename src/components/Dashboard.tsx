@@ -42,14 +42,12 @@ interface KPIData {
     diputados: number
     senado: number
     dof: number
-    conamer: number
   }
   pendingAlerts: {
     general: number
     diputados: number
     senado: number
     dof: number
-    conamer: number
   }
 }
 
@@ -167,14 +165,6 @@ const BotsExecution: React.FC = () => {
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const bots: BotConfig[] = [
-    {
-      id: 'conamer',
-      name: 'CONAMER',
-      description: 'Extracción de documentos de CONAMER',
-      webhookUrl: 'https://dbd.gepdigital.ai/webhook/conamer',
-      icon: <FileText className="w-6 h-6" />,
-      color: 'bg-[#999996] hover:bg-[#A1A3A5]'
-    },
     {
       id: 'diputados',
       name: 'Cámara de Diputados',
@@ -477,7 +467,6 @@ const BotsExecution: React.FC = () => {
               <option value="Cámara de Diputados">Cámara de Diputados</option>
               <option value="Senado">Senado</option>
               <option value="DOF">DOF</option>
-              <option value="CONAMER">CONAMER</option>
             </select>
           </div>
           <div>
@@ -601,22 +590,19 @@ const Dashboard: React.FC = () => {
       general: 0,
       diputados: 0,
       senado: 0,
-      dof: 0,
-      conamer: 0
+      dof: 0
     },
     pendingAlerts: {
       general: 0,
       diputados: 0,
       senado: 0,
-      dof: 0,
-      conamer: 0
+      dof: 0
     }
   })
   const [chartData, setChartData] = useState<ChartData[]>([
     { source: 'Cámara de Diputados', documents: 0 },
     { source: 'Cámara de Senadores', documents: 0 },
-    { source: 'Diario Oficial de la Federación', documents: 0 },
-    { source: 'CONAMER', documents: 0 }
+    { source: 'Diario Oficial de la Federación', documents: 0 }
   ])
   const [documentsToday, setDocumentsToday] = useState<Document[]>([])
   const [showLogoutModal, setShowLogoutModal] = useState(false)
@@ -756,9 +742,7 @@ const Dashboard: React.FC = () => {
         if (fuenteLower.includes('dof') || fuenteLower.includes('diario oficial')) {
           return 'dof'
         }
-        if (fuenteLower.includes('conamer') || fuenteLower.includes('comision nacional')) {
-          return 'conamer'
-        }
+
         
         return fuenteLower
       }
@@ -828,7 +812,7 @@ const Dashboard: React.FC = () => {
         if (temasStr.includes('diputados') || temasStr.includes('cámara de diputados')) return 'diputados'
         if (temasStr.includes('senado') || temasStr.includes('senadores')) return 'senado'
         if (temasStr.includes('dof') || temasStr.includes('diario oficial')) return 'dof'
-        if (temasStr.includes('conamer') || temasStr.includes('comisión')) return 'conamer'
+
         return 'general'
       }
       
@@ -837,8 +821,7 @@ const Dashboard: React.FC = () => {
         general: 0,
         diputados: 0,
         senado: 0,
-        dof: 0,
-        conamer: 0
+        dof: 0
       }
       
       alertasEnviadasHoy?.forEach(alerta => {
@@ -852,8 +835,7 @@ const Dashboard: React.FC = () => {
         general: 0,
         diputados: 0,
         senado: 0,
-        dof: 0,
-        conamer: 0
+        dof: 0
       }
       
       alertasPendientesHoy?.forEach(alerta => {
@@ -869,15 +851,13 @@ const Dashboard: React.FC = () => {
           general: alertasEnviadasPorFuente.general,
           diputados: alertasEnviadasPorFuente.diputados,
           senado: alertasEnviadasPorFuente.senado,
-          dof: alertasEnviadasPorFuente.dof,
-          conamer: alertasEnviadasPorFuente.conamer
+          dof: alertasEnviadasPorFuente.dof
         },
         pendingAlerts: {
           general: alertasPendientesPorFuente.general,
           diputados: alertasPendientesPorFuente.diputados,
           senado: alertasPendientesPorFuente.senado,
-          dof: alertasPendientesPorFuente.dof,
-          conamer: alertasPendientesPorFuente.conamer
+          dof: alertasPendientesPorFuente.dof
         }
       }
       
@@ -894,10 +874,6 @@ const Dashboard: React.FC = () => {
         { 
           source: 'Diario Oficial de la Federación', 
           documents: fuenteCount['dof'] || 0
-        },
-        { 
-          source: 'CONAMER', 
-          documents: fuenteCount['conamer'] || 0
         }
       ]
       
@@ -1219,26 +1195,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Alertas enviadas - CONAMER */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleKpiClick('alerts')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas enviadas - CONAMER</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.alertsSent.conamer}</p>
-                  </div>
-                  <div className="p-3 bg-[#0033A0]/15 rounded-full flex-shrink-0">
-                    <FileText className="text-[#0033A0]" size={20} />
-                  </div>
-                </div>
-                <div className="flex items-center mt-4">
-                  <Calendar className="text-blue-500 mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-blue-600 truncate">Día actual</span>
-                </div>
-              </div>
-
               {/* Alertas pendientes - General */}
               <div 
                 className="metric-card cursor-pointer hover:shadow-md transition-shadow"
@@ -1319,25 +1275,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Alertas pendientes - CONAMER */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleKpiClick('alerts')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas pendientes - CONAMER</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.conamer}</p>
-                  </div>
-                  <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
-                    <FileText className="text-[#FEBD3F]" size={20} />
-                  </div>
-                </div>
-                <div className="flex items-center mt-4">
-                  <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
-                </div>
-              </div>
+
             </div>
 
             {/* Gráfico de barras */}
@@ -1471,13 +1409,11 @@ const Dashboard: React.FC = () => {
                               document.fuente === 'senado' ? 'bg-purple-100 text-purple-800' :
                               document.fuente === 'diputados' ? 'bg-green-100 text-green-800' :
                               document.fuente === 'dof' ? 'bg-orange-100 text-orange-800' :
-                              document.fuente === 'conamer' ? 'bg-[#A1A3A5]/30 text-[#999996]' :
                               'bg-gray-100 text-gray-800'
                             }`}>
                               {document.fuente === 'senado' ? 'Cámara de Senadores' : 
                                document.fuente === 'diputados' ? 'Cámara de Diputados' :
                                document.fuente === 'dof' ? 'Diario Oficial de la Federación' :
-                               document.fuente === 'conamer' ? 'CONAMER' :
                                document.fuente}
                             </span>
                           </td>

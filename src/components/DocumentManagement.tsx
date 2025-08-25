@@ -86,7 +86,6 @@ const DocumentManagement: React.FC = () => {
   const sources = [
     'Cámara de Diputados',
     'Cámara de Senadores',
-    'CONAMER',
     'Diario Oficial de la Federación'
   ]
   
@@ -106,8 +105,7 @@ const DocumentManagement: React.FC = () => {
       'diputados': 'Cámara de Diputados',
       'diario oficial de la federación': 'Diario Oficial de la Federación',
       'diario oficial': 'Diario Oficial de la Federación',
-      'dof': 'Diario Oficial de la Federación',
-      'conamer': 'CONAMER'
+      'dof': 'Diario Oficial de la Federación'
     }
     const normalized = sourceMap[source.toLowerCase()] || source
     console.log('🔧 Normalizando fuente:', source, '→', normalized)
@@ -128,9 +126,7 @@ const DocumentManagement: React.FC = () => {
     if (f.includes('diput')) {
       return ['diputado', 'diputados', 'cámara de diputados']
     }
-    if (f.includes('conamer')) {
-      return ['conamer']
-    }
+
     return [fuente]
   }
 
@@ -1294,4 +1290,4 @@ const DocumentManagement: React.FC = () => {
   )
 }
 
-export default DocumentManagement 
+export default DocumentManagement

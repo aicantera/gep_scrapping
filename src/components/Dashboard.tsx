@@ -1096,15 +1096,16 @@ const Dashboard: React.FC = () => {
             {/* KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6 mb-6 md:mb-8">
               {/* Documentos capturados hoy */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
+              <button
+                type="button"
+                className="metric-card hover:shadow-md transition-shadow"
                 onClick={() => handleKpiClick('documents')}
               >
+                <div className="min-w-0" title='Documentos capturados hoy'>
+                  <p className="text-sm font-medium text-gray-600 truncate text-left">Documentos capturados hoy</p>
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Documentos capturados hoy</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.documentsToday}</p>
-                  </div>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.documentsToday}</p>
                   <div className="p-3 bg-[#A1A3A5]/30 rounded-full flex-shrink-0">
                     <FileText className="text-[#999996]" size={20} />
                   </div>
@@ -1113,98 +1114,20 @@ const Dashboard: React.FC = () => {
                   <TrendingUp className="text-green-500 mr-1 flex-shrink-0" size={14} />
                   <span className="text-xs md:text-sm text-green-600 truncate">Capturados el día de hoy</span>
                 </div>
-              </div>
+              </button>
 
-              {/* Alertas enviadas - General */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleKpiClick('alerts')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas enviadas hoy</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.alertsSent.general}</p>
-                  </div>
-                  <div className="p-3 bg-[#0033A0]/15 rounded-full flex-shrink-0">
-                    <AlertTriangle className="text-[#0033A0]" size={20} />
-                  </div>
-                </div>
-                <div className="flex items-center mt-4">
-                  <Calendar className="text-blue-500 mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-blue-600 truncate">Día actual</span>
-                </div>
-              </div>
-
-              {/* Alertas enviadas - Diputados */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleKpiClick('alerts')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas enviadas - Diputados</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.alertsSent.diputados}</p>
-                  </div>
-                  <div className="p-3 bg-[#0033A0]/15 rounded-full flex-shrink-0">
-                    <Building className="text-[#0033A0]" size={20} />
-                  </div>
-                </div>
-                <div className="flex items-center mt-4">
-                  <Calendar className="text-blue-500 mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-blue-600 truncate">Día actual</span>
-                </div>
-              </div>
-
-              {/* Alertas enviadas - Senado */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleKpiClick('alerts')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas enviadas - Senado</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.alertsSent.senado}</p>
-                  </div>
-                  <div className="p-3 bg-[#0033A0]/15 rounded-full flex-shrink-0">
-                    <Gavel className="text-[#0033A0]" size={20} />
-                  </div>
-                </div>
-                <div className="flex items-center mt-4">
-                  <Calendar className="text-blue-500 mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-blue-600 truncate">Día actual</span>
-                </div>
-              </div>
-
-              {/* Alertas enviadas - DOF */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleKpiClick('alerts')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas enviadas - DOF</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.alertsSent.dof}</p>
-                  </div>
-                  <div className="p-3 bg-[#0033A0]/15 rounded-full flex-shrink-0">
-                    <Newspaper className="text-[#0033A0]" size={20} />
-                  </div>
-                </div>
-                <div className="flex items-center mt-4">
-                  <Calendar className="text-blue-500 mr-1 flex-shrink-0" size={14} />
-                  <span className="text-xs md:text-sm text-blue-600 truncate">Día actual</span>
-                </div>
-              </div>
 
               {/* Alertas pendientes - General */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
+              <button
+                type="button"
+                className="metric-card hover:shadow-md transition-shadow"
                 onClick={() => handleKpiClick('alerts')}
               >
+                <div className="min-w-0 flex-1" title='Alertas pendientes hoy'>
+                  <p className="text-sm font-medium text-gray-600 truncate text-left">Alertas pendientes hoy</p>
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas pendientes hoy</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.general}</p>
-                  </div>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.general}</p>
                   <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
                     <AlertTriangle className="text-[#FEBD3F]" size={20} />
                   </div>
@@ -1213,18 +1136,19 @@ const Dashboard: React.FC = () => {
                   <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
                   <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
                 </div>
-              </div>
+              </button>
 
               {/* Alertas pendientes - Diputados */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
+              <button
+                type="button" 
+                className="metric-card hover:shadow-md transition-shadow"
                 onClick={() => handleKpiClick('alerts')}
               >
+                <div className="min-w-0 flex-1" title='Alertas pendientes - Diputados'>
+                  <p className="text-sm font-medium text-gray-600 truncate text-left">Alertas pendientes - Diputados</p>
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas pendientes - Diputados</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.diputados}</p>
-                  </div>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.diputados}</p>
                   <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
                     <Building className="text-[#FEBD3F]" size={20} />
                   </div>
@@ -1233,18 +1157,19 @@ const Dashboard: React.FC = () => {
                   <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
                   <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
                 </div>
-              </div>
+              </button>
 
               {/* Alertas pendientes - Senado */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
+              <button
+                type="button"
+                className="metric-card hover:shadow-md transition-shadow"
                 onClick={() => handleKpiClick('alerts')}
               >
+                <div className="min-w-0 flex-1" title='Alertas pendientes - Senado'>
+                  <p className="text-sm font-medium text-gray-600 truncate text-left">Alertas pendientes - Senado</p>
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas pendientes - Senado</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.senado}</p>
-                  </div>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.senado}</p>
                   <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
                     <Gavel className="text-[#FEBD3F]" size={20} />
                   </div>
@@ -1253,18 +1178,19 @@ const Dashboard: React.FC = () => {
                   <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
                   <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
                 </div>
-              </div>
+              </button>
 
               {/* Alertas pendientes - DOF */}
-              <div 
-                className="metric-card cursor-pointer hover:shadow-md transition-shadow"
+              <button
+                type="button"
+                className="metric-card hover:shadow-md transition-shadow"
                 onClick={() => handleKpiClick('alerts')}
               >
+                <div className="min-w-0 flex-1" title='Alertas pendientes - DOF'>
+                  <p className="text-sm font-medium text-gray-600 truncate text-left">Alertas pendientes - DOF</p>
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">Alertas pendientes - DOF</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.dof}</p>
-                  </div>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{kpiData.pendingAlerts.dof}</p>
                   <div className="p-3 bg-[#FEBD3F]/25 rounded-full flex-shrink-0">
                     <Newspaper className="text-[#FEBD3F]" size={20} />
                   </div>
@@ -1273,7 +1199,7 @@ const Dashboard: React.FC = () => {
                   <Calendar className="text-[#0033A0] mr-1 flex-shrink-0" size={14} />
                   <span className="text-xs md:text-sm text-[#0033A0] truncate">Requieren atención</span>
                 </div>
-              </div>
+              </button>
 
 
             </div>

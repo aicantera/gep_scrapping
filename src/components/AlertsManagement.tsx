@@ -93,12 +93,11 @@ const AlertsManagement: React.FC = () => {
   const [filterFecha, setFilterFecha] = useState({ desde: '', hasta: '' })
 
   // Tipos de fuente disponibles
-  type TipoFuente = 'Cámaras' | 'DOF' | 'CONAMER'
+  type TipoFuente = 'Cámaras' | 'DOF'
 
   const sources = [
     'Cámara de Diputados',
     'Cámara de Senadores',
-    'CONAMER',
     'Diario Oficial de la Federación'
   ];
 
@@ -690,13 +689,7 @@ const AlertsManagement: React.FC = () => {
     
     // Validaciones según la fuente del documento
     switch(documentoEditable.fuente){
-      case sources[2]: // CONAMER
-        if(!documentoEditable.iniciativa_texto || !documentoEditable.fuente || !documentoEditable.dependencia || !documentoEditable.temas || !documentoEditable.resumen || !documentoEditable.analisis || !documentoEditable.ultimo_doc_expediente || !documentoEditable.ver_expediente) {
-          alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-          return
-        }
-        break
-      case sources[3]: // DOF
+      case sources[2]: // DOF
         if(!documentoEditable.iniciativa_texto || !documentoEditable.fuente || !documentoEditable.temas || !documentoEditable.resumen || !documentoEditable.analisis) {
           alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
           return
@@ -957,7 +950,7 @@ const AlertsManagement: React.FC = () => {
                 <option value="Cámara de Diputados">Cámara de Diputados</option>
                 <option value="Cámara de Senadores">Cámara de Senadores</option>
                 <option value="Diario Oficial de la Federación">DOF</option>
-                <option value="CONAMER">CONAMER</option>
+
               </select>
             </div>
 
@@ -1433,34 +1426,7 @@ const AlertsManagement: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Campos específicos para CONAMER */}
-                    {documentoEditable.fuente === sources[2] && (
-                      <>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Último Documento del Expediente
-                          </label>
-                          <textarea
-                            value={documentoEditable.ultimo_doc_expediente}
-                            onChange={(e) => setDocumentoEditable({...documentoEditable, ultimo_doc_expediente: e.target.value})}
-                            className="form-input w-full h-24 resize-none"
-                            placeholder="Último documento del expediente"
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Link al enlace del expediente
-                          </label>
-                          <input
-                            type="text"
-                            value={documentoEditable.ver_expediente}
-                            onChange={(e) => setDocumentoEditable({...documentoEditable, ver_expediente: e.target.value})}
-                            className="form-input w-full"
-                            placeholder="URL del expediente"
-                          />
-                        </div>
-                      </>
-                    )}
+
 
                     {/* Transitorios - Solo para fuentes que no sean DOF */}
                     {documentoEditable.fuente !== sources[3] && (
@@ -1805,34 +1771,7 @@ const AlertsManagement: React.FC = () => {
                       )
                     )}
 
-                    {/* Campos específicos para CONAMER */}
-                    {alertaSeleccionada.documento_senado.fuente === sources[2] && (
-                      <>
-                        {alertaSeleccionada.documento_senado.ultimo_doc_expediente && (
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">Último Documento del Expediente</label>
-                            <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                              {alertaSeleccionada.documento_senado.ultimo_doc_expediente}
-                            </div>
-                          </div>
-                        )}
-                        {alertaSeleccionada.documento_senado.ver_expediente && (
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">Link al enlace del expediente</label>
-                            <div className="mt-1">
-                              <a 
-                                href={alertaSeleccionada.documento_senado.ver_expediente}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 underline break-all"
-                              >
-                                {alertaSeleccionada.documento_senado.ver_expediente}
-                              </a>
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
+
 
                     {/* Transitorios - Solo para fuentes que no sean DOF y tipos que no sean PUNTO DE ACUERDO */}
                     {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.tipo !== docTypes[0] && alertaSeleccionada.documento_senado.transitorios && (
@@ -2013,4 +1952,4 @@ const AlertsManagement: React.FC = () => {
   )
 }
 
-export default AlertsManagement 
+export default AlertsManagement

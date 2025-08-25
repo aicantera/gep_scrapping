@@ -12,8 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
-  UserCheck,
-  UserX,
+  Power,
   Download
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -990,7 +989,7 @@ const ClientsManagement: React.FC = () => {
                             }`}
                             title={client.estado === 'activo' ? 'Desactivar' : 'Activar'}
                           >
-                            {client.estado === 'activo' ? <UserX size={16} /> : <UserCheck size={16} />}
+                            <Power size={16} />
                           </button>
                           <button
                             onClick={() => openModal('delete', client)}
@@ -1741,4 +1740,4 @@ const ClientsManagement: React.FC = () => {
   );
 }
 
-export default ClientsManagement; 
+export default ClientsManagement;

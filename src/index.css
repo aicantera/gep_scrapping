@@ -69,7 +69,7 @@
 @layer components {
   /* Login Form Styles */
   .login-container {
-    @apply min-h-screen flex items-center justify-center p-4 bg-secondary-light;
+    @apply min-h-screen flex items-center justify-center p-4 bg-[url('src/assets/images/login-background.png')] bg-cover bg-center;
   }
 
   .login-card {

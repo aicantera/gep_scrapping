@@ -222,10 +222,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             <button
               type="submit"
               disabled={loading}
-              style={{ backgroundColor: '#3C3C3B' }}
-              className="w-full text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:ring-4 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2A2A29'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3C3C3B'}
+              className="w-full text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:ring-4 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed bg-[#b30437] hover:bg-[#a30d2e]"
             >
               {loading ? (
                 <div className="flex items-center justify-center space-x-2">

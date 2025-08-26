@@ -1098,7 +1098,7 @@ const AlertsManagement: React.FC = () => {
                             alerta.temas_subtemas.slice(0, 3).map((tema, index) => (
                               <span
                                 key={index}
-                                className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                                className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full"
                               >
                                 {tema}
                               </span>

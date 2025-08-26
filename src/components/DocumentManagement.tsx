@@ -176,12 +176,52 @@ const DocumentManagement: React.FC = () => {
 
       // Aplicar búsqueda de texto
       if (filters.busqueda && filters.busqueda.trim()) {
-        const searchTerm = filters.busqueda.toLowerCase()
-        console.log('🔍 Aplicando búsqueda de texto:', searchTerm)
+        const searchTerm = filters.busqueda.trim()
+        const sinAcentos = searchTerm.replace(/[áéíóúñü]/gi, c => ({'á':'a','é':'e','í':'i','ó':'o','ú':'u','ñ':'n','ü':'u','Á':'a','É':'e','Í':'i','Ó':'o','Ú':'u','Ñ':'n','Ü':'u'}[c] || c))
         
-        // Usar or() para buscar en múltiples campos
-        query = query.or(`iniciativa_texto.ilike.%${searchTerm}%,sinopsis.ilike.%${searchTerm}%,temas.ilike.%${searchTerm}%,personas.ilike.%${searchTerm}%,leyes.ilike.%${searchTerm}%`)
-        console.log('✅ Búsqueda de texto aplicada')
+        // Estrategia simple: buscar siempre ambas versiones (con y sin acentos)
+        const terminos = new Set([
+          searchTerm,           // término original
+          sinAcentos           // versión sin acentos
+        ])
+        
+        // Si el término no tiene acentos, generar versiones comunes con acentos
+        if (searchTerm === sinAcentos) {
+          const lower = searchTerm.toLowerCase()
+          const upper = searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1).toLowerCase()
+          
+          // Agregar variaciones de capitalización
+          terminos.add(lower)
+          terminos.add(upper)
+          
+          // Generar versiones con acentos más comunes
+          const conAcentosComunes = lower
+            .replace(/cion/g, 'ción')
+            .replace(/sion/g, 'sión')
+            .replace(/acion/g, 'ación')
+            .replace(/ia$/g, 'ía')
+            .replace(/io$/g, 'ío')
+            .replace(/^maria$/, 'maría')
+            .replace(/^jose$/, 'josé')
+            .replace(/^carlos$/, 'carlos')
+            .replace(/^ana$/, 'ana')
+          
+          if (conAcentosComunes !== lower) {
+            terminos.add(conAcentosComunes)
+            terminos.add(conAcentosComunes.charAt(0).toUpperCase() + conAcentosComunes.slice(1))
+          }
+        }
+        
+        // Filtrar términos únicos y no vacíos
+        const terminosFinales = Array.from(terminos).filter(t => t && t.trim())
+        
+        // Construir query con todos los términos
+        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes']
+        const conditions = terminosFinales.flatMap((term: string) => 
+          fields.map(field => `${field}.ilike.%${term}%`)
+        )
+        
+        query = query.or(conditions.join(','))
       }
 
       console.log('🔍 Query final construida, ejecutando...')

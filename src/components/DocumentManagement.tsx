@@ -1101,9 +1101,9 @@ const DocumentManagement: React.FC = () => {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                            {document.link_iniciativa && (
+                            {document.link_documento && (
                               <button
-                                onClick={() => window.open(document.link_iniciativa, '_blank')}
+                                onClick={() => window.open(document.link_documento, '_blank')}
                                 className="p-2 text-gray-400 hover:text-purple-600 transition-colors"
                                 title="Ver enlace externo"
                               >

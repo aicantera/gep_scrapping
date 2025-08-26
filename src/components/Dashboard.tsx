@@ -607,6 +607,11 @@ const Dashboard: React.FC = () => {
   const [documentsToday, setDocumentsToday] = useState<Document[]>([])
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
+  const fuentesDocumentos: string[] = [
+    'Cámara de Diputados',
+    'Cámara de Senadores',
+    'Diario Oficial de la Federación'
+  ];
 
   // Definir íconos para cada módulo
   const moduleIcons: Record<string, React.ReactNode> = {
@@ -1357,7 +1362,12 @@ const Dashboard: React.FC = () => {
                           </td>
                           <td className="px-4 py-3">
                             <div className="text-sm text-gray-900">
-                              {document.tipo || 'Sin tipo'}
+                              { document.tipo ? 
+                                  document.fuente === fuentesDocumentos[2] ?  
+                                    'Proyecto'
+                                  : document.tipo 
+                                  : 'Sin tipo'
+                              }
                             </div>
                           </td>
                         </tr>

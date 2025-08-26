@@ -921,7 +921,7 @@ const ClientsManagement: React.FC = () => {
                               {(Array.isArray(client.listas_distribucion) && client.listas_distribucion.length > 0) ? (
                                 <div className="flex flex-wrap gap-1">
                                   {client.listas_distribucion.map((lista, index) => (
-                                    <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                    <span key={index} className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
                                       {lista?.nombre || 'Sin nombre'}
                                     </span>
                                   ))}
@@ -938,7 +938,7 @@ const ClientsManagement: React.FC = () => {
                           {(Array.isArray(client.temas_suscrit) && client.temas_suscrit.length > 0) ? (
                             <div className="flex flex-wrap gap-1">
                               {client.temas_suscrit.map((tema, index) => (
-                                <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                <span key={index} className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
                                   {tema || 'Sin tema'}
                                 </span>
                               ))}

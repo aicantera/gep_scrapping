@@ -22,6 +22,8 @@ import {
 } from 'lucide-react'
 import { supabase, supabaseAdmin } from '../lib/supabase'
 
+const baseUrl = 'https://dbd.gepdigital.ai/webhook';
+
 interface UserProfile {
   id?: number
   created_at?: string
@@ -332,9 +334,32 @@ const UserManagement: React.FC = () => {
           return
         }
         
-        // Simular envío de correo de bienvenida
-        console.log('📧 Enviando correo de bienvenida a:', formData.email)
-        setSuccessMessage('Usuario registrado exitosamente. Se ha enviado un correo con las credenciales.')
+        // Envio de correo electrónico
+        try {
+          const resp = await fetch(`${baseUrl}/email_nueva_cuenta`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: formData.nombre.trim(),
+              email: formData.email.trim(),
+              link: 'ia.gep.mx/activatucuenta',
+              token: formData.password,
+            })
+          })
+
+          if (!resp.ok) {
+            throw new Error('Error al enviar correo electrónico')
+          }
+
+          await resp.json()
+          setSuccessMessage('Usuario registrado exitosamente. Se ha enviado un correo con las credenciales.')
+        } catch (error) {
+          console.error('❌ Error enviando correo electrónico:', error)
+          setError('Error al enviar correo electrónico')
+        }
+
       } else if (modalType === 'edit' && selectedUser) {
         console.log('✏️ Actualizando usuario:', selectedUser.id)
         
@@ -381,6 +406,24 @@ const UserManagement: React.FC = () => {
             } else {
               console.log('✅ Contraseña actualizada en Auth')
               message = 'Usuario y contraseña actualizados correctamente.'
+            }
+
+            // Enviar correo electrónico al actualizar contraseña
+            const resp = await fetch(`${baseUrl}/email_recuerda_cuenta`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                name: formData.nombre.trim(),
+                email: formData.email.trim(),
+                link: 'ia.gep.mx/activatucuenta',
+                token: formData.password,
+              })
+            })
+
+            if (!resp.ok) {
+              throw new Error('Error al enviar correo electrónico')
             }
           } catch (passwordUpdateError) {
             console.error('❌ Error inesperado actualizando contraseña:', passwordUpdateError)

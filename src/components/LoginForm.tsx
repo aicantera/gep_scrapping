@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Eye, EyeOff, Mail, Lock, Shield } from 'lucide-react'
 import logoNegro from '../assets/images/logonegro.jpg'
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
-  onLogin: () => void
+  onLogin?: () => void
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
+  const navigate = useNavigate();
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -96,7 +98,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         return
       }
 
-      onLogin()
+      // onLogin?.()
+      navigate('/', { replace: true });
     } catch (err) {
       console.error('Error inesperado:', err)
       setError('Error de conexión. Verifique su internet e intente nuevamente.')

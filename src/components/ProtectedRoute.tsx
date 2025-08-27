@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { Navigate, Outlet, useNavigate } from 'react-router-dom'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -12,6 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredModule, 
   onUnauthorized 
 }) => {
+  const navigate = useNavigate();
   const { user, hasAccess, loading } = useAuth()
 
   useEffect(() => {

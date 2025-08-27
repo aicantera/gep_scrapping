@@ -176,12 +176,52 @@ const DocumentManagement: React.FC = () => {
 
       // Aplicar búsqueda de texto
       if (filters.busqueda && filters.busqueda.trim()) {
-        const searchTerm = filters.busqueda.toLowerCase()
-        console.log('🔍 Aplicando búsqueda de texto:', searchTerm)
+        const searchTerm = filters.busqueda.trim()
+        const sinAcentos = searchTerm.replace(/[áéíóúñü]/gi, c => ({'á':'a','é':'e','í':'i','ó':'o','ú':'u','ñ':'n','ü':'u','Á':'a','É':'e','Í':'i','Ó':'o','Ú':'u','Ñ':'n','Ü':'u'}[c] || c))
         
-        // Usar or() para buscar en múltiples campos
-        query = query.or(`iniciativa_texto.ilike.%${searchTerm}%,sinopsis.ilike.%${searchTerm}%,temas.ilike.%${searchTerm}%,personas.ilike.%${searchTerm}%,leyes.ilike.%${searchTerm}%`)
-        console.log('✅ Búsqueda de texto aplicada')
+        // Estrategia simple: buscar siempre ambas versiones (con y sin acentos)
+        const terminos = new Set([
+          searchTerm,           // término original
+          sinAcentos           // versión sin acentos
+        ])
+        
+        // Si el término no tiene acentos, generar versiones comunes con acentos
+        if (searchTerm === sinAcentos) {
+          const lower = searchTerm.toLowerCase()
+          const upper = searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1).toLowerCase()
+          
+          // Agregar variaciones de capitalización
+          terminos.add(lower)
+          terminos.add(upper)
+          
+          // Generar versiones con acentos más comunes
+          const conAcentosComunes = lower
+            .replace(/cion/g, 'ción')
+            .replace(/sion/g, 'sión')
+            .replace(/acion/g, 'ación')
+            .replace(/ia$/g, 'ía')
+            .replace(/io$/g, 'ío')
+            .replace(/^maria$/, 'maría')
+            .replace(/^jose$/, 'josé')
+            .replace(/^carlos$/, 'carlos')
+            .replace(/^ana$/, 'ana')
+          
+          if (conAcentosComunes !== lower) {
+            terminos.add(conAcentosComunes)
+            terminos.add(conAcentosComunes.charAt(0).toUpperCase() + conAcentosComunes.slice(1))
+          }
+        }
+        
+        // Filtrar términos únicos y no vacíos
+        const terminosFinales = Array.from(terminos).filter(t => t && t.trim())
+        
+        // Construir query con todos los términos
+        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes']
+        const conditions = terminosFinales.flatMap((term: string) => 
+          fields.map(field => `${field}.ilike.%${term}%`)
+        )
+        
+        query = query.or(conditions.join(','))
       }
 
       console.log('🔍 Query final construida, ejecutando...')
@@ -970,6 +1010,9 @@ const DocumentManagement: React.FC = () => {
                         Fuente
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tipo
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fecha
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1012,6 +1055,16 @@ const DocumentManagement: React.FC = () => {
                             <Building className="w-3 h-3 mr-1" />
                             {document.fuente === 'senado' ? 'Cámara de Senadores' : document.fuente}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-xs text-gray-500 mt-1">
+                            { document.tipo ? 
+                                document.fuente === sources[2] ?  
+                                  'Proyecto'
+                                : document.tipo 
+                                : 'Sin tipo'
+                            }
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-900">
@@ -1061,9 +1114,9 @@ const DocumentManagement: React.FC = () => {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                            {document.link_iniciativa && (
+                            {document.link_documento && (
                               <button
-                                onClick={() => window.open(document.link_iniciativa, '_blank')}
+                                onClick={() => window.open(document.link_documento, '_blank')}
                                 className="p-2 text-gray-400 hover:text-purple-600 transition-colors"
                                 title="Ver enlace externo"
                               >

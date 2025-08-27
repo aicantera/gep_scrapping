@@ -613,12 +613,6 @@ const DocumentManagement: React.FC = () => {
       e.preventDefault()
       switch(editData.fuente){
         case sources[2]:
-          if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
-            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-            return
-          }
-          break
-        case sources[3]:
           if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
             alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
             return
@@ -670,7 +664,7 @@ const DocumentManagement: React.FC = () => {
                     required
                   />
                 </div>
-                { editData.fuente !== sources[3] && (
+                { editData.fuente !== sources[2] && (
                   <>
                     <div className="space-y-2">
                       <label className="form-label">Tipo de Proyecto</label>
@@ -691,14 +685,14 @@ const DocumentManagement: React.FC = () => {
                 )}
                 <div className="space-y-2">
                   <label className="form-label">
-                    {editData.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
+                    {editData.fuente === sources[2] ? "Órgano de difusión" : "Cámara de origen"}
                   </label>
                   <div className="form-input bg-gray-100 text-gray-600">
                     {editData.fuente || 'No especificado'}
                   </div>
                 </div>
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
-                {editData.fuente === sources[3] && (
+                {editData.fuente === sources[2] && (
                   <div className="space-y-2 md:col-span-2">
                     <label className="form-label">Dependencia</label>
                     <input
@@ -721,7 +715,7 @@ const DocumentManagement: React.FC = () => {
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
               </div>
               <div className="space-y-2">
-              {editData.fuente === sources[3] ? (
+              {editData.fuente === sources[2] ? (
                   <>
                     <label className="form-label">Resumen *</label>
                     <textarea
@@ -744,7 +738,7 @@ const DocumentManagement: React.FC = () => {
                 )}
               </div>
               <div className="space-y-2">
-                {editData.fuente === sources[3] || ((editData.fuente === sources[0] || editData.fuente === sources[1]) && (editData.tipo === docTypes[0] || editData.tipo === docTypes[1])) ? (
+                {editData.fuente === sources[2] || ((editData.fuente === sources[0] || editData.fuente === sources[1]) && (editData.tipo === docTypes[0] || editData.tipo === docTypes[1])) ? (
                   <>
                     <label className="form-label">Análisis</label>
                     <textarea
@@ -764,27 +758,7 @@ const DocumentManagement: React.FC = () => {
                   </>
                 )}
               </div>
-              { editData.fuente === sources[2] ? (
-                <>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="form-label">Último Documento del Expediente</label>
-                    <textarea
-                      value={editData.ultimo_doc_expediente}
-                      onChange={(e) => handleChange('ultimo_doc_expediente', e.target.value)}
-                      className="form-input resize-none"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="form-label">Link al enlace del expediente</label>
-                    <input
-                      type="text"
-                      value={editData.ver_expediente}
-                      onChange={(e) => handleChange('ver_expediente', e.target.value)}
-                      className="form-input resize-none"
-                    />
-                  </div>
-                </>
-              ) : editData.fuente !== sources[3] && (
+              { editData.fuente !== sources[2] && (
                 <>
                   <div className="space-y-2">
                     {editData.tipo !== docTypes[0] && (

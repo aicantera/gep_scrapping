@@ -85,7 +85,6 @@ const AlertsManagement: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
-  console.log('📝 Alertas cargadas:', alertas)
   // Estados de navegación
   const [activeTab, setActiveTab] = useState<'pendientes' | 'enviadas' | 'rechazadas'>('pendientes')
   
@@ -165,7 +164,6 @@ const AlertsManagement: React.FC = () => {
       const clientesIds = [...new Set(alertas.map(alerta => alerta.id_cliente).filter(Boolean))]
       
       if (clientesIds.length === 0) {
-        console.log('⚠️ No hay clientes para procesar listas de distribución')
         return alertas
       }
 
@@ -236,7 +234,6 @@ const AlertsManagement: React.FC = () => {
         }
       })
 
-      console.log('✅ Listas de distribución calculadas exitosamente')
       return alertasConListas
 
     } catch (error) {
@@ -249,7 +246,6 @@ const AlertsManagement: React.FC = () => {
   const loadAlertas = async () => {
     setLoading(true)
     try {
-      console.log('🔍 Cargando alertas con relaciones FK...')
       
       const { data: alertasData, error } = await supabase
         .from('alertas_directorio')
@@ -306,11 +302,6 @@ const AlertsManagement: React.FC = () => {
       if (error) {
         console.error('❌ Error cargando alertas:', error)
         throw error
-      }
-      
-      if (alertasData && alertasData.length > 0) {
-        // Log de todos los estados únicos encontrados
-        const estadosUnicos = [...new Set(alertasData.map(a => a.estado))]
       }
 
       // Procesar alertas con máxima tolerancia
@@ -429,14 +420,6 @@ const AlertsManagement: React.FC = () => {
       // Calcular listas de distribución para cada alerta
       const alertasConListasDistribucion = await calcularListasDistribucion(alertasProcesadas)
       setAlertas(alertasConListasDistribucion)
-      
-      // Log por estado DESPUÉS de normalización
-      const estadoCounts = alertasConListasDistribucion.reduce((acc: Record<string, number>, alerta: Alerta) => {
-        const estado = alerta.estado || 'pendientes'
-        acc[estado] = (acc[estado] || 0) + 1
-        return acc
-      }, {})
-      console.log('📈 Por estado (DESPUÉS de normalización):', estadoCounts)
 
     } catch (error) {
       console.error('❌ Error completo cargando alertas:', error)
@@ -456,16 +439,6 @@ const AlertsManagement: React.FC = () => {
 
       if (error) throw error
 
-      const clientesProcessed = (data || []).map(cliente => ({
-        id_cliente: cliente.id_cliente,
-        nombre_cliente: cliente.nombre_cliente || '',
-        siglas: cliente.siglas || '',
-        email: cliente.email || '',
-        listas_distribucion: [] // Simplificado por ahora
-      }))
-
-      // No necesitamos setClientes ya que no lo usamos
-      console.log('🔍 Clientes cargados:', clientesProcessed.length)
     } catch (error) {
       console.error('Error cargando clientes:', error)
     }
@@ -474,15 +447,8 @@ const AlertsManagement: React.FC = () => {
   // Función para filtrar alertas
   const alertasFiltradas = useMemo(() => {
     if (!alertas || alertas.length === 0) {
-      console.log('🔍 No hay alertas para filtrar')
       return []
     }
-
-    console.log('🔍 Filtrando alertas:', {
-      totalAlertas: alertas.length,
-      activeTab,
-      estados: alertas.map(a => a.estado)
-    })
 
     const filtradas = alertas.filter(alerta => {
       // Filtro por estado según la pestaña activa
@@ -530,12 +496,6 @@ const AlertsManagement: React.FC = () => {
       return true
     })
 
-    console.log('🔍 Resultado del filtrado:', {
-      alertasFiltradas: filtradas.length,
-      activeTab,
-      estadosEncontrados: filtradas.map(a => a.estado)
-    })
-
     return filtradas
   }, [alertas, activeTab, filterFuente, filterFecha, searchTerm])
 
@@ -549,29 +509,13 @@ const AlertsManagement: React.FC = () => {
   const totalPaginas = Math.ceil(alertasFiltradas.length / alertasPorPagina)
 
   useEffect(() => {
-    console.log('🚀 Iniciando carga de datos...')
     loadAlertas()
     loadClientes()
   }, [])
 
-  // Debug para ver el estado de las alertas
-  useEffect(() => {
-    console.log('📊 Estado actual de alertas:', {
-      total: alertas.length,
-      filtradas: alertasFiltradas.length,
-      activeTab,
-      porEstado: {
-        pendientes: alertas.filter(a => a.estado === 'pendientes').length,
-        enviadas: alertas.filter(a => a.estado === 'enviadas').length,
-        rechazadas: alertas.filter(a => a.estado === 'rechazadas').length
-      }
-    })
-  }, [alertas, alertasFiltradas, activeTab])
-
   // Funciones simplificadas para trabajar con los campos reales
   const validarAlerta = (alerta: Alerta) => {
     setAlertaSeleccionada(alerta)
-    console.log('📝 Validando alerta:', alerta)
     // Inicializar datos del documento del senado para edición
     if (alerta.documento_senado) {
       setDocumentoEditable({

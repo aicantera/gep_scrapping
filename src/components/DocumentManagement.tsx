@@ -761,7 +761,7 @@ const DocumentManagement: React.FC = () => {
               { editData.fuente !== sources[2] && (
                 <>
                   <div className="space-y-2">
-                    {editData.tipo !== docTypes[0] && (
+                    {(editData.tipo === docTypes[1] && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
                       <>
                         <label className="form-label">Transitorios</label>
                         <textarea

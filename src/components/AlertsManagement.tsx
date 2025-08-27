@@ -806,6 +806,11 @@ const AlertsManagement: React.FC = () => {
     setCurrentPage(1)
   }
 
+  useEffect(() => {
+    setAsuntoCorreo('');
+    setMensajeAdjunto('');
+  }, [alertaSeleccionada, documentoEditable]);
+
   return (
     <div className="p-6">
       {/* Header */}

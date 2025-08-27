@@ -1645,7 +1645,7 @@ const ClientsManagement: React.FC = () => {
                           <button
                             type="button"
                             onClick={addListaDistribucion}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mt-2"
                           >
                             Agregar Lista de Distribución
                           </button>

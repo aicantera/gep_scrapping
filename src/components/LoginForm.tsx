@@ -98,7 +98,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         return
       }
 
-      // onLogin?.()
+      onLogin?.()
       navigate('/', { replace: true });
     } catch (err) {
       console.error('Error inesperado:', err)

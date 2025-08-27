@@ -1010,6 +1010,9 @@ const DocumentManagement: React.FC = () => {
                         Fuente
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tipo
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fecha
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1052,6 +1055,16 @@ const DocumentManagement: React.FC = () => {
                             <Building className="w-3 h-3 mr-1" />
                             {document.fuente === 'senado' ? 'Cámara de Senadores' : document.fuente}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-xs text-gray-500 mt-1">
+                            { document.tipo ? 
+                                document.fuente === sources[2] ?  
+                                  'Proyecto'
+                                : document.tipo 
+                                : 'Sin tipo'
+                            }
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-900">

@@ -1207,51 +1207,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                 </div>
               </div>
 
-              {/* Relaciones */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">
-                    Clientes Relacionados ({detailData.clientes.length})
-                  </h4>
-                  <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
-                    {detailData.clientes.length > 0 ? (
-                      <div className="space-y-2">
-                        {detailData.clientes.map(cliente => (
-                          <div key={cliente.id_cliente} className="text-sm text-gray-900">
-                            • {cliente.nombre_cliente}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Sin clientes relacionados</p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">
-                    Documentos Relacionados ({detailData.documentos.length})
-                  </h4>
-                  <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
-                    {detailData.documentos.length > 0 ? (
-                      <div className="space-y-2">
-                        {detailData.documentos.slice(0, 10).map(documento => (
-                          <div key={documento.id_senado_doc} className="text-sm text-gray-900">
-                            • Documento ID: {documento.id_senado_doc}
-                          </div>
-                        ))}
-                        {detailData.documentos.length > 10 && (
-                          <div className="text-xs text-gray-500">
-                            ... y {detailData.documentos.length - 10} documentos más
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Sin documentos relacionados</p>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">

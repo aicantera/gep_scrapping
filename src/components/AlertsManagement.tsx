@@ -64,6 +64,7 @@ interface Alerta {
     analisis?: string
     analizado?: boolean
     informacion_adicional?: string
+    link_documento?: string
     [key: string]: any // Para campos adicionales
   } | null
 }
@@ -151,9 +152,9 @@ const AlertsManagement: React.FC = () => {
     ultimo_doc_expediente: '',
     ver_expediente: '',
     informacion_adicional: '',
-    titulo: ''
+    titulo: '',
+    link_documento: ''
   })
-  console.log('📝 Documento editable:', documentoEditable)
 
   // Estados para clientes (usados en validación) - ELIMINANDO VARIABLES NO USADAS
 
@@ -296,7 +297,8 @@ const AlertsManagement: React.FC = () => {
             ultimo_doc_expediente,
             ver_expediente,
             informacion_adicional,
-            titulo
+            titulo,
+            link_documento
           )
         `)
         .order('created_at', { ascending: false })
@@ -305,20 +307,10 @@ const AlertsManagement: React.FC = () => {
         console.error('❌ Error cargando alertas:', error)
         throw error
       }
-
-      console.log('🔍 Alertas encontradas:', alertasData?.length || 0)
       
       if (alertasData && alertasData.length > 0) {
-        console.log('🔍 Ejemplo de alerta con estado:', {
-          id: alertasData[0].id_alerta,
-          estado: alertasData[0].estado,
-          tipoEstado: typeof alertasData[0].estado,
-          estadoLength: alertasData[0].estado?.length
-        })
-        
         // Log de todos los estados únicos encontrados
         const estadosUnicos = [...new Set(alertasData.map(a => a.estado))]
-        console.log('🔍 Estados únicos encontrados:', estadosUnicos)
       }
 
       // Procesar alertas con máxima tolerancia
@@ -371,9 +363,6 @@ const AlertsManagement: React.FC = () => {
           const estadoOriginal = String(alerta.estado).trim()
           const estado = estadoOriginal.toLowerCase()
           
-          // Log para debug
-          console.log('Estado recibido:', estadoOriginal)
-          
           if (estado === 'pendiente' || estado === 'pendientes') {
             estadoNormalizado = 'pendientes'
           } else if (estado === 'enviada' || estado === 'enviadas' || estadoOriginal === 'Enviado al Correo') {
@@ -381,7 +370,6 @@ const AlertsManagement: React.FC = () => {
           } else if (estado === 'rechazada' || estado === 'rechazadas') {
             estadoNormalizado = 'rechazadas'
           } else {
-            console.log('Estado no reconocido, usando pendientes por defecto:', estadoOriginal)
             estadoNormalizado = 'pendientes' // Valor por defecto
           }
         }
@@ -432,7 +420,8 @@ const AlertsManagement: React.FC = () => {
             ultimo_doc_expediente: alerta.senado.ultimo_doc_expediente || null,
             titulo: alerta.senado.titulo || null,
             ver_expediente: alerta.senado.ver_expediente || null,
-            informacion_adicional: alerta.senado.informacion_adicional || null
+            informacion_adicional: alerta.senado.informacion_adicional || null,
+            link_documento: alerta.senado.link_documento || null
           } : null
         }
       })
@@ -505,8 +494,28 @@ const AlertsManagement: React.FC = () => {
       if (filterFuente && alerta.fuente !== filterFuente) return false
       
       // Filtro por fechas
-      if (filterFecha.desde && new Date(alerta.created_at) < new Date(filterFecha.desde)) return false
-      if (filterFecha.hasta && new Date(alerta.created_at) > new Date(filterFecha.hasta)) return false
+      if (filterFecha.hasta && filterFecha.desde !== filterFecha.hasta) {        
+        const fechaAlerta = new Date(alerta.created_at)
+        const fechaHasta = new Date(filterFecha.hasta)
+        if (fechaAlerta.getFullYear() > fechaHasta.getFullYear()) return false
+        if (fechaAlerta.getMonth() > fechaHasta.getMonth()) return false
+        if (fechaAlerta.getDate() > fechaHasta.getDate() + 1) return false
+      }
+      if (filterFecha.desde) {
+        const fechaAlerta = new Date(alerta.created_at)
+        const fechaDesde = new Date(filterFecha.desde)
+        // Si las fechas desde y hasta son iguales, comparar solo el día
+        if (filterFecha.hasta && (filterFecha.desde === filterFecha.hasta)) {
+          const fechaAlertaStr = fechaAlerta.toISOString().split('T')[0]
+          const fechaDesdeStr = fechaDesde.toISOString().split('T')[0]
+          if (fechaAlertaStr !== fechaDesdeStr) return false
+        } else {
+          // Comparación normal para rango de fechas
+          if (fechaAlerta.getFullYear() < fechaDesde.getFullYear()) return false
+          if (fechaAlerta.getMonth() < fechaDesde.getMonth()) return false
+          if (fechaAlerta.getDate() < fechaDesde.getDate()) return false
+        }
+      }
       
       // Filtro de búsqueda por texto
       if (searchTerm) {
@@ -590,6 +599,7 @@ const AlertsManagement: React.FC = () => {
         ver_expediente: alerta.documento_senado.ver_expediente || '',
         informacion_adicional: alerta.documento_senado.informacion_adicional || '',
         titulo: alerta.documento_senado.titulo || '',
+        link_documento: alerta.documento_senado.link_documento || '',
       })
     } else {
       // Inicializar con valores vacíos si no hay documento
@@ -617,7 +627,8 @@ const AlertsManagement: React.FC = () => {
         ultimo_doc_expediente: '',
         ver_expediente: '',
         informacion_adicional: '',
-        titulo: ''
+        titulo: '',
+        link_documento: '',
       })
     }
     
@@ -668,7 +679,8 @@ const AlertsManagement: React.FC = () => {
           ultimo_doc_expediente: documentoEditable.ultimo_doc_expediente || null,
           ver_expediente: documentoEditable.ver_expediente || null,
           informacion_adicional: documentoEditable.informacion_adicional || null,
-          titulo: documentoEditable.titulo || null
+          titulo: documentoEditable.titulo || null,
+          link_documento: documentoEditable.link_documento || null
         })
         .eq('id_senado_doc', alertaSeleccionada.id_doc_senado)
 

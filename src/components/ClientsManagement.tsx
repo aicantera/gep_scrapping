@@ -125,7 +125,6 @@ const ClientsManagement: React.FC = () => {
 
   const loadTemas = async () => {
     try {
-      console.log('🔄 Cargando temas...')
       
       const { data, error } = await supabase
         .from('temas')
@@ -137,7 +136,6 @@ const ClientsManagement: React.FC = () => {
         throw error
       }
       
-      console.log('✅ Temas cargados:', data?.length || 0, data)
       setTemas(data || [])
     } catch (error) {
       console.error('❌ Error final cargando temas:', error)
@@ -147,7 +145,6 @@ const ClientsManagement: React.FC = () => {
 
   const loadSubtemas = async () => {
     try {
-      console.log('🔄 Cargando subtemas...')
       
       const { data, error } = await supabase
         .from('subtemas')
@@ -158,8 +155,6 @@ const ClientsManagement: React.FC = () => {
         console.error('❌ Error cargando subtemas:', error)
         throw error
       }
-      
-      console.log('✅ Subtemas cargados:', data?.length || 0, data)
       setSubtemas(data || [])
     } catch (error) {
       console.error('❌ Error final cargando subtemas:', error)
@@ -236,7 +231,6 @@ const ClientsManagement: React.FC = () => {
         }
       })
       
-      console.log('✅ Clientes procesados:', processedClients.length, processedClients)
       setClients(processedClients)
     } catch (error) {
       console.error('Error cargando clientes:', error)
@@ -360,8 +354,6 @@ const ClientsManagement: React.FC = () => {
           .insert(insertData)
           .select();
 
-        console.log('📊 Resultado inserción:', { data, error });
-
         if (error) {
           console.error('❌ Error detallado al crear cliente:', error);
           throw error;
@@ -371,7 +363,7 @@ const ClientsManagement: React.FC = () => {
         setShowModal(false); // Cierra el modal
         await loadClients(); // Refresca la lista
         setTimeout(() => setSuccessMessage(''), 5000); // Oculta el mensaje después de 5s
-        return;
+        return data;
       }
       if (!selectedClient) return;
       const updateData = {
@@ -806,6 +798,13 @@ const ClientsManagement: React.FC = () => {
       setModalError('Error al descargar las listas de distribución.');
     }
   };
+
+  useEffect(() => {
+    if(showModal) {
+      setBusquedaTemasPorLista({});
+      setBusquedaTemaSubtema('');
+    }
+  }, [showModal])
 
   return (
     <div className="p-6">
@@ -1645,7 +1644,7 @@ const ClientsManagement: React.FC = () => {
                           <button
                             type="button"
                             onClick={addListaDistribucion}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mt-2"
                           >
                             Agregar Lista de Distribución
                           </button>
@@ -1656,6 +1655,11 @@ const ClientsManagement: React.FC = () => {
                 </div>
 
                 {/* Footer del modal */}
+                {modalError && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4 mx-6">
+                    <p className="text-red-600 text-sm">{modalError}</p>
+                  </div>
+                )}
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
                   <div>
                     {modalType === 'view' && formData.listas_distribucion.length > 0 && (
@@ -1675,12 +1679,7 @@ const ClientsManagement: React.FC = () => {
                       className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       {modalType === 'view' ? 'Cerrar' : 'Cancelar'}
-                    </button>
-                    {modalError && (
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
-                        <p className="text-red-600 text-sm">{modalError}</p>
-                      </div>
-                    )}
+                    </button>                    
                     {modalType !== 'view' && (
                       <button
                         onClick={saveClient}

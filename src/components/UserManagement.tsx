@@ -731,7 +731,7 @@ const UserManagement: React.FC = () => {
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             user.perfil === 'Administrador'
-                              ? 'bg-purple-100 text-purple-800'
+                              ? 'bg-gray-100 text-stone-700'
                               : 'bg-blue-100 text-blue-800'
                           }`}>
                             {user.perfil}
@@ -945,7 +945,7 @@ const UserManagement: React.FC = () => {
                             id="nombre"
                             value={formData.nombre}
                             onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
                             required
                             disabled={loading}
                           />
@@ -960,7 +960,7 @@ const UserManagement: React.FC = () => {
                           id="apellido"
                           value={formData.apellido}
                           onChange={(e) => setFormData({...formData, apellido: e.target.value})}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
+                          className="w-full px-4 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
                           required
                           disabled={loading}
                         />
@@ -978,7 +978,7 @@ const UserManagement: React.FC = () => {
                           id="email"
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
                           placeholder="usuario@gep.com.mx"
                           required
                           disabled={loading}
@@ -999,7 +999,7 @@ const UserManagement: React.FC = () => {
                           id="perfil"
                           value={formData.perfil}
                           onChange={(e) => setFormData({...formData, perfil: e.target.value as UserFormData['perfil']})}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996] appearance-none"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996] appearance-none"
                           required
                           disabled={loading}
                         >
@@ -1022,7 +1022,7 @@ const UserManagement: React.FC = () => {
                               id="password"
                               value={formData.password}
                               onChange={(e) => setFormData({...formData, password: e.target.value})}
-                              className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
+                              className="w-full pl-10 pr-12 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
                               placeholder={modalType === 'create' ? "Mínimo 8 caracteres" : "Dejar vacío para mantener actual"}
                               required={modalType === 'create'}
                               disabled={loading}
@@ -1053,7 +1053,7 @@ const UserManagement: React.FC = () => {
                               id="confirmPassword"
                               value={formData.confirmPassword}
                               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                              className="w-full px-4 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
+                              className="w-full px-4 pr-12 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
                               placeholder={modalType === 'create' ? "Confirmar contraseña" : "Confirmar nueva contraseña"}
                               required={modalType === 'create'}
                               disabled={loading}

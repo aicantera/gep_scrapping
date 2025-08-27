@@ -1235,22 +1235,22 @@ const ClientsManagement: React.FC = () => {
                       <div className="border-t pt-6">
                         <h4 className="text-lg font-medium text-gray-900 mb-4">Estadísticas del Cliente</h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                            <div className="text-2xl font-bold text-blue-600">
+                          <div className="bg-[#FDE2E7] p-4 rounded-lg border border-[#BD0E40]">
+                            <div className="text-2xl font-bold text-[#b30437]">
                               {formData.listas_distribucion.length}
                             </div>
-                            <div className="text-sm text-blue-800">Listas de Distribución</div>
+                            <div className="text-sm text-[#b30437]">Listas de Distribución</div>
                           </div>
-                          
-                          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                            <div className="text-2xl font-bold text-green-600">
+
+                          <div className="bg-[#FFF7E6] p-4 rounded-lg border border-[#FAC253]">
+                            <div className="text-2xl font-bold text-[#fdbd3f]">
                               {formData.listas_distribucion.reduce((acc, lista) => acc + lista.correos.length, 0)}
                             </div>
-                            <div className="text-sm text-green-800">Total de Correos</div>
+                            <div className="text-sm text-[#fdbd3f]">Total de Correos</div>
                           </div>
                           
-                          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                            <div className="text-2xl font-bold text-purple-600">
+                          <div className="bg-[#FFF0E6] p-4 rounded-lg border border-[#F58220]">
+                            <div className="text-2xl font-bold text-[#f58220]">
                               {(() => {
                                 // Obtener todos los temas/subtemas únicos de las listas de distribución
                                 const todosLosTemas = formData.listas_distribucion.flatMap(lista => lista.temas_subtemas);
@@ -1258,7 +1258,7 @@ const ClientsManagement: React.FC = () => {
                                 return [...new Set(todosLosTemas)].length;
                               })()}
                             </div>
-                            <div className="text-sm text-purple-800">Temas y Subtemas</div>
+                            <div className="text-sm text-[#f58220]">Temas y Subtemas</div>
                           </div>
                         </div>
                       </div>

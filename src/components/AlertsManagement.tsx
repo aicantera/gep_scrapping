@@ -436,9 +436,9 @@ const AlertsManagement: React.FC = () => {
         .from('clientes')
         .select('id_cliente, nombre_cliente, siglas, email')
         .eq('activo', true)
-
+      
       if (error) throw error
-
+      return data || [];
     } catch (error) {
       console.error('Error cargando clientes:', error)
     }

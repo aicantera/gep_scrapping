@@ -11,19 +11,21 @@ interface Props {
 
 const ProtectedRoute = ({ children }: Props) => {
   const { user, loading, connectionStatus, userRole } = useAuth();
+  const storeUser = localStorage.getItem("sb-masterd-auth-token");
+  const storeUserParse = storeUser ? JSON.parse(storeUser) : null;
 
   if (loading) return <Loading connectionStatus={connectionStatus} />;
   if (connectionStatus === "error") return <ConnectionStatusError />;
   if (user && !userRole) return <UserRoleError />;
 
-  // Solo redirige si la conexión está establecida y no hay usuario
-  if (!user && !loading && connectionStatus === "connected") {
+  // Solo redirige si la conexión está establecida, no hay usuario Y no hay usuario en localStorage
+  if (!user && !loading && !storeUserParse) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user && !loading) return children;
+  if (user) return children;
 
-  // Evita renderizar nada mientras loading o connecting
+  // Evita renderizar nada mientras se restaura la sesión desde el token
   return null;
 };
 

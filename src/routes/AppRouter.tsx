@@ -10,8 +10,9 @@ import ClientsManagement from "@/components/ClientsManagement";
 import ThemeManagement from "@/components/ThemeManagement";
 import UserManagement from "@/components/UserManagement";
 import BotsExecution from "@/components/BotsExecution";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardHome from "@/components/DashboardHome";
+// import ProtectedRoute from "@/components/ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 
 const adminRoutes = [
   <Route path="gestion-documental" element={<DocumentManagement />} />,

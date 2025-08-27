@@ -643,12 +643,15 @@ const DocumentManagement: React.FC = () => {
         <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Editar Documento</h3>
-            <button
-              onClick={() => setEditModalOpen(false)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className='flex items-center space-x-4'>
+              <p className='bg-gray-100 rounded-xl py-1 px-2 text-gray-400'>{editData.fuente}</p>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -1021,7 +1024,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.correspondier || 'Sin proponente', 40)}
+                            {truncateText(document.Proponente || 'Sin proponente', 40)}
                           </div>
                         </td>
                         <td className="px-6 py-4">

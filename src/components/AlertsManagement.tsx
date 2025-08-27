@@ -852,7 +852,7 @@ const AlertsManagement: React.FC = () => {
             onClick={() => cambiarBandeja('pendientes')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === 'pendientes'
-                ? 'bg-orange-600 text-white'
+                ? 'bg-[#fdbd3f] text-gray-900'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -872,7 +872,7 @@ const AlertsManagement: React.FC = () => {
             onClick={() => cambiarBandeja('rechazadas')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === 'rechazadas'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-[#b30437] text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >

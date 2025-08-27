@@ -28,15 +28,27 @@ const Select2: React.FC<Select2Props> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Function to normalize text by removing accents
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
   // Find the selected option to display its label
   const selectedOption = options.find(option => option.value === value);
   const displayText = selectedOption ? selectedOption.label : emptyOptionLabel;
 
-  // Filter options based on search term
-  const filteredOptions = options.filter(option =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    option.value.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter options based on search term (ignoring accents)
+  const filteredOptions = options.filter(option => {
+    const normalizedLabel = normalizeText(option.label);
+    const normalizedValue = normalizeText(option.value);
+    const normalizedSearchTerm = normalizeText(searchTerm);
+    
+    return normalizedLabel.includes(normalizedSearchTerm) ||
+           normalizedValue.includes(normalizedSearchTerm);
+  });
 
   // Close dropdown when clicking outside
   useEffect(() => {

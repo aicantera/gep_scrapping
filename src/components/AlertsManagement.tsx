@@ -1280,8 +1280,8 @@ const AlertsManagement: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          value={documentoEditable.Proponente || documentoEditable.personas}
-                          onChange={(e) => setDocumentoEditable({...documentoEditable, personas: e.target.value})}
+                          value={documentoEditable.Proponente}
+                          onChange={(e) => setDocumentoEditable({...documentoEditable, Proponente: e.target.value})}
                           className="form-input w-full"
                           placeholder="Nombre del proponente"
                         />

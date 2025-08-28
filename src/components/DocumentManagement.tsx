@@ -506,7 +506,7 @@ const DocumentManagement: React.FC = () => {
           .update({
             iniciativa_texto: editedDocument.iniciativa_texto,
             tipo: editedDocument.tipo,
-            personas: editedDocument.personas,
+            Proponente: editedDocument.Proponente,
             objeto: editedDocument.objeto,
             correspondier: editedDocument.correspondier,
             temas: editedDocument.temas,
@@ -626,11 +626,11 @@ const DocumentManagement: React.FC = () => {
           break
         }
 
-      if(editData.tipo === docTypes[0] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
+      if(editData.tipo === docTypes[0] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.Proponente || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis || !editData.resumen)) {
         alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
         return;
       }
-      if(editData.tipo === docTypes[1] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.personas || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis)) {
+      if(editData.tipo === docTypes[1] && (editData.fuente === sources[0] || editData.fuente === sources[1]) && (!editData.iniciativa_texto || !editData.tipo || !editData.Proponente || !editData.fuente || !editData.temas || !editData.objeto || !editData.analisis)) {
         alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
         return;
       }
@@ -679,8 +679,8 @@ const DocumentManagement: React.FC = () => {
                       <label className="form-label">Proponente</label>
                       <input
                         type="text"
-                        value={editData.personas}
-                        onChange={(e) => handleChange('personas', e.target.value)}
+                        value={editData.Proponente}
+                        onChange={(e) => handleChange('Proponente', e.target.value)}
                         className="form-input"
                       />
                     </div>

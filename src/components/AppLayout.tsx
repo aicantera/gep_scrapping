@@ -35,7 +35,7 @@ const adminRoutes = [
   },
   {
     icon: <Users size={20} />,
-    label: "Gestion de Clientes",
+    label: "Gestión de Clientes",
     href: "/gestion-clientes",
   },
   {

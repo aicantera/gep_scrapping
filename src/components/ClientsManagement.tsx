@@ -1210,7 +1210,7 @@ const ClientsManagement: React.FC = () => {
                           <div className="space-y-3">
                             <div className="flex flex-wrap gap-2">
                               {formData.temas_suscrit.map((tema, index) => (
-                                <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-slate-800">
                                   {tema}
                                 </span>
                               ))}
@@ -1326,12 +1326,12 @@ const ClientsManagement: React.FC = () => {
                                       <div className="flex flex-wrap gap-1">
                                         {lista.temas_subtemas.length > 0 ? (
                                           lista.temas_subtemas.map((tema, temaIndex) => (
-                                            <span key={temaIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <span key={temaIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-slate-800">
                                               {tema}
                                               <button
                                                 type="button"
                                                 onClick={() => removeTemaSubtemaFromLista(lista.id, tema)}
-                                                className="ml-1 text-blue-600 hover:text-blue-800"
+                                                className="ml-1 text-slate-600 hover:text-slate-800"
                                               >
                                                 <X size={12} />
                                               </button>
@@ -1429,7 +1429,7 @@ const ClientsManagement: React.FC = () => {
                                                               </svg>
                                                             )}
                                                           </button>
-                                                          <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1 break-words flex-1 min-w-0 inline-block leading-relaxed">{st.subtema_text}</span>
+                                                          <span className="text-xs bg-gray-200 text-slate-800 rounded-full px-2 py-1 break-words flex-1 min-w-0 inline-block leading-relaxed">{st.subtema_text}</span>
                                                         </div>
                                                       );
                                                     })}
@@ -1443,7 +1443,7 @@ const ClientsManagement: React.FC = () => {
                                     <div className="flex flex-wrap gap-1">
                                       {lista.temas_subtemas.length > 0 ? (
                                         lista.temas_subtemas.map((tema, temaIndex) => (
-                                          <span key={temaIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                          <span key={temaIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-slate-800">
                                             {tema}
                                           </span>
                                         ))

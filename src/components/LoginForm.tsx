@@ -180,11 +180,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               <label style={{ color: '#3C3C3B' }} className="text-sm font-medium block mb-2">
                 Contraseña
               </label>
-              {errors.password && (
-                <div className="error-message bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-2 text-center font-semibold">
-                  {errors.password}
-                </div>
-              )}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
@@ -219,6 +214,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-red-600 text-sm mt-1">{errors.password}</p>
+              )}
             </div>
 
             {/* Login Button */}

@@ -613,12 +613,6 @@ const DocumentManagement: React.FC = () => {
       e.preventDefault()
       switch(editData.fuente){
         case sources[2]:
-          if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis || !editData.ultimo_doc_expediente || !editData.ver_expediente) {
-            alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-            return
-          }
-          break
-        case sources[3]:
           if(!editData.iniciativa_texto || !editData.fuente || !editData.dependencia || !editData.temas || !editData.resumen || !editData.analisis) {
             alert('Todos los campos obligatorios deben estar completos para guardar los cambios.')
             return
@@ -649,12 +643,15 @@ const DocumentManagement: React.FC = () => {
         <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Editar Documento</h3>
-            <button
-              onClick={() => setEditModalOpen(false)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className='flex items-center space-x-4'>
+              <p className='bg-gray-100 rounded-xl py-1 px-2 text-gray-400'>{editData.fuente}</p>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -670,7 +667,7 @@ const DocumentManagement: React.FC = () => {
                     required
                   />
                 </div>
-                { editData.fuente !== sources[3] && (
+                { editData.fuente !== sources[2] && (
                   <>
                     <div className="space-y-2">
                       <label className="form-label">Tipo de Proyecto</label>
@@ -691,14 +688,14 @@ const DocumentManagement: React.FC = () => {
                 )}
                 <div className="space-y-2">
                   <label className="form-label">
-                    {editData.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
+                    {editData.fuente === sources[2] ? "Órgano de difusión" : "Cámara de origen"}
                   </label>
                   <div className="form-input bg-gray-100 text-gray-600">
                     {editData.fuente || 'No especificado'}
                   </div>
                 </div>
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
-                {editData.fuente === sources[3] && (
+                {editData.fuente === sources[2] && (
                   <div className="space-y-2 md:col-span-2">
                     <label className="form-label">Dependencia</label>
                     <input
@@ -721,7 +718,7 @@ const DocumentManagement: React.FC = () => {
                 {/* Eliminados los campos de Gaceta y Enlace PDF */}
               </div>
               <div className="space-y-2">
-              {editData.fuente === sources[3] ? (
+              {editData.fuente === sources[2] ? (
                   <>
                     <label className="form-label">Resumen *</label>
                     <textarea
@@ -744,7 +741,7 @@ const DocumentManagement: React.FC = () => {
                 )}
               </div>
               <div className="space-y-2">
-                {editData.fuente === sources[3] || ((editData.fuente === sources[0] || editData.fuente === sources[1]) && (editData.tipo === docTypes[0] || editData.tipo === docTypes[1])) ? (
+                {editData.fuente === sources[2] || ((editData.fuente === sources[0] || editData.fuente === sources[1]) && (editData.tipo === docTypes[0] || editData.tipo === docTypes[1])) ? (
                   <>
                     <label className="form-label">Análisis</label>
                     <textarea
@@ -764,30 +761,10 @@ const DocumentManagement: React.FC = () => {
                   </>
                 )}
               </div>
-              { editData.fuente === sources[2] ? (
-                <>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="form-label">Último Documento del Expediente</label>
-                    <textarea
-                      value={editData.ultimo_doc_expediente}
-                      onChange={(e) => handleChange('ultimo_doc_expediente', e.target.value)}
-                      className="form-input resize-none"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="form-label">Link al enlace del expediente</label>
-                    <input
-                      type="text"
-                      value={editData.ver_expediente}
-                      onChange={(e) => handleChange('ver_expediente', e.target.value)}
-                      className="form-input resize-none"
-                    />
-                  </div>
-                </>
-              ) : editData.fuente !== sources[3] && (
+              { editData.fuente !== sources[2] && (
                 <>
                   <div className="space-y-2">
-                    {editData.tipo !== docTypes[0] && (
+                    {(editData.tipo === docTypes[1] && (editData.fuente === sources[0] || editData.fuente === sources[1])) && (
                       <>
                         <label className="form-label">Transitorios</label>
                         <textarea
@@ -1047,7 +1024,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.correspondier || 'Sin proponente', 40)}
+                            {truncateText(document.Proponente || 'Sin proponente', 40)}
                           </div>
                         </td>
                         <td className="px-6 py-4">

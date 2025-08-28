@@ -806,6 +806,11 @@ const AlertsManagement: React.FC = () => {
     setCurrentPage(1)
   }
 
+  useEffect(() => {
+    setAsuntoCorreo('');
+    setMensajeAdjunto('');
+  }, [alertaSeleccionada, documentoEditable]);
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -1256,7 +1261,7 @@ const AlertsManagement: React.FC = () => {
                       />
                     </div>
                     {/* Tipo de proyecto - Solo mostrar si no es fuente[3] - NO EDITABLE */}
-                    {documentoEditable.fuente !== sources[3] && (
+                    {documentoEditable.fuente !== sources[2] && (
                       <div className="col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Tipo de Proyecto
@@ -1268,7 +1273,7 @@ const AlertsManagement: React.FC = () => {
                     )}
 
                     {/* Proponente - Solo mostrar si no es fuente[3] */}
-                    {documentoEditable.fuente !== sources[3] && (
+                    {documentoEditable.fuente !== sources[2] && (
                       <div className='col-span-1'>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Proponente
@@ -1286,7 +1291,7 @@ const AlertsManagement: React.FC = () => {
                     {/* Camara de origen / Órgano de difusión - NO EDITABLE */}
                     <div className='col-span-1'>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {documentoEditable.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
+                        {documentoEditable.fuente === sources[2] ? "Órgano de difusión" : "Cámara de origen"}
                       </label>
                       <div className="form-input w-full bg-gray-100 text-gray-600">
                         {documentoEditable.fuente || 'No especificado'}
@@ -1294,7 +1299,7 @@ const AlertsManagement: React.FC = () => {
                     </div>
 
                     {/* Dependencia - Solo mostrar si es fuente[3] (DOF) */}
-                    {documentoEditable.fuente === sources[3] && (
+                    {documentoEditable.fuente === sources[2] && (
                       <div className='md:col-span-2'>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Dependencia
@@ -1325,7 +1330,7 @@ const AlertsManagement: React.FC = () => {
 
                     {/* Objeto o Resumen según fuente */}
                     <div className="md:col-span-2">
-                      {documentoEditable.fuente === sources[3] ? (
+                      {documentoEditable.fuente === sources[2] ? (
                         <>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Resumen *
@@ -1356,7 +1361,7 @@ const AlertsManagement: React.FC = () => {
 
                     {/* Análisis o Correspondiente según fuente */}
                     <div className="md:col-span-2">
-                      {documentoEditable.fuente === sources[3] || ((documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1]) && (documentoEditable.tipo === docTypes[0] || documentoEditable.tipo === docTypes[1])) ? (
+                      {documentoEditable.fuente === sources[2] || ((documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1]) && (documentoEditable.tipo === docTypes[0] || documentoEditable.tipo === docTypes[1])) ? (
                         <>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Análisis
@@ -1386,7 +1391,7 @@ const AlertsManagement: React.FC = () => {
 
 
                     {/* Transitorios - Solo para fuentes que no sean DOF */}
-                    {documentoEditable.fuente !== sources[3] && (
+                    {documentoEditable.fuente !== sources[2] && (
                       <div className="md:col-span-2">
                         {documentoEditable.tipo !== docTypes[0] && (
                           <>
@@ -1404,8 +1409,8 @@ const AlertsManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Estatus - Solo mostrar si no es fuente[3] (DOF) */}
-                    {documentoEditable.fuente !== sources[3] && (
+                    {/* Estatus - Solo mostrar si no es fuente[2] (DOF) */}
+                    {documentoEditable.fuente !== sources[2] && (
                       <div className="md:col-span-2">
                         <label className="form-label">Estatus</label>
                         {(documentoEditable.fuente === sources[0] || documentoEditable.fuente === sources[1] || documentoEditable.tipo === docTypes[0]) ? (
@@ -1631,7 +1636,7 @@ const AlertsManagement: React.FC = () => {
                     )}
 
                     {/* Tipo de Proyecto - Solo mostrar si no es DOF */}
-                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.tipo && (
+                    {alertaSeleccionada.documento_senado.fuente !== sources[2] && alertaSeleccionada.documento_senado.tipo && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Tipo de Proyecto</label>
                         <div className="text-gray-900">
@@ -1643,7 +1648,7 @@ const AlertsManagement: React.FC = () => {
                     )}
 
                     {/* Proponente - Solo mostrar si no es DOF */}
-                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && (alertaSeleccionada.documento_senado.Proponente || alertaSeleccionada.documento_senado.personas) && (
+                    {alertaSeleccionada.documento_senado.fuente !== sources[2] && (alertaSeleccionada.documento_senado.Proponente || alertaSeleccionada.documento_senado.personas) && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Proponente</label>
                         <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.Proponente || alertaSeleccionada.documento_senado.personas}</div>
@@ -1654,14 +1659,14 @@ const AlertsManagement: React.FC = () => {
                     {alertaSeleccionada.documento_senado.fuente && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          {alertaSeleccionada.documento_senado.fuente === sources[3] ? "Órgano de difusión" : "Cámara de origen"}
+                          {alertaSeleccionada.documento_senado.fuente === sources[2] ? "Órgano de difusión" : "Cámara de origen"}
                         </label>
                         <div className="text-gray-900 font-medium">{alertaSeleccionada.documento_senado.fuente}</div>
                       </div>
                     )}
 
                     {/* Dependencia - Solo mostrar si es DOF */}
-                    {alertaSeleccionada.documento_senado.fuente === sources[3] && alertaSeleccionada.documento_senado.dependencia && (
+                    {alertaSeleccionada.documento_senado.fuente === sources[2] && alertaSeleccionada.documento_senado.dependencia && (
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Dependencia</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
@@ -1681,7 +1686,7 @@ const AlertsManagement: React.FC = () => {
                     )}
 
                     {/* Objeto o Resumen según fuente */}
-                    {alertaSeleccionada.documento_senado.fuente === sources[3] ? (
+                    {alertaSeleccionada.documento_senado.fuente === sources[2] ? (
                       alertaSeleccionada.documento_senado.resumen && (
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700">Resumen</label>
@@ -1702,7 +1707,7 @@ const AlertsManagement: React.FC = () => {
                     )}
 
                     {/* Análisis o Correspondiente según fuente */}
-                    {alertaSeleccionada.documento_senado.fuente === sources[3] || ((alertaSeleccionada.documento_senado.fuente === sources[0] || alertaSeleccionada.documento_senado.fuente === sources[1]) && (alertaSeleccionada.documento_senado.tipo === docTypes[0] || alertaSeleccionada.documento_senado.tipo === docTypes[1])) ? (
+                    {alertaSeleccionada.documento_senado.fuente === sources[2] || ((alertaSeleccionada.documento_senado.fuente === sources[0] || alertaSeleccionada.documento_senado.fuente === sources[1]) && (alertaSeleccionada.documento_senado.tipo === docTypes[0] || alertaSeleccionada.documento_senado.tipo === docTypes[1])) ? (
                       alertaSeleccionada.documento_senado.analisis && (
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700">Análisis</label>
@@ -1725,7 +1730,7 @@ const AlertsManagement: React.FC = () => {
 
 
                     {/* Transitorios - Solo para fuentes que no sean DOF y tipos que no sean PUNTO DE ACUERDO */}
-                    {alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.tipo !== docTypes[0] && alertaSeleccionada.documento_senado.transitorios && (
+                    {alertaSeleccionada.documento_senado.fuente !== sources[2] && alertaSeleccionada.documento_senado.tipo !== docTypes[0] && alertaSeleccionada.documento_senado.transitorios && (
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Transitorios</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
@@ -1735,7 +1740,7 @@ const AlertsManagement: React.FC = () => {
                     )}
 
                     {/* Estatus - Solo mostrar si no es DOF */}
-                    {(alertaSeleccionada.documento_senado.fuente !== sources[3] && alertaSeleccionada.documento_senado.resumen) && (
+                    {(alertaSeleccionada.documento_senado.fuente !== sources[2] && alertaSeleccionada.documento_senado.resumen) && (
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">Estatus</label>
                         <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">

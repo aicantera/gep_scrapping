@@ -1236,7 +1236,7 @@ const AlertsManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
-{/* asdasd */}
+
               {/* Datos del Documento del Senado - NUEVA SECCIÓN */}
               {alertaSeleccionada.documento_senado && (
                 <div className="space-y-4">

@@ -82,6 +82,7 @@ const DocumentManagement: React.FC = () => {
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const documentsPerPage = 10
   const sources = [
@@ -109,7 +110,6 @@ const DocumentManagement: React.FC = () => {
       'dof': 'Diario Oficial de la Federación'
     }
     const normalized = sourceMap[source.toLowerCase()] || source
-    console.log('🔧 Normalizando fuente:', source, '→', normalized)
     return normalized
   }
 
@@ -136,8 +136,6 @@ const DocumentManagement: React.FC = () => {
     setLoading(true)
     setError(null)
 
-    console.log('📊 Iniciando fetchDocuments con filtros:', filters)
-
     try {
       // Estrategia: Usar una sola consulta con todos los filtros
       let query = supabase
@@ -145,17 +143,14 @@ const DocumentManagement: React.FC = () => {
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
 
-      console.log('🔍 Query base creada, aplicando filtros...')
 
       // Aplicar filtros de fecha
       if (filters.fechaDesde) {
-        console.log('📅 Aplicando filtro fecha desde:', filters.fechaDesde)
         // Inicio del día en ISO
         query = query.gte('created_at', `${filters.fechaDesde}T00:00:00`)
       }
 
       if (filters.fechaHasta) {
-        console.log('📅 Aplicando filtro fecha hasta:', filters.fechaHasta)
         // Fin del día en ISO
         query = query.lte('created_at', `${filters.fechaHasta}T23:59:59`)
       }
@@ -163,7 +158,6 @@ const DocumentManagement: React.FC = () => {
       // Aplicar filtro de fuente
       if (filters.fuente) {
         const normalizedSource = normalizeSource(filters.fuente)
-        console.log('🔧 Aplicando filtro de fuente:', filters.fuente, '→', normalizedSource)
         const patterns = getFuentePatterns(normalizedSource)
         if (patterns.length <= 1) {
           query = query.ilike('fuente', `%${patterns[0]}%`)
@@ -171,7 +165,6 @@ const DocumentManagement: React.FC = () => {
           const orExpr = patterns.map(p => `fuente.ilike.%${p}%`).join(',')
           query = query.or(orExpr)
         }
-        console.log('✅ Filtro de fuente aplicado')
       }
 
       // Aplicar búsqueda de texto
@@ -216,15 +209,13 @@ const DocumentManagement: React.FC = () => {
         const terminosFinales = Array.from(terminos).filter(t => t && t.trim())
         
         // Construir query con todos los términos
-        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes']
+        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto']
         const conditions = terminosFinales.flatMap((term: string) => 
           fields.map(field => `${field}.ilike.%${term}%`)
         )
         
         query = query.or(conditions.join(','))
       }
-
-      console.log('🔍 Query final construida, ejecutando...')
 
       // Aplicar paginación
       const from = (currentPage - 1) * documentsPerPage
@@ -233,32 +224,9 @@ const DocumentManagement: React.FC = () => {
       const { data, error: fetchError, count } = await query
         .range(from, to)
 
-      console.log('📊 Respuesta de Supabase:', {
-        data: data?.length || 0,
-        count: count || 0,
-        error: fetchError ? fetchError.message : null
-      })
-
       if (fetchError) {
         console.error('❌ Error en la consulta:', fetchError)
         throw fetchError
-      }
-
-      console.log('✅ Resultados de la consulta:', {
-        documentosEncontrados: data?.length || 0,
-        totalDocumentos: count || 0,
-        paginaActual: currentPage,
-        filtrosAplicados: filters
-      })
-
-      // Mostrar algunos ejemplos de documentos si hay datos
-      if (data && data.length > 0) {
-        console.log('📄 Ejemplos de documentos:', data.slice(0, 2).map(doc => ({
-          id: doc.id_senado_doc,
-          fuente: doc.fuente,
-          titulo: doc.iniciativa_texto?.substring(0, 50) + '...',
-          fecha: doc.created_at
-        })))
       }
 
       setDocuments(data || [])
@@ -275,13 +243,11 @@ const DocumentManagement: React.FC = () => {
 
   // Cargar documentos iniciales
   useEffect(() => {
-    console.log('🚀 Componente montado, cargando documentos iniciales...')
     fetchDocuments()
   }, [])
 
   // Efecto para cambios en filtros y paginación
   useEffect(() => {
-    console.log('🔄 Filtros o página cambiaron, recargando documentos...', { currentPage, filters })
     // Ejecutar fetchDocuments siempre que cambien estos valores
     fetchDocuments()
   }, [currentPage, filters.fuente, filters.fechaDesde, filters.fechaHasta])
@@ -294,11 +260,9 @@ const DocumentManagement: React.FC = () => {
     }
     
     if (filters.busqueda !== undefined) {
-      console.log('🔍 Búsqueda cambió, aplicando debounce...', filters.busqueda)
       setIsSearching(true)
       
       const newTimeout = setTimeout(() => {
-        console.log('🔍 Ejecutando búsqueda con debounce para:', filters.busqueda)
         fetchDocuments()
         setIsSearching(false)
       }, 500)
@@ -317,13 +281,11 @@ const DocumentManagement: React.FC = () => {
   }, [searchTimeout])
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
-    console.log('🔄 Cambiando filtro:', key, '→', value)
     setFilters(prev => ({ ...prev, [key]: value }))
     setCurrentPage(1) // Siempre resetear a página 1 cuando cambien los filtros
   }
 
   const clearFilters = () => {
-    console.log('🧹 Limpiando todos los filtros...')
     setFilters({
       fuente: '',
       fechaDesde: '',
@@ -344,16 +306,6 @@ const DocumentManagement: React.FC = () => {
     }, 100)
   }
 
-
-
-
-
-
-
-
-
-
-
   const handleDownload = (document: Document) => {
     if (document.link_documento) {
       window.open(document.link_documento, '_blank')
@@ -368,7 +320,6 @@ const DocumentManagement: React.FC = () => {
   }
 
   const handleDeleteClick = (document: Document) => {
-    console.log('🗑️ Intentando eliminar documento:', document.id_senado_doc, document.iniciativa_texto)
     setDocumentToDelete(document)
     setDeleteModalOpen(true)
   }
@@ -379,7 +330,6 @@ const DocumentManagement: React.FC = () => {
       return
     }
 
-    console.log('🗑️ Confirmando eliminación del documento:', documentToDelete.id_senado_doc)
     setIsDeleting(true)
 
     try {
@@ -402,10 +352,7 @@ const DocumentManagement: React.FC = () => {
         return
       }
 
-      console.log('✅ Documento encontrado, procediendo a eliminar...')
-
       // Método 1: Intentar con cliente de administrador
-      console.log('🔑 Método 1: Usando cliente de administrador...')
       let deleteError = null
       
       try {
@@ -422,7 +369,6 @@ const DocumentManagement: React.FC = () => {
 
       // Método 2: Si falla el administrador, intentar con cliente normal
       if (deleteError) {
-        console.log('🔄 Método 2: Intentando con cliente normal...')
         try {
           const { error } = await supabase
             .from('senado')
@@ -438,7 +384,6 @@ const DocumentManagement: React.FC = () => {
 
       // Método 3: Si ambos fallan, intentar con fetch directo
       if (deleteError) {
-        console.log('🔄 Método 3: Intentando con fetch directo...')
         try {
           const response = await fetch(`${supabaseUrl}/rest/v1/senado?id_senado_doc=eq.${documentToDelete.id_senado_doc}`, {
             method: 'DELETE',
@@ -467,12 +412,10 @@ const DocumentManagement: React.FC = () => {
         throw deleteError
       }
 
-      console.log('✅ Documento eliminado exitosamente')
-
       setDeleteModalOpen(false)
       setDocumentToDelete(null)
-      alert('El documento ha sido eliminado correctamente.')
-      
+      setSuccessMessage('El documento ha sido eliminado correctamente.')
+
       // Recargar la lista de documentos
       await fetchDocuments()
       
@@ -493,11 +436,9 @@ const DocumentManagement: React.FC = () => {
   }
 
   const handleSaveEdit = async (editedDocument: Document) => {
-    console.log('✏️ Intentando actualizar documento:', editedDocument.id_senado_doc)
     
     try {
       // Método 1: Intentar con cliente de administrador
-      console.log('🔑 Método 1: Usando cliente de administrador para actualizar...')
       let updateError = null
       
       try {
@@ -532,7 +473,6 @@ const DocumentManagement: React.FC = () => {
 
       // Método 2: Si falla el administrador, intentar con cliente normal
       if (updateError) {
-        console.log('🔄 Método 2: Intentando con cliente normal...')
         try {
           const { error } = await supabase
             .from('senado')
@@ -569,11 +509,9 @@ const DocumentManagement: React.FC = () => {
         throw updateError
       }
 
-      console.log('✅ Documento actualizado exitosamente')
-
       setEditModalOpen(false)
       setSelectedDocument(null)
-      alert('Documento actualizado correctamente.')
+      setSuccessMessage('Documento actualizado exitosamente.')
       fetchDocuments()
     } catch (err) {
       console.error('❌ Error completo al actualizar documento:', err)
@@ -601,6 +539,15 @@ const DocumentManagement: React.FC = () => {
     if (!text) return 'Sin información'
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
   }
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMessage])
 
   const EditModal: React.FC = () => {
     const [editData, setEditData] = useState<Document>(selectedDocument!)
@@ -801,7 +748,7 @@ const DocumentManagement: React.FC = () => {
                 <div className="space-y-2">
                   <label className="form-label">Información adicional</label>
                   <textarea
-                    value={editData.informacion_adicional}
+                    value={editData.informacion_adicional || ''}
                     onChange={(e) => handleChange('informacion_adicional', e.target.value)}
                     className="form-input h-24 resize-none"
                   />
@@ -852,6 +799,13 @@ const DocumentManagement: React.FC = () => {
 
           </div>
       </div>
+
+      {/* Solo mensajes de éxito en la ventana principal */}
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 font-semibold text-center">
+          {successMessage}
+        </div>
+      )}
 
       {/* Filters and Search */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -998,9 +952,6 @@ const DocumentManagement: React.FC = () => {
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Temas
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Clientes
-                      </th>
                       <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Acciones
                       </th>
@@ -1059,12 +1010,6 @@ const DocumentManagement: React.FC = () => {
                             <Tag className="w-4 h-4 mr-2 text-gray-400" />
                             {truncateText(document.temas || 'Sin temas', 40)}
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            <Users className="w-3 h-3 mr-1" />
-                            Sin clientes asociados
-                          </span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-2">

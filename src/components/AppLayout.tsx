@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import {
   AlertTriangle,
+  ArrowLeft,
   BarChart3,
   Bot,
   ChevronLeft,
@@ -294,6 +295,14 @@ const AppLayout = () => {
                 >
                   <Menu size={20} />
                 </button>
+
+                <div>
+                  <ArrowLeft 
+                    size={25} 
+                    className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer" 
+                    onClick={() => navigate(-1)}
+                  />
+                </div>
 
                 <div>
                   <h2 className="text-lg md:text-xl font-semibold text-gray-800">

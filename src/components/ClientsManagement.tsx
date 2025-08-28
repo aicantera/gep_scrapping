@@ -1629,7 +1629,9 @@ const ClientsManagement: React.FC = () => {
                                                 }}
                                                 className="mr-1"
                                               />
-                                              <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1">{st.subtema_text}</span>
+                                              <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1 break-all max-w-full">
+                                                {st.subtema_text}
+                                              </span>
                                             </label>
                                           );
                                         })

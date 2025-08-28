@@ -45,7 +45,7 @@ const adminRoutes = [
   },
   {
     icon: <FileText size={20} />,
-    label: "Gestion Documental",
+    label: "Gestión Documental",
     href: "/gestion-documental",
   },
   {
@@ -69,7 +69,7 @@ const analistaRoutes = [
   },
   {
     icon: <FileText size={20} />,
-    label: "Gestion Documental",
+    label: "Gestión Documental",
     href: "/gestion-documental",
   },
 ];

@@ -649,15 +649,15 @@ const DashboardHome = () => {
       <div className="bg-white rounded-lg shadow-sm border p-4 md:p-6">
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <h3 className="text-lg font-semibold text-gray-800">
-            documentos recientes
+            Documentos recientes
           </h3>
-          <button
+          {/* <button
             onClick={loadDashboardData}
             className="flex items-center gap-2 px-3 py-2 bg-[#999996] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors text-sm"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Recargar datos</span>
-          </button>
+          </button> */}
         </div>
         {loading ? (
           <div className="text-center py-8">

@@ -1043,7 +1043,7 @@ const AlertsManagement: React.FC = () => {
                         {alerta.documento_senado?.link_iniciativa && (
                           <div className="mt-1">
                             <a 
-                              href={alerta.documento_senado.link_iniciativa}
+                              href={alerta.documento_senado.link_documento}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-800 text-xs underline"

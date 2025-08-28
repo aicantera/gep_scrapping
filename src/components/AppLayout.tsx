@@ -24,14 +24,14 @@ import SessionWarning from "./SessionWarning";
 const adminRoutes = [
   { icon: <BarChart3 size={20} />, label: "Dashboard", href: "/dashboard" },
   {
-    icon: <FileText size={20} />,
-    label: "Gestion Documental",
-    href: "/gestion-documental",
-  },
-  {
     icon: <AlertTriangle size={20} />,
     label: "Alertas y Monitoreo",
     href: "/alertas-monitoreo",
+  },
+  {
+    icon: <Bot size={20} />,
+    label: "Ejecución de Bots",
+    href: "/ejecucion-bots",
   },
   {
     icon: <Users size={20} />,
@@ -44,24 +44,19 @@ const adminRoutes = [
     href: "/gestion-temas",
   },
   {
+    icon: <FileText size={20} />,
+    label: "Gestion Documental",
+    href: "/gestion-documental",
+  },
+  {
     icon: <UserCog size={20} />,
     label: "Gestión de Usuarios",
     href: "/gestion-usuarios",
-  },
-  {
-    icon: <Bot size={20} />,
-    label: "Ejecución de Bots",
-    href: "/ejecucion-bots",
   },
 ];
 
 const analistaRoutes = [
   { icon: <BarChart3 size={20} />, label: "Dashboard", href: "/dashboard" },
-  {
-    icon: <FileText size={20} />,
-    label: "Gestion Documental",
-    href: "/gestion-documental",
-  },
   {
     icon: <AlertTriangle size={20} />,
     label: "Alertas y Monitoreo",
@@ -71,6 +66,11 @@ const analistaRoutes = [
     icon: <Bot size={20} />,
     label: "Ejecución de Bots",
     href: "/ejecucion-bots",
+  },
+  {
+    icon: <FileText size={20} />,
+    label: "Gestion Documental",
+    href: "/gestion-documental",
   },
 ];
 

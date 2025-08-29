@@ -19,6 +19,7 @@ import { supabase } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import { ESTATUS_DOC_OPTIONS } from '../utils/SelectOptions'
 import Select2 from './ui/select2'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Interfaces para tipado
 interface Alerta {
@@ -67,11 +68,15 @@ interface Alerta {
     link_documento?: string
     [key: string]: any // Para campos adicionales
   } | null
+
+  enviado_por?: any;
 }
 
 
 
 const AlertsManagement: React.FC = () => {
+  const { user } = useAuth();
+
   // Función para normalizar texto removiendo tildes
   const normalizeText = (text: string): string => {
     return text
@@ -579,9 +584,20 @@ const AlertsManagement: React.FC = () => {
     setShowValidarModal(true)
   }
 
-  const verAlerta = (alerta: Alerta) => {
-    setAlertaSeleccionada(alerta)
-    setShowVerModal(true)
+  const verAlerta = async (alerta: Alerta) => {
+    if (alerta.id_analista) {
+      const { data: userFilter } = await supabase
+        .from('usuarios')
+        .select("*")
+        .eq('user_id', alerta.id_analista)
+        .single();
+
+      setAlertaSeleccionada({ ...alerta, enviado_por: userFilter });
+      setShowVerModal(true)
+    } else {
+      setAlertaSeleccionada(alerta)
+      setShowVerModal(true)
+    }
   }
 
   const eliminarAlerta = (alerta: Alerta) => {
@@ -696,6 +712,7 @@ const AlertsManagement: React.FC = () => {
           datetime_enviado_correo: new Date().toISOString(),
           asunto_email: asuntoCorreo,
           mensaje_email: mensajeAdjunto,
+          id_analista: user?.id || null
         })
         .eq('id_alerta', alertaSeleccionada.id_alerta)
       
@@ -722,7 +739,8 @@ const AlertsManagement: React.FC = () => {
       const { error } = await supabase
         .from('alertas_directorio')
         .update({
-          estado: 'rechazadas'
+          estado: 'rechazadas',
+          id_analista: user?.id || null
         })
         .eq('id_alerta', alertaSeleccionada.id_alerta)
       
@@ -1597,6 +1615,15 @@ const AlertsManagement: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Fuente</label>
                   <div className="text-gray-900">{alertaSeleccionada.fuente || 'N/A'}</div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Enviado por:</label>
+                  <div className="text-gray-900">
+                    {`${alertaSeleccionada?.enviado_por?.nombre || 'N/A'}
+                    ${alertaSeleccionada?.enviado_por?.apellido || 'N/A'}`}
+                  </div>
+                  <div className="text-gray-900">{alertaSeleccionada?.enviado_por?.email || 'N/A'}</div>
                 </div>
               </div>
 

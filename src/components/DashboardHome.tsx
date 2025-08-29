@@ -220,6 +220,7 @@ const DashboardHome = () => {
           .from("alertas_directorio")
           .select("id_alerta, created_at")
           .eq("status_alerta", 0)
+          .eq("estado", "Pendiente")
           .gte("created_at", todayStr)
           .lt("created_at", todayStr + "T23:59:59.999Z");
 

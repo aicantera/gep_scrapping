@@ -18,7 +18,9 @@ import {
   CheckCircle,
   XCircle,
   Power,
-  PowerOff
+  PowerOff,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { supabase, supabaseAdmin } from '../lib/supabase'
 
@@ -569,12 +571,6 @@ const UserManagement: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedUsers = users.slice(startIndex, startIndex + itemsPerPage)
 
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
-  }
-
-
-
   return (
     <>
       <div className="p-6">
@@ -799,37 +795,125 @@ const UserManagement: React.FC = () => {
 
               {/* Paginación */}
               {totalPages > 1 && (
-                <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                   <div className="text-sm text-gray-700">
-                    Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, users.length)} de {users.length} resultados
+                    Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, users?.length)} de {users?.length} documentos
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-2">
+                    {/* Botón Anterior */}
                     <button
-                      onClick={() => goToPage(currentPage - 1)}
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Anterior
+                      <ChevronLeft className="w-4 h-4" />
                     </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => goToPage(page)}
-                        className={`px-3 py-1 border rounded-lg ${
-                          page === currentPage
-                            ? 'bg-[#999996] text-white border-[#A1A3A5]'
-                            : 'border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                    
+                    <div className="flex items-center space-x-1">
+                      {/* Lógica de paginación inteligente */}
+                      {(() => {
+                        const pages = []
+                        const maxVisiblePages = 7
+                        
+                        if (totalPages <= maxVisiblePages) {
+                          // Si hay pocas páginas, mostrar todas
+                          for (let i = 1; i <= totalPages; i++) {
+                            pages.push(
+                              <button
+                                key={i}
+                                onClick={() => setCurrentPage(i)}
+                                className={`px-3 py-1 text-sm rounded ${
+                                  currentPage === i
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                {i}
+                              </button>
+                            )
+                          }
+                        } else {
+                          // Lógica para muchas páginas
+                          // Siempre mostrar página 1
+                          pages.push(
+                            <button
+                              key={1}
+                              onClick={() => setCurrentPage(1)}
+                              className={`px-3 py-1 text-sm rounded ${
+                                currentPage === 1
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              1
+                            </button>
+                          )
+                          
+                          // Puntos suspensivos si hay gap
+                          if (currentPage > 4) {
+                            pages.push(
+                              <span key="ellipsis1" className="px-2 text-gray-500">...</span>
+                            )
+                          }
+                          
+                          // Páginas alrededor de la actual
+                          const start = Math.max(2, currentPage - 1)
+                          const end = Math.min(totalPages - 1, currentPage + 1)
+                          
+                          for (let i = start; i <= end; i++) {
+                            if (i !== 1 && i !== totalPages) {
+                              pages.push(
+                                <button
+                                  key={i}
+                                  onClick={() => setCurrentPage(i)}
+                                  className={`px-3 py-1 text-sm rounded ${
+                                    currentPage === i
+                                      ? 'bg-blue-600 text-white'
+                                      : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  {i}
+                                </button>
+                              )
+                            }
+                          }
+                          
+                          // Puntos suspensivos si hay gap
+                          if (currentPage < totalPages - 3) {
+                            pages.push(
+                              <span key="ellipsis2" className="px-2 text-gray-500">...</span>
+                            )
+                          }
+                          
+                          // Siempre mostrar última página
+                          if (totalPages > 1) {
+                            pages.push(
+                              <button
+                                key={totalPages}
+                                onClick={() => setCurrentPage(totalPages)}
+                                className={`px-3 py-1 text-sm rounded ${
+                                  currentPage === totalPages
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                {totalPages}
+                              </button>
+                            )
+                          }
+                        }
+                        
+                        return pages
+                      })()}
+                    </div>
+      
+                    {/* Botón Siguiente */}
                     <button
-                      onClick={() => goToPage(currentPage + 1)}
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Siguiente
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

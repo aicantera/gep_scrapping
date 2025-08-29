@@ -958,30 +958,126 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
 
         {/* Paginación */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="text-sm text-gray-700">
-                  Página {currentPage} de {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight size={16} />
-                </button>
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, themes?.length)} de {themes?.length} documentos
+            </div>
+            <div className="flex items-center space-x-2">
+              {/* Botón Anterior */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              <div className="flex items-center space-x-1">
+                {/* Lógica de paginación inteligente */}
+                {(() => {
+                  const pages = []
+                  const maxVisiblePages = 7
+                  
+                  if (totalPages <= maxVisiblePages) {
+                    // Si hay pocas páginas, mostrar todas
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => setCurrentPage(i)}
+                          className={`px-3 py-1 text-sm rounded ${
+                            currentPage === i
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {i}
+                        </button>
+                      )
+                    }
+                  } else {
+                    // Lógica para muchas páginas
+                    // Siempre mostrar página 1
+                    pages.push(
+                      <button
+                        key={1}
+                        onClick={() => setCurrentPage(1)}
+                        className={`px-3 py-1 text-sm rounded ${
+                          currentPage === 1
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        1
+                      </button>
+                    )
+                    
+                    // Puntos suspensivos si hay gap
+                    if (currentPage > 4) {
+                      pages.push(
+                        <span key="ellipsis1" className="px-2 text-gray-500">...</span>
+                      )
+                    }
+                    
+                    // Páginas alrededor de la actual
+                    const start = Math.max(2, currentPage - 1)
+                    const end = Math.min(totalPages - 1, currentPage + 1)
+                    
+                    for (let i = start; i <= end; i++) {
+                      if (i !== 1 && i !== totalPages) {
+                        pages.push(
+                          <button
+                            key={i}
+                            onClick={() => setCurrentPage(i)}
+                            className={`px-3 py-1 text-sm rounded ${
+                              currentPage === i
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            {i}
+                          </button>
+                        )
+                      }
+                    }
+                    
+                    // Puntos suspensivos si hay gap
+                    if (currentPage < totalPages - 3) {
+                      pages.push(
+                        <span key="ellipsis2" className="px-2 text-gray-500">...</span>
+                      )
+                    }
+                    
+                    // Siempre mostrar última página
+                    if (totalPages > 1) {
+                      pages.push(
+                        <button
+                          key={totalPages}
+                          onClick={() => setCurrentPage(totalPages)}
+                          className={`px-3 py-1 text-sm rounded ${
+                            currentPage === totalPages
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {totalPages}
+                        </button>
+                      )
+                    }
+                  }
+                  
+                  return pages
+                })()}
               </div>
-              <div className="text-sm text-gray-500">
-                {filteredThemes.length} tema{filteredThemes.length !== 1 ? 's' : ''} en total
-              </div>
+
+              {/* Botón Siguiente */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}

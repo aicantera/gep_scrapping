@@ -1056,7 +1056,7 @@ const DocumentManagement: React.FC = () => {
               {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                   <div className="text-sm text-gray-700">
-                    Mostrando {((currentPage - 1) * documentsPerPage) + 1} a {Math.min(currentPage * documentsPerPage, totalDocuments)} de {totalDocuments} documentos
+                    Mostrando {((currentPage - 1) * documentsPerPage) + 1} a {Math.min(currentPage * documentsPerPage, totalDocuments)} de {totalDocuments} resultados
                   </div>
                   <div className="flex items-center space-x-2">
                     {/* Botón Anterior */}

@@ -693,7 +693,9 @@ const AlertsManagement: React.FC = () => {
         .update({
           estado: 'Enviado al Correo',
           enviado_correo: true,
-          datetime_enviado_correo: new Date().toISOString()
+          datetime_enviado_correo: new Date().toISOString(),
+          asunto_email: asuntoCorreo,
+          mensaje_email: mensajeAdjunto,
         })
         .eq('id_alerta', alertaSeleccionada.id_alerta)
       

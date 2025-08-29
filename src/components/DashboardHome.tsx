@@ -201,7 +201,7 @@ const DashboardHome = () => {
       // 4. Alertas enviadas hoy (desde alertas_log con status_alerta = 1)
       const { data: alertasEnviadasHoy, error: alertasEnviadasError } =
         await supabase
-          .from("alertas_log")
+          .from("alertas_directorio")
           .select("id_alerta, created_at")
           .eq("status_alerta", 1)
           .gte("created_at", todayStr)
@@ -217,7 +217,7 @@ const DashboardHome = () => {
       // 5. Alertas pendientes hoy (desde alertas_log con status_alerta = 0)
       const { data: alertasPendientesHoy, error: alertasPendientesError } =
         await supabase
-          .from("alertas_log")
+          .from("alertas_directorio")
           .select("id_alerta, created_at")
           .eq("status_alerta", 0)
           .gte("created_at", todayStr)

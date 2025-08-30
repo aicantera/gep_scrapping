@@ -1106,8 +1106,8 @@ const UserManagement: React.FC = () => {
                               id="password"
                               value={formData.password}
                               onChange={(e) => setFormData({...formData, password: e.target.value})}
-                              className="w-full pl-10 pr-12 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
-                              placeholder={modalType === 'create' ? "Mínimo 8 caracteres" : "Dejar vacío para mantener actual"}
+                              className="w-full pl-10 pr-12 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996] placeholder:text-sm"
+                              placeholder="Contraseña"
                               required={modalType === 'create'}
                               disabled={loading}
                               minLength={modalType === 'create' ? 8 : undefined}
@@ -1137,8 +1137,8 @@ const UserManagement: React.FC = () => {
                               id="confirmPassword"
                               value={formData.confirmPassword}
                               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                              className="w-full px-4 pr-12 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996]"
-                              placeholder={modalType === 'create' ? "Confirmar contraseña" : "Confirmar nueva contraseña"}
+                              className="w-full px-4 pr-12 py-2 border border-gray-300 text-stone-700 rounded-lg focus:ring-2 focus:ring-[#999996] focus:border-[#999996] placeholder:text-sm"
+                              placeholder="Confirmar contraseña"
                               required={modalType === 'create'}
                               disabled={loading}
                             />

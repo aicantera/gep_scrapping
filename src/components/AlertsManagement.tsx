@@ -501,6 +501,8 @@ const AlertsManagement: React.FC = () => {
       return true
     })
 
+    setCurrentPage(1) // Reset página al filtrar
+
     return filtradas
   }, [alertas, activeTab, filterFuente, filterFecha, searchTerm])
 

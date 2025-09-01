@@ -34,11 +34,44 @@ interface BotConfig {
   color: string;
 }
 
+interface BotAvailability {
+  fuente: string;
+  status: string;
+  ult_ejecucion: string;
+}
+
 const BotsExecution = () => {
   const { user } = useAuth();
   const [executingBot, setExecutingBot] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [botsAvailability, setBotsAvailability] = useState<BotAvailability[]>([]);
+  const bots = [
+    {
+      id: "diputados",
+      name: "Cámara de Diputados",
+      description: "Extracción de documentos de Cámara de Diputados",
+      webhookUrl: "https://dbd.gepdigital.ai/webhook/diputados",
+      icon: <Building className="w-6 h-6" />,
+      color: "bg-[#B52244] hover:bg-[#D4133D]",
+    },
+    {
+      id: "senado",
+      name: "Cámara de Senadores",
+      description: "Extracción de documentos de Cámara de Senadores",
+      webhookUrl: "https://dbd.gepdigital.ai/webhook/senadores",
+      icon: <Gavel className="w-6 h-6" />,
+      color: "bg-[#999996] hover:bg-[#A1A3A5]",
+    },
+    {
+      id: "dof",
+      name: "Diario Oficial de la Federación",
+      description: "Extracción de documentos del DOF",
+      webhookUrl: "https://dbd.gepdigital.ai/webhook/dofv2",
+      icon: <Newspaper className="w-6 h-6" />,
+      color: "bg-[#B52244] hover:bg-[#D4133D]",
+    },
+  ];
 
   const [history, setHistory] = useState<BotExecutionHistory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,9 +107,28 @@ const BotsExecution = () => {
     }
   };
 
-  useEffect(() => {
-    loadBotExecutions();
-  }, []);
+  // Cargar disponibilidad de bots
+  const loadBotAvailability = async () => {
+    setLoading(true);
+    try {
+      console.log("Cargando disponibilidad de bots...");
+      const { data, error } = await supabase
+      .from("vw_bot_executions_status")
+      .select("*");
+
+      if (error) throw error;
+      setBotsAvailability(data || []);
+    } catch (error) {
+      console.error("Error loading bot availability:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isBotAvailable = (botName: string): boolean => {
+    const botStatus = botsAvailability.find(bot => bot.fuente === botName);
+    return botStatus?.status === 'ready';
+  };
 
   // Limpieza automática si supera 1200 registros
   useEffect(() => {
@@ -98,33 +150,6 @@ const BotsExecution = () => {
   });
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  const bots: BotConfig[] = [
-    {
-      id: "diputados",
-      name: "Cámara de Diputados",
-      description: "Extracción de documentos de Cámara de Diputados",
-      webhookUrl: "https://dbd.gepdigital.ai/webhook/diputados",
-      icon: <Building className="w-6 h-6" />,
-      color: "bg-[#B52244] hover:bg-[#D4133D]",
-    },
-    {
-      id: "senado",
-      name: "Cámara de Senadores",
-      description: "Extracción de documentos de Cámara de Senadores",
-      webhookUrl: "https://dbd.gepdigital.ai/webhook/senadores",
-      icon: <Gavel className="w-6 h-6" />,
-      color: "bg-[#999996] hover:bg-[#A1A3A5]",
-    },
-    {
-      id: "dof",
-      name: "Diario Oficial de la Federación",
-      description: "Extracción de documentos del DOF",
-      webhookUrl: "https://dbd.gepdigital.ai/webhook/dofv2",
-      icon: <Newspaper className="w-6 h-6" />,
-      color: "bg-[#B52244] hover:bg-[#D4133D]",
-    },
-  ];
 
   const executeBot = async (bot: BotConfig) => {
     setExecutingBot(bot.id);
@@ -300,6 +325,19 @@ const BotsExecution = () => {
     setError(null);
   };
 
+  useEffect(() => {
+    loadBotExecutions();
+    loadBotAvailability();
+    
+    const intervalId = setInterval(() => {
+      loadBotAvailability();
+    }, 1 * 60 * 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -392,12 +430,14 @@ const BotsExecution = () => {
               {/* Botón de ejecución */}
               <button
                 onClick={() => executeBot(bot)}
-                disabled={executingBot !== null}
+                disabled={executingBot !== null || !isBotAvailable(bot.name)}
                 className={`
                   w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg
                   text-white font-medium transition-colors text-sm
                   ${
                     executingBot === bot.id
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : !isBotAvailable(bot.name)
                       ? "bg-gray-400 cursor-not-allowed"
                       : executingBot !== null
                       ? "bg-gray-300 cursor-not-allowed"
@@ -413,7 +453,7 @@ const BotsExecution = () => {
                 ) : (
                   <>
                     <Play className="w-4 h-4" />
-                    <span>Ejecutar Bot</span>
+                    <span>{isBotAvailable(bot.name) ? "Ejecutar Bot" : "Bloqueo temporal"}</span>
                   </>
                 )}
               </button>

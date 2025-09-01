@@ -36,6 +36,12 @@ interface Subtema {
   subtema_desc?: string
 }
 
+// Nueva interfaz para contactos de email
+interface EmailContact {
+  nombre: string
+  correo: string
+}
+
 interface Client {
   id_cliente: string
   id_cliente_numerico?: number
@@ -53,7 +59,7 @@ interface ListaDistribucion {
   id: string
   nombre: string
   temas_subtemas: string[]
-  correos: string[]
+  correos: EmailContact[]
 }
 
 interface ClientFormData {
@@ -99,7 +105,7 @@ const ClientsManagement: React.FC = () => {
   const [newLista, setNewLista] = useState<Omit<ListaDistribucion, 'id'>>({
     nombre: '',
     temas_subtemas: [],
-    correos: ['']
+    correos: [{nombre: '', correo: ''}]
   })
   
   // Estado para el filtro de temas/subtemas en el formulario de lista de distribución
@@ -201,6 +207,19 @@ const ClientsManagement: React.FC = () => {
           if (typeof client.listas_distribucion === 'string') {
             try {
               listas_distribucion = JSON.parse(client.listas_distribucion)
+              listas_distribucion = listas_distribucion.map((lista: any) => {
+                lista.correos = lista.correos.map((correo: any) => {
+                  if(correo?.nombre) {
+                    return correo
+                  } else {
+                    return {
+                      nombre: '',
+                      correo: correo
+                    }
+                  }
+                })
+                return lista
+              })
             } catch (e) {
               console.warn('Error parseando listas_distribucion para cliente:', client.id_cliente, e)
               listas_distribucion = []
@@ -248,41 +267,43 @@ const ClientsManagement: React.FC = () => {
 
   // Validar formulario
   const validateForm = (): string | null => {
+    let errorMessage = ''
     if (!formData.nombre_cliente.trim()) {
-      return 'El nombre del cliente es obligatorio.'
+      errorMessage = 'El nombre del cliente es obligatorio.'
     }
     
     // Validar que haya al menos una lista de distribución
     if (formData.listas_distribucion.length === 0) {
-      return 'Debe agregar al menos una lista de distribución.'
+      errorMessage = 'Debe agregar al menos una lista de distribución.'
     }
 
     // Validar cada lista de distribución
     for (const lista of formData.listas_distribucion) {
       if (!lista.nombre.trim()) {
-        return 'Cada lista de distribución debe tener un nombre.'
+        errorMessage = 'Cada lista de distribución debe tener un nombre.'
       }
       
       if (lista.temas_subtemas.length === 0) {
-        return `La lista "${lista.nombre}" debe tener al menos un tema o subtema asociado.`
+        errorMessage = `La lista "${lista.nombre}" debe tener al menos un tema o subtema asociado.`
       }
       
-      if (lista.correos.length === 0 || lista.correos.every(correo => !correo.trim())) {
-        return `La lista "${lista.nombre}" debe tener al menos un correo electrónico válido.`
+      if (lista.correos.length === 0 || lista.correos.every(correo => !correo.correo.trim())) {
+        errorMessage = `La lista "${lista.nombre}" debe tener al menos un correo electrónico válido.`
       }
-      
       for (const correo of lista.correos) {
-        if (correo.trim() && !isValidEmail(correo.trim())) {
-          return `El correo "${correo}" en la lista "${lista.nombre}" no tiene un formato válido.`
+        if (correo.correo.trim() === '' || !isValidEmail(correo.correo.trim())) {
+          errorMessage = `El correo "${correo.correo}" en la lista "${lista.nombre}" no tiene un formato válido.`
+        }
+        if(correo.nombre.trim() === '') {
+          errorMessage = `El nombre del correo "${correo.correo}" en la lista "${lista.nombre}" no puede estar vacío.`
         }
       }
     }
 
     if (!formData.estado) {
-      return 'Debes seleccionar un estado para el cliente.'
+      errorMessage = 'Debes seleccionar un estado para el cliente.'
     }
-    
-    return null
+    return errorMessage !== '' ? errorMessage : null
   }
 
   // Verificar nombre duplicado
@@ -549,7 +570,7 @@ const ClientsManagement: React.FC = () => {
       
       // Buscar en correos de la lista
       const matchesListaCorreos = lista.correos?.some(correo => 
-        correo.toLowerCase().includes(searchLower)
+        correo.correo.toLowerCase().includes(searchLower)
       ) || false
       
       return matchesListaName || matchesListaTemas || matchesListaCorreos
@@ -575,7 +596,7 @@ const ClientsManagement: React.FC = () => {
       return
     }
     
-    if (newLista.correos.length === 0 || newLista.correos.every(correo => !correo.trim())) {
+    if (newLista.correos.length === 0 || newLista.correos.every(correo => !correo.correo.trim())) {
       setModalError('Debe agregar al menos un correo electrónico válido.')
       return
     }
@@ -584,7 +605,7 @@ const ClientsManagement: React.FC = () => {
       id: Date.now().toString(),
       nombre: newLista.nombre.trim(),
       temas_subtemas: newLista.temas_subtemas,
-      correos: newLista.correos.filter(correo => correo.trim())
+      correos: newLista.correos.filter(correo => correo.correo.trim())
     }
     
     setFormData(prev => ({
@@ -595,7 +616,7 @@ const ClientsManagement: React.FC = () => {
     setNewLista({
       nombre: '',
       temas_subtemas: [],
-      correos: ['']
+      correos: [{nombre: '', correo: ''}]
     })
     
     setModalError(null)
@@ -613,7 +634,7 @@ const ClientsManagement: React.FC = () => {
       ...prev,
       listas_distribucion: prev.listas_distribucion.map(lista => 
         lista.id === listaId 
-          ? { ...lista, correos: [...lista.correos, ''] }
+          ? { ...lista, correos: [...lista.correos, {nombre: '', correo: ''}] }
           : lista
       )
     }))
@@ -630,16 +651,33 @@ const ClientsManagement: React.FC = () => {
     }))
   }
 
-  const updateCorreoInLista = (listaId: string, correoIndex: number, value: string) => {
+  const updateCorreoInLista = (listaId: string, correoIndex: number, value: {nombre: string, correo: string}) => {
     setFormData(prev => ({
       ...prev,
       listas_distribucion: prev.listas_distribucion.map(lista => 
         lista.id === listaId 
           ? { 
               ...lista, 
-              correos: lista.correos.map((correo, index) => 
-                index === correoIndex ? value : correo
-              )
+              correos: lista.correos.map((correo, index) => {
+                if (index === correoIndex) {
+                  // Ensure we always work with clean string values
+                  const cleanNombre = typeof value.nombre === 'string' ? value.nombre : value.nombre?.nombre || '';
+                  const cleanCorreo = typeof value.correo === 'string' ? value.correo : value.correo?.correo || '';
+                  
+                  return {
+                    nombre: cleanNombre,
+                    correo: cleanCorreo
+                  };
+                }
+                
+                // Also clean existing correos to prevent nested objects
+                const cleanedCorreo = {
+                  nombre: typeof correo.nombre === 'string' ? correo.nombre : correo.nombre?.nombre || '',
+                  correo: typeof correo.correo === 'string' ? correo.correo : correo.correo?.correo || ''
+                };
+                
+                return cleanedCorreo;
+              })
             }
           : lista
       )
@@ -761,7 +799,7 @@ const ClientsManagement: React.FC = () => {
       // Datos de cada lista
       formData.listas_distribucion.forEach(lista => {
         const temas = lista.temas_subtemas.join('; ');
-        const correos = lista.correos.join('; ');
+        const correos = lista.correos.map(correo => correo.nombre + ' - ' + correo.correo).join('; ');
         const totalCorreos = lista.correos.length;
         worksheet.addRow([lista.nombre, temas, correos, totalCorreos]);
       });
@@ -937,7 +975,7 @@ const ClientsManagement: React.FC = () => {
                           {(Array.isArray(client.temas_suscrit) && client.temas_suscrit.length > 0) ? (
                             <div className="flex flex-wrap gap-1">
                               {client.temas_suscrit.map((tema, index) => (
-                                <span key={index} className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+                                <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-gray-200 text-slate-800">
                                   {tema || 'Sin tema'}
                                 </span>
                               ))}
@@ -1459,14 +1497,15 @@ const ClientsManagement: React.FC = () => {
                                         <div className="space-y-2 max-h-48 overflow-y-auto">
                                           {temas
                                             .filter((tema) => {
-                                              const q = (busquedaTemasPorLista[lista.id] || '').toLowerCase().trim()
-                                              if (!q) return true
-                                              const matchTema = tema.nombre_tema.toLowerCase().includes(q)
-                                              const matchSubtema = subtemas.some(s => s.id_tema === tema.id_tema && s.subtema_text.toLowerCase().includes(q))
-                                              return matchTema || matchSubtema
+                                              const search = busquedaTemasPorLista[lista.id] || '';
+                                              const temaMatch = tema.nombre_tema.toLowerCase().includes(search.toLowerCase());
+                                              const subtemasTema = subtemas.filter(s => s.id_tema === tema.id_tema);
+                                              const subtemaMatch = subtemasTema.some(st => st.subtema_text.toLowerCase().includes(search.toLowerCase()));
+                                              return !search || temaMatch || subtemaMatch;
                                             })
-                                            .map((tema) => {
+                                            .map(tema => {
                                               const temaSubtemas = subtemas.filter(s => s.id_tema === tema.id_tema);
+                                              // Determinar si el tema está seleccionado
                                               const temaSeleccionado = lista.temas_subtemas.includes(tema.nombre_tema);
                                               
                                               return (
@@ -1498,13 +1537,8 @@ const ClientsManagement: React.FC = () => {
                                                   </div>
                                                   
                                                   {/* Subtemas */}
-                                                  {temaSubtemas
-                                                    .filter(st => {
-                                                      const q = (busquedaTemasPorLista[lista.id] || '').toLowerCase().trim()
-                                                      if (!q) return true
-                                                      return st.subtema_text.toLowerCase().includes(q)
-                                                    })
-                                                    .map((st) => {
+                                                  {temaSubtemas.length > 0 ? (
+                                                    temaSubtemas.map((st) => {
                                                       const subtemaSeleccionado = lista.temas_subtemas.includes(st.subtema_text);
                                                       
                                                       return (
@@ -1533,10 +1567,13 @@ const ClientsManagement: React.FC = () => {
                                                           <span className="text-xs bg-gray-200 text-slate-800 rounded-full px-2 py-1 break-words flex-1 min-w-0 inline-block leading-relaxed">{st.subtema_text}</span>
                                                         </div>
                                                       );
-                                                    })}
+                                                    })
+                                                  ) : (
+                                                    <span className="text-xs text-gray-400">No hay subtemas disponibles</span>
+                                                  )}
                                                 </div>
                                               );
-                                          })}
+                                            })}
                                         </div>
                                       </div>
                                     </div>
@@ -1562,15 +1599,25 @@ const ClientsManagement: React.FC = () => {
                                   <div className="space-y-2">
                                     {lista.correos.length > 0 ? (
                                       lista.correos.map((correo, correoIndex) => (
-                                        <div key={correoIndex} className="flex items-center gap-2">
-                                          <input
-                                            type="email"
-                                            value={correo}
-                                            onChange={(e) => updateCorreoInLista(lista.id, correoIndex, e.target.value)}
-                                            disabled={modalType === 'view'}
-                                            className="form-input flex-1"
-                                            placeholder="correo@ejemplo.com"
-                                          />
+                                        <div key={correoIndex} className="flex items-center gap-2 bg-gray-100 p-2 rounded">
+                                          <div className='flex flex-col items-center gap-2 w-full'>
+                                            <input
+                                              type="text"
+                                              value={correo.nombre}
+                                              onChange={(e) => updateCorreoInLista(lista.id, correoIndex, {nombre: e.target.value, correo: correo.correo})}
+                                              disabled={modalType === 'view'}
+                                              className="form-input"
+                                              placeholder="Nombre del contacto"
+                                            />
+                                            <input
+                                              type="email"
+                                              value={correo.correo}
+                                              onChange={(e) => updateCorreoInLista(lista.id, correoIndex, {nombre: correo.nombre, correo: e.target.value})}
+                                              disabled={modalType === 'view'}
+                                              className="form-input"
+                                              placeholder="correo@ejemplo.com"
+                                            />
+                                          </div>
                                           {modalType !== 'view' && lista.correos.length > 1 && (
                                             <button
                                               type="button"
@@ -1624,12 +1671,25 @@ const ClientsManagement: React.FC = () => {
                               {newLista.correos.map((correo, idx) => (
                                 <div key={idx} className="flex items-center gap-2">
                                   <input
-                                    type="email"
-                                    className="form-input flex-1"
-                                    placeholder="correo@ejemplo.com"
-                                    value={correo}
+                                    type="text"
+                                    className="form-input w-1/2"
+                                    placeholder="Nombre del contacto"
+                                    value={correo.nombre}
                                     onChange={e => {
-                                      const value = e.target.value;
+                                      const value = {nombre: e.target.value, correo: correo.correo};
+                                      setNewLista(prev => ({
+                                        ...prev,
+                                        correos: prev.correos.map((c, i) => i === idx ? value : c)
+                                      }));
+                                    }}
+                                  />
+                                  <input
+                                    type="email"
+                                    className="form-input w-1/2"
+                                    placeholder="correo@ejemplo.com"
+                                    value={correo.correo}
+                                    onChange={e => {
+                                      const value = {nombre: correo.nombre, correo: e.target.value};
                                       setNewLista(prev => ({
                                         ...prev,
                                         correos: prev.correos.map((c, i) => i === idx ? value : c)
@@ -1654,8 +1714,8 @@ const ClientsManagement: React.FC = () => {
                               ))}
                               <button
                                 type="button"
+                                onClick={() => setNewLista(prev => ({ ...prev, correos: [...prev.correos, {nombre: '', correo: ''}] }))}
                                 className="text-blue-600 hover:text-blue-800 text-sm"
-                                onClick={() => setNewLista(prev => ({ ...prev, correos: [...prev.correos, ''] }))}
                               >
                                 + Agregar correo
                               </button>

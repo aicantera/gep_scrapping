@@ -67,9 +67,11 @@ interface Alerta {
     informacion_adicional?: string
     link_documento?: string
     [key: string]: any // Para campos adicionales
+    titulo?: string
   } | null
 
   enviado_por?: any;
+  emailsCount?: number;
 }
 
 
@@ -435,19 +437,19 @@ const AlertsManagement: React.FC = () => {
   }
 
   // Función para cargar clientes
-  const loadClientes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('id_cliente, nombre_cliente, siglas, email')
-        .eq('activo', true)
+  // const loadClientes = async () => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from('clientes')
+  //       .select('id_cliente, nombre_cliente, siglas, email')
+  //       .eq('activo', true)
       
-      if (error) throw error
-      return data || [];
-    } catch (error) {
-      console.error('Error cargando clientes:', error)
-    }
-  }
+  //     if (error) throw error
+  //     return data || [];
+  //   } catch (error) {
+  //     console.error('Error cargando clientes:', error)
+  //   }
+  // }
 
   // Función para filtrar alertas
   const alertasFiltradas = useMemo(() => {
@@ -517,12 +519,24 @@ const AlertsManagement: React.FC = () => {
 
   useEffect(() => {
     loadAlertas()
-    loadClientes()
+    // loadClientes()
   }, [])
 
   // Funciones simplificadas para trabajar con los campos reales
-  const validarAlerta = (alerta: Alerta) => {
-    setAlertaSeleccionada(alerta)
+  const validarAlerta = async (alerta: Alerta) => {
+    // setAlertaSeleccionada(alerta)
+    const { data } = await supabase
+    .from('clientes')
+    .select("*")
+    .eq('id_cliente', alerta.id_cliente);
+
+    const lists = JSON.parse(data?.[0]?.listas_distribucion || "[]")
+    const emailsCount = lists[0]?.correos?.length || 0;
+
+    // Asignar lista de difusión a alerta
+    setAlertaSeleccionada({ ...alerta, emailsCount });
+    setShowValidarModal(true)
+
     // Inicializar datos del documento del senado para edición
     if (alerta.documento_senado) {
       setDocumentoEditable({
@@ -1045,17 +1059,17 @@ const AlertsManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 max-w-sm">
                         <div className="text-sm font-medium text-gray-900 truncate">
-                          {alerta.documento_senado?.sinopsis || 'Sin documento vinculado'}
+                          {alerta.fuente === 'Diario Oficial de la Federación' ? (
+                            alerta.documento_senado?.titulo || 'Sin título'
+                          ) : (
+                            alerta.documento_senado?.sinopsis
+                          )}
                         </div>
                         <div className="text-xs text-gray-500 truncate">
                           {alerta.documento_senado?.Proponente && (
                             <span>Por: {alerta.documento_senado.Proponente}</span>
                           )}
-                          {alerta.documento_senado?.tipo && (
-                            <span className="ml-2 px-2 py-1 bg-gray-100 rounded text-xs">
-                              {alerta.documento_senado.tipo}
-                            </span>
-                          )}
+
                         </div>
                         {alerta.documento_senado?.link_iniciativa && (
                           <div className="mt-1">
@@ -1337,7 +1351,7 @@ const AlertsManagement: React.FC = () => {
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Destinatarios:</span>
-                    <div className="text-gray-900">{alertaSeleccionada.listas_distribucion?.length || 0} correos</div>
+                    <div className="text-gray-900">{alertaSeleccionada.emailsCount} correos</div>
                   </div>
                 </div>
               </div>

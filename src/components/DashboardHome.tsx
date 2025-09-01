@@ -198,23 +198,7 @@ const DashboardHome = () => {
         ),
       ]);
 
-      // 4. Alertas enviadas hoy (desde alertas_log con status_alerta = 1)
-      const { data: alertasEnviadasHoy, error: alertasEnviadasError } =
-        await supabase
-          .from("alertas_directorio")
-          .select("id_alerta, created_at")
-          .eq("status_alerta", 1)
-          .gte("created_at", todayStr)
-          .lt("created_at", todayStr + "T23:59:59.999Z");
-
-      if (alertasEnviadasError) {
-        console.error(
-          "Error obteniendo alertas enviadas del día:",
-          alertasEnviadasError
-        );
-      }
-
-      // 5. Alertas pendientes hoy (desde alertas_log con status_alerta = 0)
+      // 4. Alertas pendientes hoy (desde alertas_log con status_alerta = 0)
       const { data: alertasPendientesHoy, error: alertasPendientesError } =
         await supabase
           .from("alertas_directorio")
@@ -232,49 +216,28 @@ const DashboardHome = () => {
       }
 
       // 6. Obtener detalles de alertas para mapear por fuente
-      const alertasIds = [
-        ...(alertasEnviadasHoy || []).map((a) => a.id_alerta),
-        ...(alertasPendientesHoy || []).map((a) => a.id_alerta),
-      ];
+      const { data: alertasPendientesGeneral, error: alertasDetallesError } = await supabase
+      .from("alertas_directorio")
+      .select("*")
+      .eq("estado", "Pendiente");
 
-      let alertasDetalles: Array<{
-        id_alerta: number;
-        temas: string | string[];
-      }> = [];
-      if (alertasIds.length > 0) {
-        const { data: alertasDetallesData, error: alertasDetallesError } =
-          await supabase
-            .from("alertas_directorio")
-            .select("id_alerta, temas")
-            .in("id_alerta", alertasIds);
-
-        if (alertasDetallesError) {
-          console.error(
-            "Error obteniendo detalles de alertas:",
-            alertasDetallesError
-          );
-        } else {
-          alertasDetalles = alertasDetallesData || [];
-        }
+      if (alertasDetallesError) {
+        console.error(
+          "Error obteniendo detalles de alertas:",
+          alertasDetallesError
+        );
       }
 
-      // Mapear alertas por fuente basándose en los temas
-      const mapearFuentePorTemas = (temas: string[] | string): string => {
-        const temasArray = Array.isArray(temas) ? temas : [temas];
-        const temasStr = temasArray.join(" ").toLowerCase();
+      const alertasPendientesDiputados = alertasPendientesGeneral?.filter(
+        (alerta) => alerta.fuente === "Cámara de Diputados"
+      );
+      const alertasPendientesSenado = alertasPendientesGeneral?.filter(
+        (alerta) => alerta.fuente === "Cámara de Senadores"
+      );
 
-        if (
-          temasStr.includes("diputados") ||
-          temasStr.includes("cámara de diputados")
-        )
-          return "diputados";
-        if (temasStr.includes("senado") || temasStr.includes("senadores"))
-          return "senado";
-        if (temasStr.includes("dof") || temasStr.includes("diario oficial"))
-          return "dof";
-
-        return "general";
-      };
+      const alertasPendientesDOF = alertasPendientesGeneral?.filter(
+        (alerta) => alerta.fuente === "Diario Oficial de la Federación"
+      );
 
       // Contar alertas enviadas por fuente
       const alertasEnviadasPorFuente: Record<string, number> = {
@@ -283,30 +246,6 @@ const DashboardHome = () => {
         senado: 0,
         dof: 0,
       };
-
-      alertasEnviadasHoy?.forEach((alerta) => {
-        const detalle = alertasDetalles.find(
-          (d) => d.id_alerta === alerta.id_alerta
-        );
-        const fuente = mapearFuentePorTemas(detalle?.temas || []);
-        alertasEnviadasPorFuente[fuente]++;
-      });
-
-      // Contar alertas pendientes por fuente
-      const alertasPendientesPorFuente: Record<string, number> = {
-        general: 0,
-        diputados: 0,
-        senado: 0,
-        dof: 0,
-      };
-
-      alertasPendientesHoy?.forEach((alerta) => {
-        const detalle = alertasDetalles.find(
-          (d) => d.id_alerta === alerta.id_alerta
-        );
-        const fuente = mapearFuentePorTemas(detalle?.temas || []);
-        alertasPendientesPorFuente[fuente]++;
-      });
 
       // Crear KPIs según nuevas especificaciones
       const realKpiData: KPIData = {
@@ -318,10 +257,10 @@ const DashboardHome = () => {
           dof: alertasEnviadasPorFuente.dof,
         },
         pendingAlerts: {
-          general: alertasPendientesPorFuente.general,
-          diputados: alertasPendientesPorFuente.diputados,
-          senado: alertasPendientesPorFuente.senado,
-          dof: alertasPendientesPorFuente.dof,
+          general: alertasPendientesHoy?.length || 0,
+          diputados: alertasPendientesDiputados?.length || 0,
+          senado: alertasPendientesSenado?.length || 0,
+          dof: alertasPendientesDOF?.length || 0,
         },
       };
 

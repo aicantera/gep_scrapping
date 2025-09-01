@@ -658,11 +658,11 @@ const ClientsManagement: React.FC = () => {
         lista.id === listaId 
           ? { 
               ...lista, 
-              correos: lista.correos.map((correo, index) => {
+              correos: lista.correos.map((correo: EmailContact | any, index) => {
                 if (index === correoIndex) {
                   // Ensure we always work with clean string values
-                  const cleanNombre = typeof value.nombre === 'string' ? value.nombre : value.nombre?.nombre || '';
-                  const cleanCorreo = typeof value.correo === 'string' ? value.correo : value.correo?.correo || '';
+                  const cleanNombre = typeof value.nombre === 'string' ? value.nombre : (value as any).nombre?.nombre || '';
+                  const cleanCorreo = typeof value.correo === 'string' ? value.correo : (value as any).correo?.correo || '';
                   
                   return {
                     nombre: cleanNombre,
@@ -672,12 +672,12 @@ const ClientsManagement: React.FC = () => {
                 
                 // Also clean existing correos to prevent nested objects
                 const cleanedCorreo = {
-                  nombre: typeof correo.nombre === 'string' ? correo.nombre : correo.nombre?.nombre || '',
-                  correo: typeof correo.correo === 'string' ? correo.correo : correo.correo?.correo || ''
+                  nombre: typeof (correo as EmailContact).nombre === 'string' ? (correo as EmailContact).nombre : (correo as any).nombre?.nombre || '',
+                  correo: typeof (correo as EmailContact).correo === 'string' ? (correo as EmailContact).correo : (correo as any).correo?.correo || ''
                 };
                 
                 return cleanedCorreo;
-              })
+              }) as EmailContact[]
             }
           : lista
       )

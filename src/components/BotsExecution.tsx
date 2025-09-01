@@ -14,6 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 interface BotExecutionHistory {
   id: number;
@@ -152,6 +153,7 @@ const BotsExecution = () => {
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const executeBot = async (bot: BotConfig) => {
+    toast.info(`Ejecutando bot ${bot.name}...`);
     setExecutingBot(bot.id);
     setError(null);
     setSuccessMessage(null);
@@ -241,6 +243,7 @@ const BotsExecution = () => {
         setSuccessMessage(
           `✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`
         );
+        toast.success(`Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`);
         loadBotExecutions(); // Recargar lista
         return;
       }
@@ -297,6 +300,7 @@ const BotsExecution = () => {
       const errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
       console.error(`❌ Error ejecutando bot ${bot.name}:`, error);
+      toast.error(`Error ejecutando bot ${bot.name}`);
 
       // Actualizar estado a falla
       if (executionId) {

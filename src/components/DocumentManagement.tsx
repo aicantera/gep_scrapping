@@ -96,149 +96,263 @@ const DocumentManagement: React.FC = () => {
   ];
 
   // Función para normalizar nombres de fuentes
-  const normalizeSource = (source: string): string => {
-    const sourceMap: { [key: string]: string } = {
-      'cámara de senadores': 'Cámara de Senadores',
-      'camara de senadores': 'Cámara de Senadores',
-      'senadores': 'Cámara de Senadores',
-      'cámara de diputados': 'Cámara de Diputados',
-      'camara de diputados': 'Cámara de Diputados',
-      'diputados': 'Cámara de Diputados',
-      'diario oficial de la federación': 'Diario Oficial de la Federación',
-      'diario oficial': 'Diario Oficial de la Federación',
-      'dof': 'Diario Oficial de la Federación'
-    }
-    const normalized = sourceMap[source.toLowerCase()] || source
-    return normalized
-  }
+  // const normalizeSource = (source: string): string => {
+  //   const sourceMap: { [key: string]: string } = {
+  //     'cámara de senadores': 'Cámara de Senadores',
+  //     'camara de senadores': 'Cámara de Senadores',
+  //     'senadores': 'Cámara de Senadores',
+  //     'cámara de diputados': 'Cámara de Diputados',
+  //     'camara de diputados': 'Cámara de Diputados',
+  //     'diputados': 'Cámara de Diputados',
+  //     'diario oficial de la federación': 'Diario Oficial de la Federación',
+  //     'diario oficial': 'Diario Oficial de la Federación',
+  //     'dof': 'Diario Oficial de la Federación'
+  //   }
+  //   const normalized = sourceMap[source.toLowerCase()] || source
+  //   return normalized
+  // }
 
   // Patrones para filtrar fuente considerando sinónimos/variantes en BD
-  const getFuentePatterns = (fuente: string): string[] => {
-    const f = fuente.toLowerCase()
-    if (!f) return []
-    if (f.includes('diario') || f.includes('dof')) {
-      // Coincidir tanto Federación como Nación y genérico "Diario Oficial"
-      return ['diario oficial', 'federación', 'nación']
-    }
-    if (f.includes('senad')) {
-      return ['senado', 'senadores', 'cámara de senadores']
-    }
-    if (f.includes('diput')) {
-      return ['diputado', 'diputados', 'cámara de diputados']
-    }
+  // const getFuentePatterns = (fuente: string): string[] => {
+  //   const f = fuente.toLowerCase()
+  //   if (!f) return []
+  //   if (f.includes('diario') || f.includes('dof')) {
+  //     // Coincidir tanto Federación como Nación y genérico "Diario Oficial"
+  //     return ['diario oficial', 'federación', 'nación']
+  //   }
+  //   if (f.includes('senad')) {
+  //     return ['senado', 'senadores', 'cámara de senadores']
+  //   }
+  //   if (f.includes('diput')) {
+  //     return ['diputado', 'diputados', 'cámara de diputados']
+  //   }
 
-    return [fuente]
-  }
+  //   return [fuente]
+  // }
 
-
-  const fetchDocuments = async () => {
+  async function fetchDocuments() {
     setLoading(true)
     setError(null)
 
     try {
-      // Estrategia: Usar una sola consulta con todos los filtros
-      let query = supabase
-        .from('senado')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
+      const andFilters: string[] = []
 
-
-      // Aplicar filtros de fecha
-      if (filters.fechaDesde) {
-        // Inicio del día en ISO
-        query = query.gte('created_at', `${filters.fechaDesde}T00:00:00`)
-      }
-
-      if (filters.fechaHasta) {
-        // Fin del día en ISO
-        query = query.lte('created_at', `${filters.fechaHasta}T23:59:59`)
-      }
-
-      // Aplicar filtro de fuente
+      // Fuente
       if (filters.fuente) {
-        const normalizedSource = normalizeSource(filters.fuente)
-        const patterns = getFuentePatterns(normalizedSource)
-        if (patterns.length <= 1) {
-          query = query.ilike('fuente', `%${patterns[0]}%`)
-        } else {
-          const orExpr = patterns.map(p => `fuente.ilike.%${p}%`).join(',')
-          query = query.or(orExpr)
-        }
+        andFilters.push(`fuente.ilike.%${filters.fuente}%`)
       }
 
-      // Aplicar búsqueda de texto
+      // Fechas
+      if (filters.fechaDesde) {
+        andFilters.push(`created_at.gte.${filters.fechaDesde}T00:00:00`)
+      }
+      if (filters.fechaHasta) {
+        andFilters.push(`created_at.lte.${filters.fechaHasta}T23:59:59`)
+      }
+
+      // Búsqueda en varios campos con variantes
+      let orSearch = ''
       if (filters.busqueda && filters.busqueda.trim()) {
         const searchTerm = filters.busqueda.trim()
-        const sinAcentos = searchTerm.replace(/[áéíóúñü]/gi, c => ({'á':'a','é':'e','í':'i','ó':'o','ú':'u','ñ':'n','ü':'u','Á':'a','É':'e','Í':'i','Ó':'o','Ú':'u','Ñ':'n','Ü':'u'}[c] || c))
-        
-        // Estrategia simple: buscar siempre ambas versiones (con y sin acentos)
-        const terminos = new Set([
-          searchTerm,           // término original
-          sinAcentos           // versión sin acentos
-        ])
-        
-        // Si el término no tiene acentos, generar versiones comunes con acentos
-        if (searchTerm === sinAcentos) {
-          const lower = searchTerm.toLowerCase()
-          const upper = searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1).toLowerCase()
-          
-          // Agregar variaciones de capitalización
-          terminos.add(lower)
-          terminos.add(upper)
-          
-          // Generar versiones con acentos más comunes
-          const conAcentosComunes = lower
-            .replace(/cion/g, 'ción')
-            .replace(/sion/g, 'sión')
-            .replace(/acion/g, 'ación')
-            .replace(/ia$/g, 'ía')
-            .replace(/io$/g, 'ío')
-            .replace(/^maria$/, 'maría')
-            .replace(/^jose$/, 'josé')
-            .replace(/^carlos$/, 'carlos')
-            .replace(/^ana$/, 'ana')
-          
-          if (conAcentosComunes !== lower) {
-            terminos.add(conAcentosComunes)
-            terminos.add(conAcentosComunes.charAt(0).toUpperCase() + conAcentosComunes.slice(1))
-          }
-        }
-        
-        // Filtrar términos únicos y no vacíos
-        const terminosFinales = Array.from(terminos).filter(t => t && t.trim())
-        
-        // Construir query con todos los términos
-        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto']
-        const conditions = terminosFinales.flatMap((term: string) => 
-          fields.map(field => `${field}.ilike.%${term}%`)
+        // Quitar acentos
+        const sinAcentos = searchTerm.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        // Variantes de capitalización
+        const variantes = new Set([searchTerm, sinAcentos, searchTerm.toLowerCase(), searchTerm.toUpperCase()])
+        const fields = [
+          'iniciativa_texto',
+          'sinopsis',
+          'temas',
+          'personas',
+          'leyes',
+          'objeto',
+          'resumen',
+          'Proponente'
+        ]
+        // Genera todas las combinaciones campo/variante
+        const conditions = Array.from(variantes).flatMap(term =>
+          fields.map(f => `${f}.ilike.%${term}%`)
         )
-        
-        query = query.or(conditions.join(','))
+        orSearch = `or(${conditions.join(',')})`
       }
 
-      // Aplicar paginación
+      // Construir el filtro AND
+      let andQuery = andFilters.join(',')
+      if (andQuery && orSearch) {
+        andQuery = `and=(${andQuery},${orSearch})`
+      } else if (andQuery) {
+        andQuery = `and=(${andQuery})`
+      } else if (orSearch) {
+        andQuery = orSearch
+      }
+
+      // Paginación
       const from = (currentPage - 1) * documentsPerPage
-      const to = from + documentsPerPage - 1
+      // const to = from + documentsPerPage - 1
 
-      const { data, error: fetchError, count } = await query
-        .range(from, to)
+      // URL final
+      let url = `${supabaseUrl}/rest/v1/senado?select=*&order=created_at.desc`
+      if (andQuery) url += `&${andQuery}`
+      url += `&limit=${documentsPerPage}&offset=${from}`
 
-      if (fetchError) {
-        console.error('❌ Error en la consulta:', fetchError)
-        throw fetchError
+      // Para contar total de documentos (sin paginación)
+      let countUrl = `${supabaseUrl}/rest/v1/senado?select=id_senado_doc`
+      if (andQuery) countUrl += `&${andQuery}`
+
+      // Fetch documentos paginados
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseServiceKey,
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) throw new Error(`Error: ${response.status}`)
+
+      const data = await response.json()
+
+      // Fetch total count
+      const countResponse = await fetch(countUrl, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseServiceKey,
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json',
+          'Range-Unit': 'items',
+          'Range': '0-0',
+          'Prefer': 'count=exact'
+        }
+      })
+      let total = 0
+      if (countResponse.ok) {
+        const contentRange = countResponse.headers.get('content-range')
+        if (contentRange) {
+          const match = contentRange.match(/\/(\d+)$/)
+          if (match) total = parseInt(match[1], 10)
+        }
       }
 
       setDocuments(data || [])
-      setTotalDocuments(count || 0)
-      setTotalPages(Math.ceil((count || 0) / documentsPerPage))
+      setTotalDocuments(total)
+      setTotalPages(Math.ceil(total / documentsPerPage))
 
-    } catch (err) {
-      console.error('Error fetching documents:', err)
+    } catch (error) {
+      console.log("🚀 ~ fetchDocuments ~ error:", error)
       setError('No se pudieron cargar los documentos. Intenta de nuevo más tarde.')
     } finally {
       setLoading(false)
     }
   }
+
+  // const fetchDocuments = async () => {
+  //   setLoading(true)
+  //   setError(null)
+
+  //   try {
+  //     // Estrategia: Usar una sola consulta con todos los filtros
+  //     let query = supabase
+  //       .from('senado')
+  //       .select('*', { count: 'exact' })
+  //       .order('created_at', { ascending: false })
+
+
+  //     // Aplicar filtros de fecha
+  //     if (filters.fechaDesde) {
+  //       // Inicio del día en ISO
+  //       query = query.gte('created_at', `${filters.fechaDesde}T00:00:00`)
+  //     }
+
+  //     if (filters.fechaHasta) {
+  //       // Fin del día en ISO
+  //       query = query.lte('created_at', `${filters.fechaHasta}T23:59:59`)
+  //     }
+
+  //     // Aplicar filtro de fuente
+  //     if (filters.fuente) {
+  //       const normalizedSource = normalizeSource(filters.fuente)
+  //       const patterns = getFuentePatterns(normalizedSource)
+  //       if (patterns.length <= 1) {
+  //         query = query.ilike('fuente', `%${patterns[0]}%`)
+  //       } else {
+  //         const orExpr = patterns.map(p => `fuente.ilike.%${p}%`).join(',')
+  //         query = query.or(orExpr)
+  //       }
+  //     }
+
+  //     // Aplicar búsqueda de texto
+  //     if (filters.busqueda && filters.busqueda.trim()) {
+  //       const searchTerm = filters.busqueda.trim()
+  //       const sinAcentos = searchTerm.replace(/[áéíóúñü]/gi, c => ({'á':'a','é':'e','í':'i','ó':'o','ú':'u','ñ':'n','ü':'u','Á':'a','É':'e','Í':'i','Ó':'o','Ú':'u','Ñ':'n','Ü':'u'}[c] || c))
+        
+  //       // Estrategia simple: buscar siempre ambas versiones (con y sin acentos)
+  //       const terminos = new Set([
+  //         searchTerm,           // término original
+  //         sinAcentos           // versión sin acentos
+  //       ])
+        
+  //       // Si el término no tiene acentos, generar versiones comunes con acentos
+  //       if (searchTerm === sinAcentos) {
+  //         const lower = searchTerm.toLowerCase()
+  //         const upper = searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1).toLowerCase()
+          
+  //         // Agregar variaciones de capitalización
+  //         terminos.add(lower)
+  //         terminos.add(upper)
+          
+  //         // Generar versiones con acentos más comunes
+  //         const conAcentosComunes = lower
+  //           .replace(/cion/g, 'ción')
+  //           .replace(/sion/g, 'sión')
+  //           .replace(/acion/g, 'ación')
+  //           .replace(/ia$/g, 'ía')
+  //           .replace(/io$/g, 'ío')
+  //           .replace(/^maria$/, 'maría')
+  //           .replace(/^jose$/, 'josé')
+  //           .replace(/^carlos$/, 'carlos')
+  //           .replace(/^ana$/, 'ana')
+          
+  //         if (conAcentosComunes !== lower) {
+  //           terminos.add(conAcentosComunes)
+  //           terminos.add(conAcentosComunes.charAt(0).toUpperCase() + conAcentosComunes.slice(1))
+  //         }
+  //       }
+        
+  //       // Filtrar términos únicos y no vacíos
+  //       const terminosFinales = Array.from(terminos).filter(t => t && t.trim())
+        
+  //       // Construir query con todos los términos
+  //       const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'Proponente']
+  //       const conditions = terminosFinales.flatMap((term: string) => 
+  //         fields.map(field => `${field}.ilike.%${term}%`)
+  //       )
+        
+  //       query = query.or(conditions.join(','))
+  //     }
+
+  //     // Aplicar paginación
+  //     const from = (currentPage - 1) * documentsPerPage
+  //     const to = from + documentsPerPage - 1
+
+  //     const { data, error: fetchError, count } = await query
+  //       .range(from, to)
+
+  //     if (fetchError) {
+  //       console.error('❌ Error en la consulta:', fetchError)
+  //       throw fetchError
+  //     }
+
+  //     setDocuments(data || [])
+  //     setTotalDocuments(count || 0)
+  //     setTotalPages(Math.ceil((count || 0) / documentsPerPage))
+
+  //   } catch (err) {
+  //     console.error('Error fetching documents:', err)
+  //     setError('No se pudieron cargar los documentos. Intenta de nuevo más tarde.')
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
   // Cargar documentos iniciales
   useEffect(() => {

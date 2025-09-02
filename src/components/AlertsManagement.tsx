@@ -41,7 +41,10 @@ interface Alerta {
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
   temas_subtemas?: string[]
-  listas_distribucion?: string[]
+  listas_distribucion?: {
+    nombre: string;
+    correo: string;
+  }[]
   
   // Datos del documento del senado (si existe relación FK)
   documento_senado?: {
@@ -72,6 +75,7 @@ interface Alerta {
 
   enviado_por?: any;
   emailsCount?: number;
+  newEmailsList?: string[];
 }
 
 
@@ -227,17 +231,27 @@ const AlertsManagement: React.FC = () => {
             )
             
             if (hayCoincidencia && lista.correos && Array.isArray(lista.correos)) {
-              correosDestino.push(...lista.correos)
+              // lista.correos puede ser un array de strings o de objetos { correo, nombre }
+              lista.correos.forEach((c: any) => {
+                if (typeof c === 'string') {
+                  correosDestino.push(c)
+                } else if (c && typeof c.correo === 'string') {
+                  correosDestino.push(c.correo)
+                }
+              })
             }
           }
         })
 
         // Eliminar duplicados de correos
-        const correosUnicos = [...new Set(correosDestino)]
+        const correosUnicos = Array.from(new Set(correosDestino))
+
+        // Convertir a la forma esperada por la interfaz: { nombre, correo }[]
+        const listasDistribucion = correosUnicos.map(email => ({ nombre: '', correo: email }))
         
         return {
           ...alerta,
-          listas_distribucion: correosUnicos
+          listas_distribucion: listasDistribucion
         }
       })
 
@@ -524,7 +538,7 @@ const AlertsManagement: React.FC = () => {
 
   // Funciones simplificadas para trabajar con los campos reales
   const validarAlerta = async (alerta: Alerta) => {
-    // setAlertaSeleccionada(alerta)
+    setAlertaSeleccionada(alerta)
     const { data } = await supabase
     .from('clientes')
     .select("*")
@@ -1623,7 +1637,7 @@ const AlertsManagement: React.FC = () => {
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <h5 className="font-medium text-blue-900 mb-2">📬 Destinatarios ({alertaSeleccionada.listas_distribucion.length})</h5>
                   <div className="text-sm text-blue-800 max-h-20 overflow-y-auto">
-                    {alertaSeleccionada.listas_distribucion.join(', ')}
+                    {alertaSeleccionada.listas_distribucion.map((item) => item.correo).join(', ')}
                   </div>
                 </div>
               )}

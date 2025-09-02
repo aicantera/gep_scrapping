@@ -75,6 +75,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Función para actualizar la actividad del usuario
   const updateUserActivity = () => {
     lastActivityRef.current = Date.now()
+    
+    // Resetear el timeout de sesión cuando hay actividad
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current)
+      sessionTimeoutRef.current = setTimeout(() => {
+        checkSessionTimeout()
+      }, SESSION_TIMEOUT)
+    }
   }
 
   // Función para obtener información del usuario desde la tabla usuarios (con cache)

@@ -601,6 +601,16 @@ const ClientsManagement: React.FC = () => {
       return
     }
     
+    if (newLista.correos.some(correo => correo.correo.trim() === '' || !isValidEmail(correo.correo.trim()))) {
+      setModalError('Al menos uno de los correos electrónicos no es válido.')
+      return
+    }
+
+    if (newLista.correos.some(correo => correo.nombre.trim() === '')) {
+      setModalError('Al menos uno de los correos electrónicos no tiene un nombre.')
+      return
+    }
+    
     const listaValida: ListaDistribucion = {
       id: Date.now().toString(),
       nombre: newLista.nombre.trim(),

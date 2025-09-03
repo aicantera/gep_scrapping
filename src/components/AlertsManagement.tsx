@@ -479,31 +479,26 @@ const AlertsManagement: React.FC = () => {
 
       // Filtro por fuente
       if (filterFuente && alerta.fuente !== filterFuente) return false
-      
-      // Filtro por fechas
-      if (filterFecha.hasta && filterFecha.desde !== filterFecha.hasta) {        
-        const fechaAlerta = new Date(alerta.created_at)
-        const fechaHasta = new Date(filterFecha.hasta)
-        if (fechaAlerta.getFullYear() > fechaHasta.getFullYear()) return false
-        if (fechaAlerta.getMonth() > fechaHasta.getMonth()) return false
-        if (fechaAlerta.getDate() > fechaHasta.getDate() + 1) return false
-      }
-      if (filterFecha.desde) {
+
+      // Filtro por fechas (corregido)
+      if (filterFecha.desde && filterFecha.hasta) {
         const fechaAlerta = new Date(alerta.created_at)
         const fechaDesde = new Date(filterFecha.desde)
-        // Si las fechas desde y hasta son iguales, comparar solo el día
-        if (filterFecha.hasta && (filterFecha.desde === filterFecha.hasta)) {
-          const fechaAlertaStr = fechaAlerta.toISOString().split('T')[0]
-          const fechaDesdeStr = fechaDesde.toISOString().split('T')[0]
-          if (fechaAlertaStr !== fechaDesdeStr) return false
-        } else {
-          // Comparación normal para rango de fechas
-          if (fechaAlerta.getFullYear() < fechaDesde.getFullYear()) return false
-          if (fechaAlerta.getMonth() < fechaDesde.getMonth()) return false
-          if (fechaAlerta.getDate() < fechaDesde.getDate()) return false
-        }
+        const fechaHasta = new Date(filterFecha.hasta)
+        // Ajustar fechaHasta al final del día
+        fechaHasta.setHours(23, 59, 59, 999)
+        if (fechaAlerta < fechaDesde || fechaAlerta > fechaHasta) return false
+      } else if (filterFecha.desde) {
+        const fechaAlerta = new Date(alerta.created_at)
+        const fechaDesde = new Date(filterFecha.desde)
+        if (fechaAlerta < fechaDesde) return false
+      } else if (filterFecha.hasta) {
+        const fechaAlerta = new Date(alerta.created_at)
+        const fechaHasta = new Date(filterFecha.hasta)
+        fechaHasta.setHours(23, 59, 59, 999)
+        if (fechaAlerta > fechaHasta) return false
       }
-      
+
       // Filtro de búsqueda por texto
       if (searchTerm) {
         const searchNormalized = normalizeText(searchTerm)
@@ -513,7 +508,7 @@ const AlertsManagement: React.FC = () => {
           (alerta.temas_subtemas || []).some(tema => normalizeText(tema).includes(searchNormalized))
         )
       }
-      
+
       return true
     })
 
@@ -978,6 +973,7 @@ const AlertsManagement: React.FC = () => {
               <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
                 type="date"
+                min={filterFecha.desde}
                 value={filterFecha.hasta}
                 onChange={(e) => setFilterFecha({ ...filterFecha, hasta: e.target.value })}
                 className="form-input pl-10 w-full"

@@ -5,6 +5,7 @@ import Loading from "@/components/Loading";
 import AppLayout from "@/components/AppLayout";
 import { LoginForm } from "@/components/LoginForm";
 import DocumentManagement from "@/components/DocumentManagement";
+import DocumentEdit from "@/components/DocumentEdit";
 import AlertsManagement from "@/components/AlertsManagement";
 import ClientsManagement from "@/components/ClientsManagement";
 import ThemeManagement from "@/components/ThemeManagement";
@@ -16,6 +17,7 @@ import ProtectedRoute from "./ProtectedRoute";
 
 const adminRoutes = [
   <Route path="gestion-documental" element={<DocumentManagement />} />,
+  <Route path="gestion-documental/:id/editar" element={<DocumentEdit />} />,
   <Route path="alertas-monitoreo" element={<AlertsManagement />} />,
   <Route path="gestion-clientes" element={<ClientsManagement />} />,
   <Route path="gestion-temas" element={<ThemeManagement />} />,
@@ -25,6 +27,7 @@ const adminRoutes = [
 
 const analistaRoutes = [
   <Route path="gestion-documental" element={<DocumentManagement />} />,
+  <Route path="gestion-documental/:id/editar" element={<DocumentEdit />} />,
   <Route path="alertas-monitoreo" element={<AlertsManagement />} />,
   <Route path="ejecucion-bots" element={<BotsExecution />} />,
 ];

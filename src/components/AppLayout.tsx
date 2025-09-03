@@ -82,6 +82,26 @@ const getPageTitle: Record<string, string> = {
   "/gestion-temas": "Gestión de Temas",
   "/gestion-usuarios": "Gestión de Usuarios",
   "/ejecucion-bots": "Ejecución de Bots",
+  "/gestion-documental/:id/editar": "Editar Documento",
+};
+
+const getPageTitleFromPath = (currentPath: string): string => {
+  if (getPageTitle[currentPath]) {
+    return getPageTitle[currentPath];
+  }
+
+  for (const [pattern, title] of Object.entries(getPageTitle)) {
+    if (pattern.includes(':')) {
+      const regexPattern = pattern.replace(/:[^/]+/g, '[^/]+');
+      const regex = new RegExp(`^${regexPattern}$`);
+      
+      if (regex.test(currentPath)) {
+        return title;
+      }
+    }
+  }
+
+  return "Página no encontrada";
 };
 
 const AppLayout = () => {
@@ -96,13 +116,10 @@ const AppLayout = () => {
   const currentPathname = location.pathname;
   const routes = userRole === "Administrador" ? adminRoutes : analistaRoutes;
 
-
   const confirmLogout = async () => {
     try {
       setLogoutLoading(true);
-      // setError(null)
 
-      // Timeout de seguridad de 10 segundos
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(
           () => reject(new Error("Timeout: El proceso tardó demasiado")),
@@ -116,8 +133,6 @@ const AppLayout = () => {
       navigate("/login");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
-      // setError(error instanceof Error ? error.message : 'Error al cerrar sesión. Intenta nuevamente.')
-      // setTimeout(() => setError(null), 5000)
     } finally {
       setLogoutLoading(false);
     }
@@ -184,6 +199,7 @@ const AppLayout = () => {
 
             {/* Botón de cerrar para móvil */}
             <button
+              title='Cerrar'
               onClick={() => setMobileMenuOpen(false)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
@@ -290,6 +306,7 @@ const AppLayout = () => {
               <div className="flex items-center space-x-4">
                 {/* Botón hamburger para móvil */}
                 <button
+                  title='Menu'
                   onClick={() => setMobileMenuOpen(true)}
                   className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
@@ -306,7 +323,7 @@ const AppLayout = () => {
 
                 <div>
                   <h2 className="text-lg md:text-xl font-semibold text-gray-800">
-                    {getPageTitle[location.pathname] || "Página no encontrada"}
+                    {getPageTitleFromPath(location.pathname) || "Página no encontrada"}
                   </h2>
                   <p className="text-xs md:text-sm text-gray-500 mt-1">
                     {new Date().toLocaleDateString("es-MX", {

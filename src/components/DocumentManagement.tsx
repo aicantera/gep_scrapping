@@ -23,7 +23,6 @@ import {
 } from 'lucide-react'
 import { ESTATUS_DOC_OPTIONS } from '../utils/SelectOptions'
 import Select2 from './ui/select2'
-
 interface Document {
   id_senado_doc: number
   created_at: string
@@ -715,7 +714,7 @@ const DocumentManagement: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="form-label">Título *</label>

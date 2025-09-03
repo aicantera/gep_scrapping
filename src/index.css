@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Calibri:wght@300;400;700&display=swap');
-
+@import '../src/styles/_variables.scss';
+@import '../src/styles/_keyframe-animations.scss';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

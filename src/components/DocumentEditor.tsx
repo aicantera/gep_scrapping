@@ -11,6 +11,7 @@ import { Typography } from "@tiptap/extension-typography"
 import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
+import { Extension } from "@tiptap/core"
 
 // --- UI Primitives ---
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
@@ -19,6 +20,7 @@ import {
   ToolbarGroup,
   ToolbarSeparator,
 } from "@/components/tiptap-ui-primitive/toolbar"
+import { Button } from "@/components/tiptap-ui-primitive/button"
 
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
@@ -76,6 +78,71 @@ interface DocumentEditorProps {
   placeholder?: string
 }
 
+// Custom Indent Extension
+const IndentExtension = Extension.create({
+  name: 'indent',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading'],
+        attributes: {
+          indent: {
+            default: 0,
+            renderHTML: attributes => {
+              if (!attributes.indent) return {}
+              return {
+                style: `padding-left: ${attributes.indent * 1.5}rem;`
+              }
+            },
+            parseHTML: element => {
+              const style = element.getAttribute('style')
+              if (!style) return 0
+              const match = style.match(/padding-left:\s*(\d+(?:\.\d+)?)rem/)
+              return match ? Math.round(parseFloat(match[1]) / 1.5) : 0
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  addCommands() {
+    return {
+      indent: () => ({ tr, state, dispatch }) => {
+        const { selection } = state
+        const { from, to } = selection
+
+        tr.doc.nodesBetween(from, to, (node, pos) => {
+          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            const currentIndent = node.attrs.indent || 0
+            const newIndent = Math.min(currentIndent + 1, 8) // Max 8 levels
+            tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: newIndent })
+          }
+        })
+
+        if (dispatch) dispatch(tr)
+        return true
+      },
+      outdent: () => ({ tr, state, dispatch }) => {
+        const { selection } = state
+        const { from, to } = selection
+
+        tr.doc.nodesBetween(from, to, (node, pos) => {
+          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            const currentIndent = node.attrs.indent || 0
+            const newIndent = Math.max(currentIndent - 1, 0)
+            tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: newIndent })
+          }
+        })
+
+        if (dispatch) dispatch(tr)
+        return true
+      }
+    }
+  }
+})
+
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
@@ -85,6 +152,8 @@ const MainToolbarContent = ({
   onLinkClick: () => void
   isMobile: boolean
 }) => {
+  const { editor } = React.useContext(EditorContext)
+  
   return (
     <>
       <Spacer />
@@ -126,6 +195,33 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <MarkButton type="superscript" />
         <MarkButton type="subscript" />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      <ToolbarGroup>
+        <Button
+          type="button"
+          onClick={() => editor?.chain().focus().indent().run()}
+          tooltip="Aumentar sangría"
+          aria-label="Aumentar sangría"
+          disabled={!editor}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Button>
+        <Button
+          type="button"
+          onClick={() => editor?.chain().focus().outdent().run()}
+          tooltip="Disminuir sangría"
+          aria-label="Disminuir sangría"
+          disabled={!editor}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </Button>
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -227,6 +323,7 @@ export function DocumentEditor({
       Typography,
       Superscript,
       Subscript,
+      IndentExtension,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,

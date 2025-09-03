@@ -34,6 +34,7 @@ interface Document {
     link_iniciativa: string
     link_documento: string
     imagen_link: string | null
+    documento_html: string | null
     keywords: string
   }
 
@@ -56,9 +57,11 @@ const DocumentEdit: React.FC = () => {
   }, [id])
 
   useEffect(() => {
-    if (document && editData) {
+    if (document && editData && (editData.documento_html === '' || editData.documento_html === null)) {
       const htmlContent = generateDocumentHTML(editData)
       setEditorContent(htmlContent)
+    } else if (document && editData && (document.documento_html !== null || document.documento_html !== '')) {
+      setEditorContent(document.documento_html || '')
     }
   }, [document, editData])
 
@@ -85,14 +88,9 @@ const DocumentEdit: React.FC = () => {
     }
   }
 
+  // Genera el HTML del documento si no existe
   const generateDocumentHTML = (doc: Document): string => {
-    let html = `<h1>Información del Documento</h1>`
-    html += `<p><strong>ID:</strong> ${doc.id_senado_doc}</p>`
-    html += `<p><strong>Fuente:</strong> ${doc.fuente}</p>`
-    html += `<p><strong>Fecha:</strong> ${new Date(doc.created_at).toLocaleDateString('es-MX')}</p>`
-    
-    html += `<hr>`
-    html += `<h2>Contenido del Documento</h2>`
+    let html = ``
     
     // Título
     if (doc.titulo) {
@@ -191,39 +189,23 @@ const DocumentEdit: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log(editorContent)
     if (!editData) return
 
     try {
       setSaving(true)
       
-      // Guardar contenido del editor en iniciativa_texto
+      // Guardar contenido del editor en documento_html
       const updatedData = {
         ...editData,
-        iniciativa_texto: editorContent
+        documento_html: editorContent
       }
       
-    //   const { error } = await supabase
-    //     .from('senado')
-    //     .update({
-    //       iniciativa_texto: updatedData.iniciativa_texto,
-    //       tipo: updatedData.tipo,
-    //       personas: updatedData.personas,
-    //       objeto: updatedData.objeto,
-    //       correspondiente: updatedData.correspondiente,
-    //       temas: updatedData.temas,
-    //       link_iniciativa: updatedData.link_iniciativa,
-    //       sinopsis: updatedData.sinopsis,
-    //       resumen: updatedData.resumen,
-    //       analisis: updatedData.analisis,
-    //       dependencia: updatedData.dependencia,
-    //       ver_expediente: updatedData.ver_expediente,
-    //       ultimo_doc_expediente: updatedData.ultimo_doc_expediente,
-    //       transitorios: updatedData.transitorios,
-    //       informacion_adicional: updatedData.informacion_adicional,
-    //       titulo: updatedData.titulo
-    //     })
-    //     .eq('id_senado_doc', updatedData.id_senado_doc)
+      const { error } = await supabase
+        .from('senado')
+        .update({
+            documento_html: updatedData.documento_html
+        })
+        .eq('id_senado_doc', updatedData.id_senado_doc)
 
       if (error) throw error
 

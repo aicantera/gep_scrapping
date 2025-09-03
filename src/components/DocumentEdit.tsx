@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Save, ArrowLeft, X } from 'lucide-react'
-import { ESTATUS_DOC_OPTIONS } from '../utils/SelectOptions'
-import Select2 from './ui/select2'
-import { supabase } from '../lib/supabase'
+import { Save, X } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'react-toastify'
+import { DocumentEditor } from './DocumentEditor'
 
 interface Document {
     id_senado_doc: number
@@ -37,23 +36,31 @@ interface Document {
     imagen_link: string | null
     keywords: string
   }
-  
 
 const DocumentEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [document, setDocument] = useState<Document | null>(null)
+  const [editData, setEditData] = useState<Document | null>(null)
+  const [editorContent, setEditorContent] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Source and document type constants (matching DocumentManagement)
+  // Source and document type constants
   const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación"]
   const docTypes = ["Iniciativa", "Proposición"]
 
   useEffect(() => {
     fetchDocument()
   }, [id])
+
+  useEffect(() => {
+    if (document && editData) {
+      const htmlContent = generateDocumentHTML(editData)
+      setEditorContent(htmlContent)
+    }
+  }, [document, editData])
 
   const fetchDocument = async () => {
     if (!id) return
@@ -69,6 +76,7 @@ const DocumentEdit: React.FC = () => {
       if (error) throw error
       
       setDocument(data)
+      setEditData(data)
     } catch (error) {
       console.error('Error fetching document:', error)
       setError('Error al cargar el documento')
@@ -77,78 +85,155 @@ const DocumentEdit: React.FC = () => {
     }
   }
 
-  const handleChange = (field: keyof Document, value: string) => {
-    if (!document) return
-    setDocument(prev => ({ ...prev!, [field]: value }))
+  const generateDocumentHTML = (doc: Document): string => {
+    let html = `<h1>Información del Documento</h1>`
+    html += `<p><strong>ID:</strong> ${doc.id_senado_doc}</p>`
+    html += `<p><strong>Fuente:</strong> ${doc.fuente}</p>`
+    html += `<p><strong>Fecha:</strong> ${new Date(doc.created_at).toLocaleDateString('es-MX')}</p>`
+    
+    html += `<hr>`
+    html += `<h2>Contenido del Documento</h2>`
+    
+    // Título
+    if (doc.titulo) {
+      html += `<h3>Título</h3>`
+      html += `<p>${doc.titulo}</p>`
+    }
+
+    // Campos específicos por fuente
+    if (doc.fuente !== sources[2]) { // No es DOF
+      if (doc.tipo) {
+        html += `<h3>Tipo de Proyecto</h3>`
+        html += `<p>${doc.tipo}</p>`
+      }
+      
+      if (doc.Proponente) {
+        html += `<h3>Proponente</h3>`
+        html += `<p>${doc.Proponente}</p>`
+      }
+      
+      if (doc.objeto) {
+        html += `<h3>Objeto</h3>`
+        html += `<p>${doc.objeto}</p>`
+      }
+    } else { // Es DOF
+      if (doc.dependencia) {
+        html += `<h3>Dependencia</h3>`
+        html += `<p>${doc.dependencia}</p>`
+      }
+      
+      if (doc.resumen) {
+        html += `<h3>Resumen</h3>`
+        html += `<p>${doc.resumen}</p>`
+      }
+    }
+
+    // Temas
+    if (doc.temas) {
+      html += `<h3>Temas/Subtemas</h3>`
+      html += `<p>${doc.temas}</p>`
+    }
+
+    // Iniciativa/Texto principal
+    if (doc.iniciativa_texto) {
+      html += `<h3>Iniciativa/Texto</h3>`
+      html += `<div>${doc.iniciativa_texto}</div>`
+    }
+
+    // Análisis o Correspondiente
+    if (doc.fuente === sources[2] || 
+        ((doc.fuente === sources[0] || doc.fuente === sources[1]) && 
+         (doc.tipo === docTypes[0] || doc.tipo === docTypes[1]))) {
+      if (doc.analisis) {
+        html += `<h3>Análisis</h3>`
+        html += `<p>${doc.analisis}</p>`
+      }
+    } else {
+      if (doc.sinopsis) {
+        html += `<h3>Correspondiente</h3>`
+        html += `<p>${doc.sinopsis}</p>`
+      }
+    }
+
+    // Campos adicionales para no-DOF
+    if (doc.fuente !== sources[2]) {
+      if (doc.transitorios && doc.tipo === docTypes[1] && 
+          (doc.fuente === sources[0] || doc.fuente === sources[1])) {
+        html += `<h3>Transitorios</h3>`
+        html += `<p>${doc.transitorios}</p>`
+      }
+      
+      if (doc.resumen) {
+        html += `<h3>Estatus</h3>`
+        html += `<p>${doc.resumen}</p>`
+      }
+      
+      if (doc.informacion_adicional && 
+          ((doc.tipo === docTypes[0] || doc.tipo === docTypes[1]) && 
+           (doc.fuente === sources[0] || doc.fuente === sources[1]))) {
+        html += `<h3>Información Adicional</h3>`
+        html += `<p>${doc.informacion_adicional}</p>`
+      }
+    }
+
+    return html
   }
 
-  const validateDocument = (doc: Document): boolean => {
-    switch(doc.fuente){
-      case sources[2]: // DOF
-        if(!doc.iniciativa_texto || !doc.fuente || !doc.dependencia || !doc.temas || !doc.resumen || !doc.analisis) {
-          toast.error('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-          return false
-        }
-        break
-      default:
-        if (!doc.iniciativa_texto || !doc.tipo || !doc.objeto) {
-          toast.error('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-          return false
-        }
-        break
-    }
+  const handleChange = (field: keyof Document, value: string) => {
+    if (!editData) return
+    const updatedData = { ...editData, [field]: value }
+    setEditData(updatedData)
+  }
 
-    if(doc.tipo === docTypes[0] && (doc.fuente === sources[0] || doc.fuente === sources[1]) && (!doc.iniciativa_texto || !doc.tipo || !doc.Proponente || !doc.fuente || !doc.temas || !doc.objeto || !doc.analisis || !doc.resumen)) {
-      toast.error('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-      return false
-    }
-    
-    if(doc.tipo === docTypes[1] && (doc.fuente === sources[0] || doc.fuente === sources[1]) && (!doc.iniciativa_texto || !doc.tipo || !doc.Proponente || !doc.fuente || !doc.temas || !doc.objeto || !doc.analisis)) {
-      toast.error('Todos los campos obligatorios deben estar completos para guardar los cambios.')
-      return false
-    }
-
-    return true
+  const handleEditorChange = (html: string) => {
+    setEditorContent(html)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!document || !validateDocument(document)) return
+    console.log(editorContent)
+    if (!editData) return
 
     try {
       setSaving(true)
       
-      const { error } = await supabase
-        .from('senado')
-        .update({
-            iniciativa_texto: document.iniciativa_texto,
-            tipo: document.tipo,
-            personas: document.personas,
-            objeto: document.objeto,
-            correspondiente: document.correspondiente,
-            temas: document.temas,
-            link_iniciativa: document.link_iniciativa,
-            sinopsis: document.sinopsis,
-            resumen: document.resumen,
-            analisis: document.analisis,
-            dependencia: document.dependencia,
-            ver_expediente: document.ver_expediente,
-            ultimo_doc_expediente: document.ultimo_doc_expediente,
-            transitorios: document.transitorios,
-            informacion_adicional: document.informacion_adicional,
-            titulo: document.titulo
-        })
-        .eq('id_senado_doc', document.id_senado_doc)
+      // Guardar contenido del editor en iniciativa_texto
+      const updatedData = {
+        ...editData,
+        iniciativa_texto: editorContent
+      }
+      
+    //   const { error } = await supabase
+    //     .from('senado')
+    //     .update({
+    //       iniciativa_texto: updatedData.iniciativa_texto,
+    //       tipo: updatedData.tipo,
+    //       personas: updatedData.personas,
+    //       objeto: updatedData.objeto,
+    //       correspondiente: updatedData.correspondiente,
+    //       temas: updatedData.temas,
+    //       link_iniciativa: updatedData.link_iniciativa,
+    //       sinopsis: updatedData.sinopsis,
+    //       resumen: updatedData.resumen,
+    //       analisis: updatedData.analisis,
+    //       dependencia: updatedData.dependencia,
+    //       ver_expediente: updatedData.ver_expediente,
+    //       ultimo_doc_expediente: updatedData.ultimo_doc_expediente,
+    //       transitorios: updatedData.transitorios,
+    //       informacion_adicional: updatedData.informacion_adicional,
+    //       titulo: updatedData.titulo
+    //     })
+    //     .eq('id_senado_doc', updatedData.id_senado_doc)
 
       if (error) throw error
 
-      // Navigate back to document management with success message
+      toast.success('Documento actualizado exitosamente')
       navigate('/gestion-documental', { 
         state: { successMessage: 'Documento actualizado exitosamente' }
       })
     } catch (error) {
       console.error('Error saving document:', error)
-      setError('Error al guardar el documento')
+      toast.error('Error al guardar el documento')
     } finally {
       setSaving(false)
     }
@@ -165,7 +250,7 @@ const DocumentEdit: React.FC = () => {
     )
   }
 
-  if (error || !document) {
+  if (error || !document || !editData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -190,204 +275,41 @@ const DocumentEdit: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <p className="text-sm text-gray-500">ID: {document.id_senado_doc}</p>
-            <div className="flex items-center space-x-4">
-              <span className="bg-gray-100 rounded-xl py-1 px-3 text-sm text-gray-600">
-                {document.fuente}
-              </span>
-            </div>
+            <span className="bg-gray-100 rounded-xl py-1 px-3 text-sm text-gray-600">
+              {document.fuente}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="form-label">Título *</label>
+          <form className="p-6 space-y-6">
+            {/* Rich Text Editor */}
+            <div className="space-y-2">
+                <label className="form-label">Tipo de proyecto:</label>
                 <input
-                  id="titulo"
-                  name="titulo"
-                  placeholder="Título"
-                  type="text"
-                  value={document.titulo}
-                  onChange={(e) => handleChange('titulo', e.target.value)}
-                  className="form-input"
-                  required
-                />
-              </div>
-              
-              {document.fuente !== sources[2] && (
-                <>
-                  <div className="space-y-2">
-                    <label className="form-label">Tipo de Proyecto</label>
-                    <div className="form-input bg-gray-100 text-gray-600">
-                      {document.tipo || 'No especificado'}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="form-label">Proponente</label>
-                    <input
-                      id="Proponente"
-                      name="Proponente"
-                      placeholder="Proponente"
-                      type="text"
-                      value={document.Proponente}
-                      onChange={(e) => handleChange('Proponente', e.target.value)}
-                      className="form-input"
-                    />
-                  </div>
-                </>
-              )}
-              
-              <div className="space-y-2">
-                <label className="form-label">
-                  {document.fuente === sources[2] ? "Órgano de difusión" : "Cámara de origen"}
-                </label>
-                <div className="form-input bg-gray-100 text-gray-600">
-                  {document.fuente || 'No especificado'}
-                </div>
-              </div>
-              
-              {document.fuente === sources[2] && (
-                <div className="space-y-2 md:col-span-2">
-                  <label className="form-label">Dependencia</label>
-                  <input
-                    id="dependencia"
-                    name="dependencia"
-                    placeholder="Dependencia"
+                    id="tipo"
+                    name="tipo"
+                    placeholder="Tipo de proyecto"
                     type="text"
-                    value={document.dependencia}
-                    onChange={(e) => handleChange('dependencia', e.target.value)}
+                    value={document.tipo}
+                    onChange={(e) => handleChange('tipo', e.target.value)}
                     className="form-input"
-                  />
-                </div>
-              )}
-              
-              <div className="space-y-2 md:col-span-2">
-                <label className="form-label">Temas/Subtemas</label>
-                <input
-                  id="temas"
-                  name="temas"
-                  placeholder="Temas/Subtemas"
-                  type="text"
-                  value={document.temas}
-                  onChange={(e) => handleChange('temas', e.target.value)}
-                  className="form-input"
+                    disabled={true}
                 />
-              </div>
             </div>
-
             <div className="space-y-2">
-              {document.fuente === sources[2] ? (
-                <>
-                  <label className="form-label">Resumen *</label>
-                  <textarea
-                    id="resumen"
-                    name="resumen"
-                    placeholder="Resumen"
-                    value={document.resumen}
-                    onChange={(e) => handleChange('resumen', e.target.value)}
-                    className="form-input h-24 resize-none"
-                    required
-                  />
-                </>
-              ) : (
-                <>
-                  <label className="form-label">Objeto *</label>
-                  <textarea
-                    id="objeto"
-                    name="objeto"
-                    placeholder="Objeto"
-                    value={document.objeto}
-                    onChange={(e) => handleChange('objeto', e.target.value)}
-                    className="form-input h-24 resize-none"
-                    required
-                  />
-                </>
-              )}
+              <label className="form-label">Contenido del Documento:</label>
+              <DocumentEditor
+                value={editorContent}
+                onChange={handleEditorChange}
+                width="100%"
+                height="500px"
+                placeholder="Edita el contenido del documento aquí..."
+              />
             </div>
-
-            <div className="space-y-2">
-              {document.fuente === sources[2] || ((document.fuente === sources[0] || document.fuente === sources[1]) && (document.tipo === docTypes[0] || document.tipo === docTypes[1])) ? (
-                <>
-                  <label className="form-label">Análisis</label>
-                  <textarea
-                    id="analisis"
-                    name="analisis"
-                    placeholder="Análisis"
-                    value={document.analisis}
-                    onChange={(e) => handleChange('analisis', e.target.value)}
-                    className="form-input h-24 resize-none"
-                  />
-                </>
-              ) : (
-                <>
-                  <label className="form-label">Correspondiente</label>
-                  <textarea
-                    id="correspondiente"
-                    name="correspondiente"
-                    placeholder="Correspondiente"
-                    value={document.correspondiente}
-                    onChange={(e) => handleChange('correspondiente', e.target.value)}
-                    className="form-input h-24 resize-none"
-                  />
-                </>
-              )}
-            </div>
-
-            {document.fuente !== sources[2] && (
-              <>
-                <div className="space-y-2">
-                  {(document.tipo === docTypes[1] && (document.fuente === sources[0] || document.fuente === sources[1])) && (
-                    <>
-                      <label className="form-label">Transitorios</label>
-                      <textarea
-                        value={document.transitorios}
-                        onChange={(e) => handleChange('transitorios', e.target.value)}
-                        className="form-input h-24 resize-none"
-                        placeholder="Transitorios de la iniciativa o propuesta"
-                      />
-                    </>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="form-label">Estatus</label>
-                  {(document.fuente === sources[0] || document.fuente === sources[1] || document.tipo === docTypes[0]) ? (
-                    <Select2
-                      value={document.resumen}
-                      onChange={(value: string) => handleChange('resumen', value)}
-                      options={ESTATUS_DOC_OPTIONS}
-                      emptyOptionLabel="Sin estatus"
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      value={document.resumen}
-                      onChange={(e) => handleChange('resumen', e.target.value)}
-                      className="form-input"
-                      placeholder="Estatus de la iniciativa o propuesta"
-                    />
-                  )}
-                </div>
-              </>
-            )}
-
-            {((document.tipo === docTypes[0] || document.tipo === docTypes[1]) && (document.fuente === sources[0] || document.fuente === sources[1])) && (
-              <div className="space-y-2">
-                <label className="form-label">Información adicional</label>
-                <textarea
-                  id="informacion_adicional"
-                  name="informacion_adicional"
-                  placeholder="Información adicional"
-                  value={document.informacion_adicional || ''}
-                  onChange={(e) => handleChange('informacion_adicional', e.target.value)}
-                  className="form-input h-24 resize-none"
-                />
-              </div>
-            )}
 
             {/* Action buttons */}
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
@@ -400,7 +322,8 @@ const DocumentEdit: React.FC = () => {
                 Cancelar
               </button>
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
                 disabled={saving}
                 className="px-6 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors flex items-center space-x-2 disabled:opacity-50"
               >

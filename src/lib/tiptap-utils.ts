@@ -296,23 +296,37 @@ export const handleImageUpload = async (
     throw new Error("No file provided")
   }
 
+  if (!file.type.startsWith('image/')) {
+    throw new Error("File must be an image")
+  }
+
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
       `File size exceeds maximum allowed (${MAX_FILE_SIZE / (1024 * 1024)}MB)`
     )
   }
 
-  // For demo/testing: Simulate upload progress. In production, replace the following code
-  // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
+  // Simulate upload progress for better UX
+  for (let progress = 0; progress <= 90; progress += 30) {
     if (abortSignal?.aborted) {
       throw new Error("Upload cancelled")
     }
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 100))
     onProgress?.({ progress })
   }
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+  // Check if cancelled before creating URL
+  if (abortSignal?.aborted) {
+    throw new Error("Upload cancelled")
+  }
+
+  // Create object URL for the uploaded image
+  const imageUrl = URL.createObjectURL(file)
+  
+  // Complete progress
+  onProgress?.({ progress: 100 })
+
+  return imageUrl
 }
 
 type ProtocolOptions = {

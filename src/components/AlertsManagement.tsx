@@ -483,19 +483,16 @@ const AlertsManagement: React.FC = () => {
       // Filtro por fechas (corregido)
       if (filterFecha.desde && filterFecha.hasta) {
         const fechaAlerta = new Date(alerta.created_at)
-        const fechaDesde = new Date(filterFecha.desde)
-        const fechaHasta = new Date(filterFecha.hasta)
-        // Ajustar fechaHasta al final del día
-        fechaHasta.setHours(23, 59, 59, 999)
+        const fechaDesde = new Date(filterFecha.desde + 'T00:00:00')
+        const fechaHasta = new Date(filterFecha.hasta + 'T23:59:59.999')
         if (fechaAlerta < fechaDesde || fechaAlerta > fechaHasta) return false
       } else if (filterFecha.desde) {
         const fechaAlerta = new Date(alerta.created_at)
-        const fechaDesde = new Date(filterFecha.desde)
+        const fechaDesde = new Date(filterFecha.desde + 'T00:00:00')
         if (fechaAlerta < fechaDesde) return false
       } else if (filterFecha.hasta) {
         const fechaAlerta = new Date(alerta.created_at)
-        const fechaHasta = new Date(filterFecha.hasta)
-        fechaHasta.setHours(23, 59, 59, 999)
+        const fechaHasta = new Date(filterFecha.hasta + 'T23:59:59.999')
         if (fechaAlerta > fechaHasta) return false
       }
 

@@ -1,6 +1,5 @@
 import * as React from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
-import { useNavigate } from 'react-router-dom'
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
@@ -12,6 +11,8 @@ import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
 import { Extension } from "@tiptap/core"
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model"
+import type { Transaction } from "@tiptap/pm/state"
 
 // --- UI Primitives ---
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
@@ -89,13 +90,13 @@ const IndentExtension = Extension.create({
         attributes: {
           indent: {
             default: 0,
-            renderHTML: attributes => {
+            renderHTML: (attributes: { indent: number }) => {
               if (!attributes.indent) return {}
               return {
                 style: `padding-left: ${attributes.indent * 1.5}rem;`
               }
             },
-            parseHTML: element => {
+            parseHTML: (element: HTMLElement) => {
               const style = element.getAttribute('style')
               if (!style) return 0
               const match = style.match(/padding-left:\s*(\d+(?:\.\d+)?)rem/)
@@ -109,11 +110,11 @@ const IndentExtension = Extension.create({
 
   addCommands() {
     return {
-      indent: () => ({ tr, state, dispatch }) => {
+      indent: () => ({ tr, state, dispatch }: { tr: Transaction; state: any; dispatch?: (tr: Transaction) => void }) => {
         const { selection } = state
         const { from, to } = selection
 
-        tr.doc.nodesBetween(from, to, (node, pos) => {
+        tr.doc.nodesBetween(from, to, (node: ProseMirrorNode, pos: number) => {
           if (node.type.name === 'paragraph' || node.type.name === 'heading') {
             const currentIndent = node.attrs.indent || 0
             const newIndent = Math.min(currentIndent + 1, 8) // Max 8 levels
@@ -124,11 +125,11 @@ const IndentExtension = Extension.create({
         if (dispatch) dispatch(tr)
         return true
       },
-      outdent: () => ({ tr, state, dispatch }) => {
+      outdent: () => ({ tr, state, dispatch }: { tr: Transaction; state: any; dispatch?: (tr: Transaction) => void }) => {
         const { selection } = state
         const { from, to } = selection
 
-        tr.doc.nodesBetween(from, to, (node, pos) => {
+        tr.doc.nodesBetween(from, to, (node: ProseMirrorNode, pos: number) => {
           if (node.type.name === 'paragraph' || node.type.name === 'heading') {
             const currentIndent = node.attrs.indent || 0
             const newIndent = Math.max(currentIndent - 1, 0)
@@ -154,6 +155,16 @@ const MainToolbarContent = ({
 }) => {
   const { editor } = React.useContext(EditorContext)
   
+  const handleIndent = () => {
+    if (!editor) return
+    editor.commands.indent()
+  }
+
+  const handleOutdent = () => {
+    if (!editor) return
+    editor.commands.outdent()
+  }
+
   return (
     <>
       <Spacer />
@@ -202,7 +213,7 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <Button
           type="button"
-          onClick={() => editor?.chain().focus().indent().run()}
+          onClick={handleIndent}
           tooltip="Aumentar sangría"
           aria-label="Aumentar sangría"
           disabled={!editor}
@@ -213,7 +224,7 @@ const MainToolbarContent = ({
         </Button>
         <Button
           type="button"
-          onClick={() => editor?.chain().focus().outdent().run()}
+          onClick={handleOutdent}
           tooltip="Disminuir sangría"
           aria-label="Disminuir sangría"
           disabled={!editor}

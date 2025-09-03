@@ -70,6 +70,16 @@ import "@/components/tiptap-node/heading-node/heading-node.scss"
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss"
 
+// Extend Commands interface to include custom commands
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    indent: {
+      indent: () => ReturnType
+      outdent: () => ReturnType
+    }
+  }
+}
+
 interface DocumentEditorProps {
   value?: string
   onChange?: (value: string) => void
@@ -90,10 +100,11 @@ const IndentExtension = Extension.create({
         attributes: {
           indent: {
             default: 0,
-            renderHTML: (attributes: { indent: number }) => {
-              if (!attributes.indent) return {}
+            renderHTML: (attributes: Record<string, any>) => {
+              const indent = attributes.indent
+              if (!indent) return {}
               return {
-                style: `padding-left: ${attributes.indent * 1.5}rem;`
+                style: `padding-left: ${indent * 1.5}rem;`
               }
             },
             parseHTML: (element: HTMLElement) => {
@@ -110,7 +121,7 @@ const IndentExtension = Extension.create({
 
   addCommands() {
     return {
-      indent: () => ({ tr, state, dispatch }: { tr: Transaction; state: any; dispatch?: (tr: Transaction) => void }) => {
+      indent: () => ({ tr, state, dispatch }: { tr: Transaction; state: any; dispatch: any }) => {
         const { selection } = state
         const { from, to } = selection
 
@@ -125,7 +136,7 @@ const IndentExtension = Extension.create({
         if (dispatch) dispatch(tr)
         return true
       },
-      outdent: () => ({ tr, state, dispatch }: { tr: Transaction; state: any; dispatch?: (tr: Transaction) => void }) => {
+      outdent: () => ({ tr, state, dispatch }: { tr: Transaction; state: any; dispatch: any }) => {
         const { selection } = state
         const { from, to } = selection
 

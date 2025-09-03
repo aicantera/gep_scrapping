@@ -592,8 +592,8 @@ const BotsExecution = () => {
                     <span
                       className={`inline-block px-2 py-1 rounded text-xs font-semibold ${clsx({
                         "bg-green-100 text-green-700": row.estatus === "Éxito" || row.estatus === "éxito",
-                        "bg-red-100 text-red-700": row.estatus === "falla",
-                        "bg-gray-100 text-gray-700": row.estatus === "en proceso",
+                        "bg-red-100 text-red-700": row.estatus === "Error" || row.estatus === "error",
+                        "bg-gray-100 text-gray-700": row.estatus === "en proceso" || row.estatus === "En Proceso" || row.estatus === "en Proceso",
                       })}`}
                     >
                       {row.estatus.charAt(0).toUpperCase() +

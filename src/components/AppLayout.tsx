@@ -26,7 +26,7 @@ const adminRoutes = [
   {
     icon: <AlertTriangle size={20} />,
     label: "Alertas y Monitoreo",
-    href: "/alertas-monitoreo",
+    href: "/gestion-alertas",
   },
   {
     icon: <Bot size={20} />,
@@ -60,7 +60,7 @@ const analistaRoutes = [
   {
     icon: <AlertTriangle size={20} />,
     label: "Alertas y Monitoreo",
-    href: "/alertas-monitoreo",
+    href: "/gestion-alertas",
   },
   {
     icon: <Bot size={20} />,
@@ -77,12 +77,14 @@ const analistaRoutes = [
 const getPageTitle: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/gestion-documental": "Gestión Documental",
-  "/alertas-monitoreo": "Alertas y Monitoreo",
+  "/gestion-alertas": "Alertas y Monitoreo",
   "/gestion-clientes": "Gestión de Clientes",
   "/gestion-temas": "Gestión de Temas",
   "/gestion-usuarios": "Gestión de Usuarios",
   "/ejecucion-bots": "Ejecución de Bots",
   "/gestion-documental/:id/editar": "Editar Documento",
+  "/gestion-alertas/:id/validar": "Validar Alerta",
+  "/gestion-alertas/:id/ver": "Ver Alerta",
 };
 
 const getPageTitleFromPath = (currentPath: string): string => {

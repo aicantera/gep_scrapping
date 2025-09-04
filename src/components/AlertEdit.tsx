@@ -66,6 +66,7 @@ const AlertEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [alert, setAlert] = useState<Alert | null>(null)
+  const [cliente, setCliente] = useState<any>(null)
   const [asuntoCorreo, setAsuntoCorreo] = useState<string>('')
   const [mensajeAdjunto, setMensajeAdjunto] = useState<string>('')
   const [loading, setLoading] = useState(true)
@@ -136,22 +137,28 @@ const AlertEdit: React.FC = () => {
           )
         `)
         .eq('id_alerta', parseInt(id))
-        .single()
+        .single();
 
       if (error) throw error
-      
       const { data: clienteData } = await supabase
       .from('clientes')
       .select("*")
       .eq('id_cliente', alertaData.id_cliente);
-
+      
       const lists = JSON.parse(clienteData?.[0]?.listas_distribucion || "[]")
       const emailsCount = lists[0]?.correos?.length || 0;
-
-      if (error) throw error
       
-      setAlert(alertaData)
+      setCliente({
+        nombre_cliente: clienteData?.[0]?.nombre_cliente,
+        siglas: clienteData?.[0]?.siglas,
+        email: clienteData?.[0]?.email,
+        listas_distribucion: lists,
+        emailsCount,
+        newEmailsList: lists[0]?.correos || [],
+        temas_subtemas: clienteData?.[0]?.temas_suscrit
+      });
       console.log(alertaData)
+      setAlert(alertaData)
     } catch (error) {
       console.error('Error fetching alert:', error)
       setError('Error al cargar la alerta')
@@ -286,7 +293,7 @@ const AlertEdit: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="font-medium text-gray-700">Cliente:</span>
-                  <div className="text-gray-900">{alert.nombre_cliente}</div>
+                  <div className="text-gray-900">{cliente.nombre_cliente}</div>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Fecha de Creación:</span>
@@ -294,11 +301,11 @@ const AlertEdit: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Temas y Subtemas:</span>
-                  <div className="text-gray-900">{(alert.temas_subtemas || []).join(', ')}</div>
+                  <div className="text-gray-900">{(cliente.temas_subtemas || []).join(', ')}</div>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Destinatarios:</span>
-                  <div className="text-gray-900">{alert.emailsCount} correos</div>
+                  <div className="text-gray-900">{cliente.emailsCount} correos</div>
                 </div>
               </div>
             </div>

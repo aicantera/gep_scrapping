@@ -430,8 +430,8 @@ const AlertView: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Temas y Subtemas</label>
               <div className="flex flex-wrap gap-2">
-                {(alert.temas_subtemas && alert.temas_subtemas.length > 0) ? (
-                  alert.temas_subtemas.map((tema, index) => (
+                {(cliente?.temas_subtemas && cliente.temas_subtemas.length > 0) ? (
+                  cliente.temas_subtemas.map((tema: string, index: number) => (
                     <span
                       key={index}
                       className="inline-flex px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
@@ -481,6 +481,7 @@ const AlertView: React.FC = () => {
                     onChange={() => {}}
                     width="100%"
                     height="500px"
+                    readOnly
                   />
                 </div>
 

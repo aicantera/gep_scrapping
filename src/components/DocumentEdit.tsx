@@ -82,7 +82,6 @@ const DocumentEdit: React.FC = () => {
       
       setDocument(data)
       setEditData(data)
-      console.log(data)
     } catch (error) {
       console.error('Error fetching document:', error)
       setError('Error al cargar el documento')
@@ -94,7 +93,6 @@ const DocumentEdit: React.FC = () => {
   // Genera el HTML del documento si no existe
   const generateDocumentHTML = (doc: Document): string => {
     let html = ``
-    console.log(doc)
     // 1. DOF
     if (doc.fuente === sources[2]) {
       // Título

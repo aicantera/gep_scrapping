@@ -331,7 +331,6 @@ const AlertEdit: React.FC = () => {
     
     try {
       setSaving(true)
-      console.log(alert)
       // Update document_html
       if (alert.senado) {
         const { error: docError } = await supabase

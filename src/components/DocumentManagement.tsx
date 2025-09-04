@@ -20,6 +20,7 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react'
+import { supabase, supabaseAdmin } from '@/lib/supabase'
 interface Document {
   id_senado_doc: number
   created_at: string
@@ -71,6 +72,9 @@ const DocumentManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [totalDocuments, setTotalDocuments] = useState(0)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -255,7 +259,8 @@ const DocumentManagement: React.FC = () => {
   }
 
   const handleDeleteClick = (document: Document) => {
-    navigate(`/gestion-documental/${document.id_senado_doc}/eliminar`)
+    setDocumentToDelete(document)
+    setShowDeleteModal(true)
   }
 
   const formatDate = (dateString: string) => {
@@ -264,6 +269,117 @@ const DocumentManagement: React.FC = () => {
       month: 'short',
       day: 'numeric'
     })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!documentToDelete) {
+      console.error('❌ No hay documento seleccionado para eliminar')
+      return
+    }
+
+    setIsDeleting(true)
+
+    try {
+      // Verificar que el documento existe antes de eliminarlo
+      const { data: existingDoc, error: checkError } = await supabase
+        .from('senado')
+        .select('id_senado_doc')
+        .eq('id_senado_doc', documentToDelete.id_senado_doc)
+        .single()
+
+      if (checkError) {
+        console.error('❌ Error al verificar documento:', checkError)
+        alert('Error al verificar el documento. Intenta nuevamente.')
+        return
+      }
+
+      if (!existingDoc) {
+        console.error('❌ Documento no encontrado:', documentToDelete.id_senado_doc)
+        alert('El documento no fue encontrado en la base de datos.')
+        return
+      }
+
+      // Método 1: Intentar con cliente de administrador
+      let deleteError = null
+      
+      try {
+        const { error } = await supabaseAdmin
+          .from('senado')
+          .delete()
+          .eq('id_senado_doc', documentToDelete.id_senado_doc)
+        
+        deleteError = error
+      } catch (adminErr) {
+        console.error('❌ Error con cliente de administrador:', adminErr)
+        deleteError = adminErr
+      }
+
+      // Método 2: Si falla el administrador, intentar con cliente normal
+      if (deleteError) {
+        try {
+          const { error } = await supabase
+            .from('senado')
+            .delete()
+            .eq('id_senado_doc', documentToDelete.id_senado_doc)
+          
+          deleteError = error
+        } catch (normalErr) {
+          console.error('❌ Error con cliente normal:', normalErr)
+          deleteError = normalErr
+        }
+      }
+
+      // Método 3: Si ambos fallan, intentar con fetch directo
+      if (deleteError) {
+        try {
+          const response = await fetch(`${supabaseUrl}/rest/v1/senado?id_senado_doc=eq.${documentToDelete.id_senado_doc}`, {
+            method: 'DELETE',
+            headers: {
+              'apikey': supabaseServiceKey,
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            }
+          })
+          
+          if (!response.ok) {
+            const errorText = await response.text()
+            deleteError = new Error(`HTTP ${response.status}: ${errorText}`)
+          } else {
+            deleteError = null
+          }
+        } catch (fetchErr) {
+          console.error('❌ Error con fetch directo:', fetchErr)
+          deleteError = fetchErr
+        }
+      }
+
+      if (deleteError) {
+        console.error('❌ Todos los métodos de eliminación fallaron:', deleteError)
+        throw deleteError
+      }
+
+      setShowDeleteModal(false)
+      setDocumentToDelete(null)
+      setSuccessMessage('El documento ha sido eliminado correctamente.')
+
+      // Recargar la lista de documentos
+      await fetchDocuments()
+      
+    } catch (err) {
+      console.error('❌ Error completo al eliminar documento:', err)
+      
+      // Mostrar mensaje de error más específico
+      let errorMessage = 'Error al eliminar el documento. Intenta nuevamente.'
+      
+      if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = `Error: ${err.message}`
+      }
+      
+      alert(errorMessage)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const truncateText = (text: string, maxLength: number = 60) => {
@@ -684,6 +800,77 @@ const DocumentManagement: React.FC = () => {
               )}
             </>
           )}
+        </div>
+      )}
+
+       {/* Delete Confirmation Modal */}
+       {showDeleteModal && documentToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl max-w-lg w-full mx-4 p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Confirmar eliminación</h3>
+                <p className="text-gray-600">Esta acción no se puede deshacer.</p>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <p className="text-gray-700 mb-2">
+                <strong>Documento a eliminar:</strong>
+              </p>
+              <p className="text-gray-700 mb-2">
+                <strong>ID:</strong> {documentToDelete.id_senado_doc}
+              </p>
+              <p className="text-gray-700 mb-2">
+                <strong>Título:</strong> {truncateText(documentToDelete.iniciativa_texto, 80)}
+              </p>
+              <p className="text-gray-700 mb-2">
+                <strong>Fuente:</strong> {documentToDelete.fuente || 'Sin fuente'}
+              </p>
+              <p className="text-gray-700">
+                <strong>Fecha:</strong> {formatDate(documentToDelete.created_at)}
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+              <p className="text-yellow-800 text-sm">
+                ⚠️ <strong>Advertencia:</strong> Esta acción eliminará permanentemente el documento de la base de datos.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDocumentToDelete(null)
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 transition-colors font-medium disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Eliminar documento</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

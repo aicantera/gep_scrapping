@@ -7,6 +7,8 @@ import { LoginForm } from "@/components/LoginForm";
 import DocumentManagement from "@/components/DocumentManagement";
 import DocumentEdit from "@/components/DocumentEdit";
 import AlertsManagement from "@/components/AlertsManagement";
+import AlertEdit from "@/components/AlertEdit";
+import AlertView from "@/components/AlertView";
 import ClientsManagement from "@/components/ClientsManagement";
 import ThemeManagement from "@/components/ThemeManagement";
 import UserManagement from "@/components/UserManagement";
@@ -18,6 +20,9 @@ import ProtectedRoute from "./ProtectedRoute";
 const adminRoutes = [
   <Route path="gestion-documental" element={<DocumentManagement />} />,
   <Route path="gestion-documental/:id/editar" element={<DocumentEdit />} />,
+  <Route path="gestion-alertas" element={<AlertsManagement />} />,
+  <Route path="gestion-alertas/:id/validar" element={<AlertEdit />} />,
+  <Route path="gestion-alertas/:id/ver" element={<AlertView />} />,
   <Route path="alertas-monitoreo" element={<AlertsManagement />} />,
   <Route path="gestion-clientes" element={<ClientsManagement />} />,
   <Route path="gestion-temas" element={<ThemeManagement />} />,
@@ -28,6 +33,9 @@ const adminRoutes = [
 const analistaRoutes = [
   <Route path="gestion-documental" element={<DocumentManagement />} />,
   <Route path="gestion-documental/:id/editar" element={<DocumentEdit />} />,
+  <Route path="gestion-alertas" element={<AlertsManagement />} />,
+  <Route path="gestion-alertas/:id/validar" element={<AlertEdit />} />,
+  <Route path="gestion-alertas/:id/ver" element={<AlertView />} />,
   <Route path="alertas-monitoreo" element={<AlertsManagement />} />,
   <Route path="ejecucion-bots" element={<BotsExecution />} />,
 ];

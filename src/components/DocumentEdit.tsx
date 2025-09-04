@@ -4,6 +4,8 @@ import { Save, TriangleAlert, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-toastify'
 import { DocumentEditor } from './DocumentEditor'
+import Select2 from './ui/select2'
+import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
 import SendAlertModal from './SendAlertModal'
 
 interface Document {
@@ -52,7 +54,7 @@ const DocumentEdit: React.FC = () => {
 
   // Source and document type constants
   const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación"]
-  const docTypes = ["Iniciativa", "Proposición"]
+  const docTypes = ["INICIATIVA", "PUNTO DE ACUERDO"]
 
   useEffect(() => {
     fetchDocument()
@@ -93,86 +95,124 @@ const DocumentEdit: React.FC = () => {
   // Genera el HTML del documento si no existe
   const generateDocumentHTML = (doc: Document): string => {
     let html = ``
-    
-    // Título
-    if (doc.titulo) {
-      html += `<h3>Título</h3>`
-      html += `<p>${doc.titulo}</p>`
-    }
+    // 1. DOF
+    if (doc.fuente === sources[2]) {
+      // Título
+      if (doc.titulo) {
+        html += `<h3>Título</h3>`
+        html += `<p>${doc.titulo}</p>`
+      }
 
-    // Campos específicos por fuente
-    if (doc.fuente !== sources[2]) { // No es DOF
-      if (doc.tipo) {
-        html += `<h3>Tipo de Proyecto</h3>`
-        html += `<p>${doc.tipo}</p>`
+      // Fuente
+      if (doc.fuente) {
+        html += `<h3>Fuente</h3>`
+        html += `<p>${doc.fuente}</p>`
       }
-      
-      if (doc.Proponente) {
-        html += `<h3>Proponente</h3>`
-        html += `<p>${doc.Proponente}</p>`
-      }
-      
-      if (doc.objeto) {
-        html += `<h3>Objeto</h3>`
-        html += `<p>${doc.objeto}</p>`
-      }
-    } else { // Es DOF
+
+      // Dependencia
       if (doc.dependencia) {
         html += `<h3>Dependencia</h3>`
         html += `<p>${doc.dependencia}</p>`
       }
-      
+
+      // Temas
+      if (doc.temas) {
+        html += `<h3>Temas</h3>`
+        html += `<p>${doc.temas}</p>`
+      }
+
+      // Resumen
       if (doc.resumen) {
         html += `<h3>Resumen</h3>`
         html += `<p>${doc.resumen}</p>`
       }
-    }
 
-    // Temas
-    if (doc.temas) {
-      html += `<h3>Temas/Subtemas</h3>`
-      html += `<p>${doc.temas}</p>`
-    }
-
-    // Iniciativa/Texto principal
-    if (doc.iniciativa_texto) {
-      html += `<h3>Iniciativa/Texto</h3>`
-      html += `<div>${doc.iniciativa_texto}</div>`
-    }
-
-    // Análisis o Correspondiente
-    if (doc.fuente === sources[2] || 
-        ((doc.fuente === sources[0] || doc.fuente === sources[1]) && 
-         (doc.tipo === docTypes[0] || doc.tipo === docTypes[1]))) {
+      // Análisis
       if (doc.analisis) {
         html += `<h3>Análisis</h3>`
         html += `<p>${doc.analisis}</p>`
       }
-    } else {
-      if (doc.sinopsis) {
-        html += `<h3>Correspondiente</h3>`
-        html += `<p>${doc.sinopsis}</p>`
-      }
     }
+    // 2. INICIATIVAS (Diputados/Senadores)
+    else if ((doc.fuente === sources[0] || doc.fuente === sources[1]) && doc.tipo === docTypes[0]) {
+      // Tipo de Proyecto
+      if (doc.tipo) {
+        html += `<h3>Tipo de Proyecto</h3>`
+        html += `<p>${doc.tipo}</p>`
+      }
 
-    // Campos adicionales para no-DOF
-    if (doc.fuente !== sources[2]) {
-      if (doc.transitorios && doc.tipo === docTypes[1] && 
-          (doc.fuente === sources[0] || doc.fuente === sources[1])) {
+      // Título
+      if (doc.titulo) {
+        html += `<h3>Título</h3>`
+        html += `<p>${doc.titulo}</p>`
+      }
+
+      // Cámara de origen (fuente)
+      if (doc.fuente) {
+        html += `<h3>Cámara de Origen</h3>`
+        html += `<p>${doc.fuente}</p>`
+      }
+
+      // Proponente
+      if (doc.Proponente) {
+        html += `<h3>Proponente</h3>`
+        html += `<p>${doc.Proponente}</p>`
+      }
+
+      // Objeto
+      if (doc.objeto) {
+        html += `<h3>Objeto</h3>`
+        html += `<p>${doc.objeto}</p>`
+      }
+
+      // Análisis
+      if (doc.analisis) {
+        html += `<h3>Análisis</h3>`
+        html += `<p>${doc.analisis}</p>`
+      }
+
+      // Transitorios
+      if (doc.transitorios) {
         html += `<h3>Transitorios</h3>`
         html += `<p>${doc.transitorios}</p>`
       }
-      
-      if (doc.resumen) {
-        html += `<h3>Estatus</h3>`
-        html += `<p>${doc.resumen}</p>`
+    }
+    // 3. PUNTOS DE ACUERDO (Diputados/Senadores)
+    else if ((doc.fuente === sources[0] || doc.fuente === sources[1]) && doc.tipo === docTypes[1]) {
+      // Tipo de Proyecto
+      if (doc.tipo) {
+        html += `<h3>Tipo de Proyecto</h3>`
+        html += `<p>${doc.tipo}</p>`
       }
-      
-      if (doc.informacion_adicional && 
-          ((doc.tipo === docTypes[0] || doc.tipo === docTypes[1]) && 
-           (doc.fuente === sources[0] || doc.fuente === sources[1]))) {
-        html += `<h3>Información Adicional</h3>`
-        html += `<p>${doc.informacion_adicional}</p>`
+
+      // Título
+      if (doc.titulo) {
+        html += `<h3>Título</h3>`
+        html += `<p>${doc.titulo}</p>`
+      }
+
+      // Cámara de origen (fuente)
+      if (doc.fuente) {
+        html += `<h3>Cámara de Origen</h3>`
+        html += `<p>${doc.fuente}</p>`
+      }
+
+      // Proponente
+      if (doc.Proponente) {
+        html += `<h3>Proponente</h3>`
+        html += `<p>${doc.Proponente}</p>`
+      }
+
+      // Objeto
+      if (doc.objeto) {
+        html += `<h3>Objeto</h3>`
+        html += `<p>${doc.objeto}</p>`
+      }
+
+      // Análisis
+      if (doc.analisis) {
+        html += `<h3>Análisis</h3>`
+        html += `<p>${doc.analisis}</p>`
       }
     }
 
@@ -205,7 +245,8 @@ const DocumentEdit: React.FC = () => {
       const { error } = await supabase
         .from('senado')
         .update({
-            documento_html: updatedData.documento_html
+            documento_html: updatedData.documento_html,
+            resumen: updatedData.resumen
         })
         .eq('id_senado_doc', updatedData.id_senado_doc)
 
@@ -266,12 +307,12 @@ const DocumentEdit: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Content */}
-        <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <form className="p-6 space-y-6">
-              {/* Rich Text Editor */}
+      {/* Content */}
+      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <form className="p-6 space-y-6">
+            {/* Rich Text Editor */}
+            {document.fuente !== sources[2] && (
               <div className="space-y-2">
                   <label className="form-label">Tipo de proyecto:</label>
                   <input
@@ -285,53 +326,75 @@ const DocumentEdit: React.FC = () => {
                       disabled={true}
                   />
               </div>
+            )}
+            <div className="space-y-2">
+              <label className="form-label">Contenido del Documento:</label>
+              <DocumentEditor
+                value={editorContent}
+                onChange={handleEditorChange}
+                width="100%"
+                height="500px"
+                placeholder="Edita el contenido del documento aquí..."
+              />
+            </div>
+            {(document.fuente !== sources[2] && (document.tipo === docTypes[0] || document.tipo === docTypes[1])) && (
               <div className="space-y-2">
-                <label className="form-label">Contenido del Documento:</label>
-                <DocumentEditor
-                  value={editorContent}
-                  onChange={handleEditorChange}
-                  width="100%"
-                  height="500px"
-                  placeholder="Edita el contenido del documento aquí..."
-                />
+                <label className="form-label">Estatus</label>
+                {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
+                  <Select2
+                    value={editData.resumen}
+                    onChange={(value: string) => handleChange('resumen', value)}
+                    options={ESTATUS_DOC_OPTIONS}
+                    emptyOptionLabel="Sin estatus"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={editData.resumen}
+                    onChange={(e) => handleChange('resumen', e.target.value)}
+                    className="form-input"
+                    placeholder="Estatus de la iniciativa o propuesta"
+                  />
+                )}
               </div>
+            )}
 
-              {/* Action buttons */}
-              <div className='flex flex-col md:flex-row justify-center md:justify-between items-center gap-4 mt-4'>
-                <div className='flex justify-start items-center'>
-                  <button
-                    type='button'
-                    className="flex items-center justify-center space-x-2 px-6 py-2 w-52 md:w-auto bg-[#f58220] text-white rounded-lg hover:bg-[#e27210] transition-colors border border-[#f58220] disabled:opacity-50"
-                    onClick={() => setIsAlertModalOpen(true)}
-                    >
-                    <TriangleAlert className="w-4 h-4" />
-                    <span>Crear alerta</span>
-                  </button>
-                </div>
-                <div className="flex flex-col md:flex-row justify-center md:justify-between gap-4 border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/gestion-documental')}
-                    disabled={saving}
-                    className="px-6 py-2 w-52 md:w-auto bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300 disabled:opacity-50"
+            {/* Action buttons */}
+            <div className='flex flex-col md:flex-row justify-center md:justify-between items-center gap-4 mt-4'>
+              <div className='flex justify-start items-center'>
+                <button
+                  type='button'
+                  className="flex items-center justify-center space-x-2 px-6 py-2 w-52 md:w-auto bg-[#f58220] text-white rounded-lg hover:bg-[#e27210] transition-colors border border-[#f58220] disabled:opacity-50"
+                  onClick={() => setIsAlertModalOpen(true)}
                   >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={saving}
-                    className="px-6 py-2 w-52 md:w-auto bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors flex items-center space-x-2 disabled:opacity-50"
-                    >
-                    <Save className="w-4 h-4" />
-                    <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
-                  </button>
-                </div>
+                  <TriangleAlert className="w-4 h-4" />
+                  <span>Crear alerta</span>
+                </button>
               </div>
-            </form>
-          </div>
+              <div className="flex flex-col md:flex-row justify-center md:justify-between gap-4 border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => navigate('/gestion-documental')}
+                  disabled={saving}
+                  className="px-6 py-2 w-52 md:w-auto bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className="px-6 py-2 w-52 md:w-auto bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors flex items-center space-x-2 disabled:opacity-50"
+                  >
+                  <Save className="w-4 h-4" />
+                  <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
+    </div>
 
       {/* Modal for sending alert */}
       {isAlertModalOpen && (

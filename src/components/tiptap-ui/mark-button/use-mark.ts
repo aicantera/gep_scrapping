@@ -121,7 +121,16 @@ export function shouldShowButton(props: {
  * Gets the formatted mark name
  */
 export function getFormattedMarkName(type: Mark): string {
-  return type.charAt(0).toUpperCase() + type.slice(1)
+  const translations: Record<Mark, string> = {
+    bold: "Negrita",
+    italic: "Cursiva", 
+    underline: "Subrayado",
+    strike: "Tachado",
+    code: "Código",
+    superscript: "Superíndice",
+    subscript: "Subíndice"
+  }
+  return translations[type] || type.charAt(0).toUpperCase() + type.slice(1)
 }
 
 /**

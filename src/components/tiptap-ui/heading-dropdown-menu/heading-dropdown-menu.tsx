@@ -88,9 +88,9 @@ export const HeadingDropdownMenu = React.forwardRef<
             tabIndex={-1}
             disabled={!canToggle}
             data-disabled={!canToggle}
-            aria-label="Format text as heading"
+            aria-label="Formatear texto como título"
             aria-pressed={isActive}
-            tooltip="Heading"
+            tooltip="Título"
             {...buttonProps}
             ref={ref}
           >
@@ -108,7 +108,7 @@ export const HeadingDropdownMenu = React.forwardRef<
                     <HeadingButton
                       editor={editor}
                       level={level}
-                      text={`Heading ${level}`}
+                      text={`Título ${level}`}
                       showTooltip={false}
                     />
                   </DropdownMenuItem>

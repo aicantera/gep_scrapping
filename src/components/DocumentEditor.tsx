@@ -56,9 +56,6 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
-// --- Components ---
-import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
-
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 
@@ -87,6 +84,7 @@ interface DocumentEditorProps {
   height?: string | number
   className?: string
   placeholder?: string
+  readOnly?: boolean
 }
 
 // Custom Indent Extension
@@ -264,10 +262,6 @@ const MainToolbarContent = ({
       <Spacer />
 
       {isMobile && <ToolbarSeparator />}
-
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
     </>
   )
 }
@@ -307,7 +301,8 @@ export function DocumentEditor({
   width = "100%", 
   height = "600px",
   className = "",
-  placeholder = "Comienza a escribir aquí..."
+  placeholder = "Comienza a escribir aquí...",
+  readOnly = false
 }: DocumentEditorProps) {
   const isMobile = useIsMobile()
   const { height: windowHeight } = useWindowSize()
@@ -355,6 +350,7 @@ export function DocumentEditor({
       }),
     ],
     content: value,
+    editable: !readOnly,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       onChange?.(html)
@@ -384,30 +380,32 @@ export function DocumentEditor({
       style={{ width, height, display: 'flex', flexDirection: 'column' }}
     >
       <EditorContext.Provider value={{ editor }}>
-        <Toolbar
-          ref={toolbarRef}
-          className="border-b border-gray-200 bg-gray-50"
-          style={{
-            ...(isMobile
-              ? {
-                  bottom: `calc(100% - ${windowHeight - rect.y}px)`,
-                }
-              : {}),
-          }}
-        >
-          {mobileView === "main" ? (
-            <MainToolbarContent
-              onHighlighterClick={() => setMobileView("highlighter")}
-              onLinkClick={() => setMobileView("link")}
-              isMobile={isMobile}
-            />
-          ) : (
-            <MobileToolbarContent
-              type={mobileView === "highlighter" ? "highlighter" : "link"}
-              onBack={() => setMobileView("main")}
-            />
-          )}
-        </Toolbar>
+        {!readOnly && (
+          <Toolbar
+            ref={toolbarRef}
+            className="border-b border-gray-200 bg-gray-50"
+            style={{
+              ...(isMobile
+                ? {
+                    bottom: `calc(100% - ${windowHeight - rect.y}px)`,
+                  }
+                : {}),
+            }}
+          >
+            {mobileView === "main" ? (
+              <MainToolbarContent
+                onHighlighterClick={() => setMobileView("highlighter")}
+                onLinkClick={() => setMobileView("link")}
+                isMobile={isMobile}
+              />
+            ) : (
+              <MobileToolbarContent
+                type={mobileView === "highlighter" ? "highlighter" : "link"}
+                onBack={() => setMobileView("main")}
+              />
+            )}
+          </Toolbar>
+        )}
 
         <EditorContent
           editor={editor}

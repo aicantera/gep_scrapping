@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Save, X } from 'lucide-react'
+import { Save, TriangleAlert, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-toastify'
 import { DocumentEditor } from './DocumentEditor'
 import Select2 from './ui/select2'
 import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
+import SendAlertModal from './SendAlertModal'
 
 interface Document {
     id_senado_doc: number
@@ -49,6 +50,7 @@ const DocumentEdit: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   // Source and document type constants
   const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación"]
@@ -292,19 +294,19 @@ const DocumentEdit: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <p className="text-sm text-gray-500">ID: {document.id_senado_doc}</p>
-            <span className="bg-gray-100 rounded-xl py-1 px-3 text-sm text-gray-600">
-              {document.fuente}
-            </span>
+    <>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <p className="text-sm text-gray-500">ID: {document.id_senado_doc}</p>
+              <span className="bg-gray-100 rounded-xl py-1 px-3 text-sm text-gray-600">
+                {document.fuente}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-
       {/* Content */}
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -356,30 +358,53 @@ const DocumentEdit: React.FC = () => {
                 )}
               </div>
             )}
-            {/* Action buttons */}
-            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={() => navigate('/gestion-documental')}
-                disabled={saving}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={saving}
-                className="px-6 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors flex items-center space-x-2 disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
-              </button>
-            </div>
-          </form>
+
+              {/* Action buttons */}
+              <div className='flex flex-col md:flex-row justify-center md:justify-between items-center gap-4 mt-4'>
+                <div className='flex justify-start items-center'>
+                  <button
+                    type='button'
+                    className="flex items-center justify-center space-x-2 px-6 py-2 w-52 md:w-auto bg-[#f58220] text-white rounded-lg hover:bg-[#e27210] transition-colors border border-[#f58220] disabled:opacity-50"
+                    onClick={() => setIsAlertModalOpen(true)}
+                    >
+                    <TriangleAlert className="w-4 h-4" />
+                    <span>Crear alerta</span>
+                  </button>
+                </div>
+                <div className="flex flex-col md:flex-row justify-center md:justify-between gap-4 border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/gestion-documental')}
+                    disabled={saving}
+                    className="px-6 py-2 w-52 md:w-auto bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300 disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={saving}
+                    className="px-6 py-2 w-52 md:w-auto bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors flex items-center space-x-2 disabled:opacity-50"
+                    >
+                    <Save className="w-4 h-4" />
+                    <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Modal for sending alert */}
+      {isAlertModalOpen && (
+        <SendAlertModal
+          isOpen={isAlertModalOpen}
+          onClose={() => setIsAlertModalOpen(false)}
+          document={document}
+        />
+      )}
+    </>
   )
 }
 

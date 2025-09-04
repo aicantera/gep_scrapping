@@ -4,57 +4,75 @@ import { X, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-toastify'
 import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
+import { DocumentEditor } from './DocumentEditor'
 
 interface Alert {
-  id_alerta: number
-  nombre_cliente: string
-  created_at: string
-  temas_subtemas: string[]
-  emailsCount: number
-  estado: string
-  fuente: string | null
-  documento_senado: Document | null
-  listas_distribucion: Array<{correo: string, nombre: string}>
-  datetime_enviado_correo: string | null
-  link_pdf_enviado: string | null
-  enviado_por: {
-    nombre: string
-    apellido: string
-    email: string
+  // Campos REALES de la tabla alertas_directorio
+  id_alerta: number                    // bigint
+  created_at: string                   // timestamp with time zone
+  id_cliente: string                   // uuid
+  status_alerta: boolean | null        // boolean nullable
+  temas: string[] | null              // ARRAY nullable
+  sub_tema: string[] | null           // ARRAY nullable
+  fuente: string | null               // text nullable
+  estado: string | null               // text nullable ('pendientes' | 'enviadas' | 'rechazadas')
+  id_doc_senado: number | null        // bigint nullable
+  id_analista: string | null          // text nullable
+  enviado_correo: boolean | null      // boolean nullable
+  datetime_enviado_correo: string | null // timestamp nullable
+  link_pdf_enviado?: string | null    // url del pdf enviado
+  alerta_html?: string | null
+  
+  // Campos calculados/derivados para la UI
+  nombre_cliente?: string
+  temas_subtemas?: string[]
+  listas_distribucion?: {
+    nombre: string;
+    correo: string;
+  }[]
+  
+  // Datos del documento del senado (si existe relación FK)
+  senado?: {
+    sinopsis?: string
+    Proponente?: string
+    created_at?: string
+    link_iniciativa?: string
+    resumen?: string
+    tipo?: string
+    objeto?: string
+    gaceta?: string
+    iniciativa_texto?: string
+    temas?: string
+    personas?: string
+    partidos?: string
+    fuente?: string
+    transitorios?: string
+    dependencia?: string
+    ultimo_doc_expediente?: string
+    ver_expediente?: string
+    analisis?: string
+    analizado?: boolean
+    informacion_adicional?: string
+    link_documento?: string
+    id_senado_doc?: number
+    [key: string]: any // Para campos adicionales
+    titulo?: string    
   } | null
-}
 
-interface Document {
-  id_senado_doc: number
-  titulo: string
-  tipo: string
-  fuente: string
-  dependencia: string
-  temas: string
-  resumen: string
-  objeto: string
-  analisis: string
-  sinopsis: string
-  correspondiente: string
-  transitorios: string
-  Proponente: string
-  personas: string
-  analizado: boolean
-  informacion_adicional: string
-  link_iniciativa: string
-  gaceta: string
-  iniciativa_id: string
-  partidos: string
-  leyes: string
-  created_at: string
+  enviado_por?: any;
+  emailsCount?: number;
+  newEmailsList?: string[];
 }
 
 const AlertView: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [alert, setAlert] = useState<Alert | null>(null)
+  const [cliente, setCliente] = useState<any>(null)
+  const [analista, setAnalista] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editorContent, setEditorContent] = useState<string>('')
 
   // Source and document type constants
   const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación"]
@@ -64,26 +82,235 @@ const AlertView: React.FC = () => {
     fetchAlert()
   }, [id])
 
+  useEffect(() => {
+    if(alert && alert.alerta_html && alert.alerta_html !== '') {
+      setEditorContent(alert.alerta_html)
+    } else if (alert && (!alert.alerta_html || alert.alerta_html === '') && alert.senado && alert.senado.documento_html && alert.senado.documento_html !== '') { 
+      setEditorContent(alert.senado.documento_html)
+    } else if (alert && (!alert.alerta_html || alert.alerta_html === '') && alert.senado && alert.senado.documento_html && alert.senado.documento_html === '') {
+      const htmlContent = generateDocumentHTML(alert.senado)
+      setEditorContent(htmlContent)
+    }
+  }, [alert])
+  
+  const generateDocumentHTML = (doc: any): string => {
+    let html = ''
+    
+    // 1. DOF documents
+    if (doc.fuente === sources[2]) {
+      // Título
+      if (doc.titulo) {
+        html += `<h3>Título</h3>`
+        html += `<p>${doc.titulo}</p>`
+      }
+
+      // Fuente (Órgano de difusión)
+      if (doc.fuente) {
+        html += `<h3>Fuente</h3>`
+        html += `<p>${doc.fuente}</p>`
+      }
+
+      // Dependencia
+      if (doc.dependencia) {
+        html += `<h3>Dependencia</h3>`
+        html += `<p>${doc.dependencia}</p>`
+      }
+
+      // Temas
+      if (doc.temas) {
+        html += `<h3>Temas</h3>`
+        html += `<p>${doc.temas}</p>`
+      }
+
+      // Resumen
+      if (doc.resumen) {
+        html += `<h3>Resumen</h3>`
+        html += `<p>${doc.resumen}</p>`
+      }
+
+      // Análisis
+      if (doc.analisis) {
+        html += `<h3>Análisis</h3>`
+        html += `<p>${doc.analisis}</p>`
+      }
+    }
+    // 2. INICIATIVAS (Diputados/Senadores)
+    else if ((doc.fuente === sources[0] || doc.fuente === sources[1]) && doc.tipo === docTypes[0]) {
+      // Tipo de Proyecto
+      if (doc.tipo) {
+        html += `<h3>Tipo de Proyecto</h3>`
+        html += `<p>${doc.tipo}</p>`
+      }
+
+      // Título
+      if (doc.titulo) {
+        html += `<h3>Título</h3>`
+        html += `<p>${doc.titulo}</p>`
+      }
+
+      // Cámara de origen (fuente)
+      if (doc.fuente) {
+        html += `<h3>Cámara de Origen</h3>`
+        html += `<p>${doc.fuente}</p>`
+      }
+
+      // Proponente
+      if (doc.Proponente) {
+        html += `<h3>Proponente</h3>`
+        html += `<p>${doc.Proponente}</p>`
+      }
+
+      // Objeto
+      if (doc.objeto) {
+        html += `<h3>Objeto</h3>`
+        html += `<p>${doc.objeto}</p>`
+      }
+
+      // Análisis
+      if (doc.analisis) {
+        html += `<h3>Análisis</h3>`
+        html += `<p>${doc.analisis}</p>`
+      }
+
+      // Transitorios
+      if (doc.transitorios) {
+        html += `<h3>Transitorios</h3>`
+        html += `<p>${doc.transitorios}</p>`
+      }
+    }
+    // 3. PUNTOS DE ACUERDO (Diputados/Senadores)
+    else if ((doc.fuente === sources[0] || doc.fuente === sources[1]) && doc.tipo === docTypes[1]) {
+      // Tipo de Proyecto
+      if (doc.tipo) {
+        html += `<h3>Tipo de Proyecto</h3>`
+        html += `<p>${doc.tipo}</p>`
+      }
+
+      // Título
+      if (doc.titulo) {
+        html += `<h3>Título</h3>`
+        html += `<p>${doc.titulo}</p>`
+      }
+
+      // Cámara de origen (fuente)
+      if (doc.fuente) {
+        html += `<h3>Cámara de Origen</h3>`
+        html += `<p>${doc.fuente}</p>`
+      }
+
+      // Proponente
+      if (doc.Proponente) {
+        html += `<h3>Proponente</h3>`
+        html += `<p>${doc.Proponente}</p>`
+      }
+
+      // Objeto
+      if (doc.objeto) {
+        html += `<h3>Objeto</h3>`
+        html += `<p>${doc.objeto}</p>`
+      }
+
+      // Análisis
+      if (doc.analisis) {
+        html += `<h3>Análisis</h3>`
+        html += `<p>${doc.analisis}</p>`
+      }
+    }
+
+    return html
+  }
+
   const fetchAlert = async () => {
     if (!id) return
     
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      const { data: alertaData, error } = await supabase
         .from('alertas_directorio')
         .select(`
-          *,
-          documento_senado:senado(*),
-          listas_distribucion:lista_distribucion_alertas(correo, nombre),
-          enviado_por:usuarios(nombre, apellido, email)
+          id_alerta,
+          created_at,
+          id_cliente,
+          status_alerta,
+          temas,
+          sub_tema,
+          fuente,
+          estado,
+          id_doc_senado,
+          id_analista,
+          enviado_correo,
+          datetime_enviado_correo,
+          link_pdf_enviado,
+          alerta_html,
+          clientes (
+            nombre_cliente,
+            siglas,
+            email
+          ),
+          senado (
+            fuente,
+            dependencia,
+            sinopsis,
+            Proponente,
+            created_at,
+            link_iniciativa,
+            resumen,
+            tipo,
+            objeto,
+            gaceta,
+            temas,
+            personas,
+            partidos,
+            iniciativa_texto,
+            iniciativa_id,
+            imagen_link,
+            leyes,
+            analisis,
+            transitorios,
+            correspondiente,
+            analizado,
+            ultimo_doc_expediente,
+            ver_expediente,
+            informacion_adicional,
+            titulo,
+            link_documento,
+            documento_html,
+            id_senado_doc
+          )
         `)
         .eq('id_alerta', parseInt(id))
-        .single()
+        .single();
 
       if (error) throw error
       
-      setAlert(data)
-      console.log(data)
+      if (alertaData?.id_analista) {
+        const { data: userFilter } = await supabase
+          .from('usuarios')
+          .select("*")
+          .eq('user_id', alertaData.id_analista)
+          .single();
+  
+        setAnalista(userFilter);
+      } 
+
+      const { data: clienteData } = await supabase
+      .from('clientes')
+      .select("*")
+      .eq('id_cliente', alertaData.id_cliente);
+      
+      const lists = JSON.parse(clienteData?.[0]?.listas_distribucion || "[]")
+      const emailsCount = lists[0]?.correos?.length || 0;
+      
+      setCliente({
+        nombre_cliente: clienteData?.[0]?.nombre_cliente,
+        siglas: clienteData?.[0]?.siglas,
+        email: clienteData?.[0]?.email,
+        listas_distribucion: lists,
+        emailsCount,
+        newEmailsList: lists[0]?.correos || [],
+        temas_subtemas: clienteData?.[0]?.temas_suscrit
+      });
+      setAlert(alertaData)
     } catch (error) {
       console.error('Error fetching alert:', error)
       setError('Error al cargar la alerta')
@@ -152,7 +379,7 @@ const AlertView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Cliente</label>
-                <div className="text-gray-900 font-medium">{alert.nombre_cliente}</div>
+                <div className="text-gray-900 font-medium">{cliente.nombre_cliente}</div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">ID Alerta</label>
@@ -193,9 +420,9 @@ const AlertView: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Enviado por:</label>
                 <div className="text-gray-900">
-                  {`${alert?.enviado_por?.nombre || 'N/A'} ${alert?.enviado_por?.apellido || 'N/A'}`}
+                  {`${analista?.nombre || 'N/A'} ${analista?.apellido || 'N/A'}`}
                 </div>
-                <div className="text-gray-900">{alert?.enviado_por?.email || 'N/A'}</div>
+                <div className="text-gray-900">{analista?.email || 'N/A'}</div>
               </div>
             </div>
 
@@ -219,224 +446,74 @@ const AlertView: React.FC = () => {
             </div>
 
             {/* Información del Documento del Senado */}
-            {alert.documento_senado && (
+            {alert.senado && (
               <div className="border-t pt-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  📄 Documento de Fuente de Extracción
-                </h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Título */}
-                  {alert.documento_senado.titulo && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Título</label>
-                      <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                        {alert.documento_senado.titulo}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tipo de Proyecto - Solo mostrar si no es DOF */}
-                  {alert.documento_senado.fuente !== sources[2] && alert.documento_senado.tipo && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Tipo de Proyecto</label>
-                      <div className="text-gray-900">
-                        <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
-                          {alert.documento_senado.tipo}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Proponente - Solo mostrar si no es DOF */}
-                  {alert.documento_senado.fuente !== sources[2] && (alert.documento_senado.Proponente || alert.documento_senado.personas) && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Proponente</label>
-                      <div className="text-gray-900 font-medium">{alert.documento_senado.Proponente || alert.documento_senado.personas}</div>
-                    </div>
-                  )}
-
-                  {/* Cámara de origen / Órgano de difusión */}
-                  {alert.documento_senado.fuente && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        {alert.documento_senado.fuente === sources[2] ? "Órgano de difusión" : "Cámara de origen"}
-                      </label>
-                      <div className="text-gray-900 font-medium">{alert.documento_senado.fuente}</div>
-                    </div>
-                  )}
-
-                  {/* Dependencia - Solo mostrar si es DOF */}
-                  {alert.documento_senado.fuente === sources[2] && alert.documento_senado.dependencia && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Dependencia</label>
-                      <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                        {alert.documento_senado.dependencia}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Temas/Subtemas */}
-                  {alert.documento_senado.temas && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Temas/Subtemas</label>
-                      <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                        {alert.documento_senado.temas}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Objeto o Resumen según fuente */}
-                  {alert.documento_senado.fuente === sources[2] ? (
-                    alert.documento_senado.resumen && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Resumen</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alert.documento_senado.resumen}
-                        </div>
-                      </div>
-                    )
-                  ) : (
-                    alert.documento_senado.objeto && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Objeto</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alert.documento_senado.objeto}
-                        </div>
-                      </div>
-                    )
-                  )}
-
-                  {/* Análisis o Correspondiente según fuente */}
-                  {alert.documento_senado.fuente === sources[2] || ((alert.documento_senado.fuente === sources[0] || alert.documento_senado.fuente === sources[1]) && (alert.documento_senado.tipo === docTypes[0] || alert.documento_senado.tipo === docTypes[1])) ? (
-                    alert.documento_senado.analisis && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Análisis</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alert.documento_senado.analisis}
-                        </div>
-                      </div>
-                    )
-                  ) : (
-                    alert.documento_senado.correspondiente && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Correspondiente</label>
-                        <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                          {alert.documento_senado.correspondiente}
-                        </div>
-                      </div>
-                    )
-                  )}
-
-                  {/* Transitorios - Solo para fuentes que no sean DOF y tipos que no sean PUNTO DE ACUERDO */}
-                  {alert.documento_senado.fuente !== sources[2] && alert.documento_senado.tipo !== docTypes[0] && alert.documento_senado.transitorios && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Transitorios</label>
-                      <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                        {alert.documento_senado.transitorios}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Estatus - Solo mostrar si no es DOF */}
-                  {(alert.documento_senado.fuente !== sources[2] && alert.documento_senado.resumen) && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Estatus</label>
-                      <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                        {(() => {
-                          const resumen = alert.documento_senado?.resumen;
-                          if (!resumen) return '';
-                          const matchedStatus = ESTATUS_DOC_OPTIONS.find(option => option.value === resumen);
-                          return matchedStatus ? matchedStatus.label : resumen;
-                        })()}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Información adicional - Solo para tipos específicos con fuentes de Cámaras */}
-                  {((alert.documento_senado.tipo === docTypes[0] || alert.documento_senado.tipo === docTypes[1]) && (alert.documento_senado.fuente === sources[0] || alert.documento_senado.fuente === sources[1])) && alert.documento_senado.informacion_adicional && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Información adicional</label>
-                      <div className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-lg">
-                        {alert.documento_senado.informacion_adicional}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Enlaces adicionales */}
-                  {alert.documento_senado.link_iniciativa && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Enlace Iniciativa</label>
-                      <div className="mt-1">
-                        <a 
-                          href={alert.documento_senado.link_iniciativa}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 underline break-all"
-                        >
-                          Ver documento original
-                        </a>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Campos adicionales */}
-                  {alert.documento_senado.gaceta && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Gaceta</label>
-                      <div className="text-gray-900">{alert.documento_senado.gaceta}</div>
-                    </div>
-                  )}
-
-                  {alert.documento_senado.iniciativa_id && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">ID de Iniciativa</label>
-                      <div className="text-gray-900">
-                        <span className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                          {alert.documento_senado.iniciativa_id}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {alert.documento_senado.partidos && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Partidos</label>
-                      <div className="text-gray-900">{alert.documento_senado.partidos}</div>
-                    </div>
-                  )}
-
-                  {alert.documento_senado.leyes && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Leyes</label>
-                      <div className="text-gray-900">{alert.documento_senado.leyes}</div>
-                    </div>
-                  )}
-
-                  {/* Fecha de Creación del Documento */}
-                  {alert.documento_senado.created_at && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Fecha de Creación del Documento</label>
-                      <div className="text-gray-900">
-                        {new Date(alert.documento_senado.created_at).toLocaleDateString('es-MX')}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Estado de análisis */}
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">Estado de Análisis</label>
-                    <div className="mt-1">
-                      <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                        alert.documento_senado.analizado 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {alert.documento_senado.analizado ? 'Analizado' : 'Pendiente de análisis'}
-                      </span>
-                    </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-medium text-gray-900 flex items-center">
+                    📄 Documento de Fuente de Extracción
+                  </h4>
+                  <div className="flex items-center space-x-4">
+                    <span className="bg-gray-100 text-gray-800 rounded-xl py-1 px-3 text-sm">
+                      {alert.fuente}
+                    </span>
                   </div>
                 </div>
+
+                {/* Tipo de proyecto - Solo mostrar si no es DOF */}
+                {alert.senado.fuente !== sources[2] && (
+                  <div className="space-y-2 mb-4">
+                    <label className="form-label">Tipo de proyecto:</label>
+                    <input
+                      placeholder="Tipo de proyecto"
+                      type="text"
+                      value={alert.senado?.tipo || ''}
+                      className="form-input bg-gray-100"
+                      disabled={true}
+                      readOnly
+                    />
+                  </div>
+                )}
+                
+                {/* Document Editor - Read Only */}
+                <div className="space-y-4">
+                  <DocumentEditor
+                    value={editorContent}
+                    onChange={() => {}}
+                    width="100%"
+                    height="500px"
+                  />
+                </div>
+
+                {/* Estado de análisis */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700">Estado de Análisis</label>
+                  <div className="mt-1">
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                      alert.senado.analizado 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {alert.senado.analizado ? 'Analizado' : 'Pendiente de análisis'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Enlaces adicionales si existen */}
+                {alert.senado.link_iniciativa && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">Enlace Iniciativa</label>
+                    <div className="mt-1">
+                      <a 
+                        href={alert.senado.link_iniciativa}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline break-all"
+                      >
+                        Ver documento original
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

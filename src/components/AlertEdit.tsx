@@ -56,6 +56,7 @@ interface Alert {
     analizado?: boolean
     informacion_adicional?: string
     link_documento?: string
+    id_senado_doc?: number
     [key: string]: any // Para campos adicionales
     titulo?: string    
   } | null
@@ -291,7 +292,8 @@ const AlertEdit: React.FC = () => {
             informacion_adicional,
             titulo,
             link_documento,
-            documento_html
+            documento_html,
+            id_senado_doc
           )
         `)
         .eq('id_alerta', parseInt(id))
@@ -315,7 +317,6 @@ const AlertEdit: React.FC = () => {
         newEmailsList: lists[0]?.correos || [],
         temas_subtemas: clienteData?.[0]?.temas_suscrit
       });
-      console.log(alertaData)
       setAlert(alertaData)
     } catch (error) {
       console.error('Error fetching alert:', error)
@@ -330,7 +331,7 @@ const AlertEdit: React.FC = () => {
     
     try {
       setSaving(true)
-      
+      console.log(alert)
       // Update document_html
       if (alert.senado) {
         const { error: docError } = await supabase
@@ -342,7 +343,7 @@ const AlertEdit: React.FC = () => {
         
         if (docError) throw docError;
       }
-      
+
       // Update alert status and send email
       const { error: alertError } = await supabase
         .from('alertas_directorio')
@@ -352,7 +353,8 @@ const AlertEdit: React.FC = () => {
           datetime_enviado_correo: new Date().toISOString(),
           asunto_email: asuntoCorreo,
           mensaje_email: mensajeAdjunto,
-          id_analista: user?.id || null
+          id_analista: user?.id || null,
+          alerta_html: editorContent
         })
         .eq('id_alerta', alert.id_alerta)
       

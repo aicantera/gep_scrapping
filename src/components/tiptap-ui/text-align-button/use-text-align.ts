@@ -57,10 +57,10 @@ export const textAlignIcons = {
 }
 
 export const textAlignLabels: Record<TextAlign, string> = {
-  left: "Align left",
-  center: "Align center",
-  right: "Align right",
-  justify: "Align justify",
+  left: "Alinear a la izquierda",
+  center: "Alinear al centro",
+  right: "Alinear a la derecha",
+  justify: "Justificar",
 }
 
 /**

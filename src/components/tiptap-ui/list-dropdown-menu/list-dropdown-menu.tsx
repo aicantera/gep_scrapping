@@ -25,24 +25,24 @@ import { Card, CardBody } from "@/components/tiptap-ui-primitive/card"
 
 export interface ListDropdownMenuProps extends Omit<ButtonProps, "type"> {
   /**
-   * The Tiptap editor instance.
+   * La instancia del editor de Tiptap.
    */
   editor?: Editor
   /**
-   * The list types to display in the dropdown.
+   * Los tipos de lista para mostrar en el menú desplegable.
    */
   types?: ListType[]
   /**
-   * Whether the dropdown should be hidden when no list types are available
+   * Si el menú desplegable debe estar oculto cuando no hay tipos de lista disponibles
    * @default false
    */
   hideWhenUnavailable?: boolean
   /**
-   * Callback for when the dropdown opens or closes
+   * Callback para cuando el menú desplegable se abre o cierra
    */
   onOpenChange?: (isOpen: boolean) => void
   /**
-   * Whether to render the dropdown menu in a portal
+   * Si el menú desplegable debe renderizarse en un portal
    * @default false
    */
   portal?: boolean
@@ -89,8 +89,8 @@ export function ListDropdownMenu({
           tabIndex={-1}
           disabled={!canToggle}
           data-disabled={!canToggle}
-          aria-label="List options"
-          tooltip="List"
+          aria-label="Opciones de lista"
+          tooltip="Lista"
           {...props}
         >
           <Icon className="tiptap-button-icon" />

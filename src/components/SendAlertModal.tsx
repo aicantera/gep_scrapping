@@ -37,7 +37,6 @@ const SendAlertModal: React.FC<{
             : [],
         })) || [];
 
-      console.log("🚀 ~ getClient ~ transformedData:", transformedData);
       setClients(transformedData);
       setError(null);
     } catch (error) {
@@ -129,7 +128,7 @@ const SendAlertModal: React.FC<{
 
     if (invalidClient) {
       setErrorMsg(
-        "Cada cliente seleccionado debe tener al menos una lista de difusión seleccionada."
+        "Cada cliente seleccionado debe tener al menos una lista de distribución seleccionada."
       );
       return;
     }
@@ -203,7 +202,7 @@ const SendAlertModal: React.FC<{
         {/* Sistema de checks */}
         <div className="mb-4">
           <h3 className="font-medium mb-2">
-            Selecciona clientes y listas de difusión:
+            Selecciona clientes y listas de distribución:
           </h3>
           {filteredClients.map((client) => (
             <div key={client.id_cliente} className="mb-2">

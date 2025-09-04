@@ -297,23 +297,23 @@ const DocumentEdit: React.FC = () => {
               </div>
 
               {/* Action buttons */}
-              <div className='flex justify-between items-center'>
+              <div className='flex flex-col md:flex-row justify-center md:justify-between items-center gap-4 mt-4'>
                 <div className='flex justify-start items-center'>
                   <button
                     type='button'
-                    className="flex items-center space-x-2 px-6 py-2 bg-[#f58220] text-white rounded-lg hover:bg-[#e27210] transition-colors border border-[#f58220] disabled:opacity-50"
+                    className="flex items-center justify-center space-x-2 px-6 py-2 w-52 md:w-auto bg-[#f58220] text-white rounded-lg hover:bg-[#e27210] transition-colors border border-[#f58220] disabled:opacity-50"
                     onClick={() => setIsAlertModalOpen(true)}
                     >
                     <TriangleAlert className="w-4 h-4" />
                     <span>Crear alerta</span>
                   </button>
                 </div>
-                <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+                <div className="flex flex-col md:flex-row justify-center md:justify-between gap-4 border-gray-200">
                   <button
                     type="button"
                     onClick={() => navigate('/gestion-documental')}
                     disabled={saving}
-                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300 disabled:opacity-50"
+                    className="px-6 py-2 w-52 md:w-auto bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300 disabled:opacity-50"
                   >
                     Cancelar
                   </button>
@@ -321,7 +321,7 @@ const DocumentEdit: React.FC = () => {
                     type="button"
                     onClick={handleSubmit}
                     disabled={saving}
-                    className="px-6 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors flex items-center space-x-2 disabled:opacity-50"
+                    className="px-6 py-2 w-52 md:w-auto bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors flex items-center space-x-2 disabled:opacity-50"
                     >
                     <Save className="w-4 h-4" />
                     <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>

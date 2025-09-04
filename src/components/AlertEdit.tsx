@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Save, X, Send, XCircle } from 'lucide-react'
+import { X, Send, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-toastify'
 import Select2 from './ui/select2'

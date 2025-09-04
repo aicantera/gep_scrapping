@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { 
   AlertTriangle,
-  X,
   RefreshCw,
   Search,
   CheckCircle,
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import * as XLSX from 'xlsx'
-import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 // Interfaces para tipado
@@ -76,7 +74,6 @@ interface Alerta {
 }
 
 const AlertsManagement: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   // Función para normalizar texto removiendo tildes

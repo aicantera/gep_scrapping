@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { X, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { toast } from 'react-toastify'
-import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
 import { DocumentEditor } from './DocumentEditor'
 
 interface Alert {

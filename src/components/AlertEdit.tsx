@@ -27,6 +27,7 @@ interface Alert {
   datetime_enviado_correo: string | null // timestamp nullable
   link_pdf_enviado?: string | null    // url del pdf enviado
   alerta_html?: string | null
+  destinatarios?: string[] | null
   
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
@@ -82,11 +83,18 @@ const AlertEdit: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editorContent, setEditorContent] = useState<string>('')
+  const [newEmail, setNewEmail] = useState<string>('')
+  const [emailError, setEmailError] = useState<string | null>(null)
   const [localImages, setLocalImages] = useState<Map<string, File>>(new Map());
+
 
   // Source and document type constants
   const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación"]
   const docTypes = ["INICIATIVA", "PUNTO DE ACUERDO"]
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email.trim())
+  }
 
   useEffect(() => {
     fetchAlert()
@@ -106,6 +114,54 @@ const AlertEdit: React.FC = () => {
   useEffect(() => {
     fetchAlert()
   }, [id])
+
+  useEffect(() => {
+    validateEmail()
+  }, [newEmail])
+
+  const validateEmail = () => {
+
+    if(newEmail === '') {
+      setEmailError(null)
+      return
+    }
+
+    if (!isValidEmail(newEmail)) {
+      setEmailError('Por favor ingresa un correo electrónico válido')
+      return
+    }
+    
+    if (editData?.destinatarios?.includes(newEmail)) {
+      setEmailError('Este correo ya está agregado')
+      return
+    }
+    setEmailError(null)
+  };
+  
+  const addEmail = () => {
+    if (!editData) return
+
+    const trimmedEmail = newEmail.trim()
+    if (!trimmedEmail) {
+      setEmailError('Por favor ingresa un correo electrónico')
+      return
+    }
+
+    setEditData({
+      ...editData,
+      destinatarios: [...(editData?.destinatarios || []), trimmedEmail]
+    })
+    setEmailError(null)
+    setNewEmail('')
+  };
+
+  const removeEmail = (email: string) => {
+    if (!editData) return
+    setEditData({
+      ...editData,
+      destinatarios: editData.destinatarios?.filter((e: string) => e !== email)
+    })
+  };
 
   const generateDocumentHTML = (doc: any): string => {
     let html = ''
@@ -268,6 +324,7 @@ const AlertEdit: React.FC = () => {
           datetime_enviado_correo,
           link_pdf_enviado,
           alerta_html,
+          destinatarios,
           clientes (
             nombre_cliente,
             siglas,
@@ -309,9 +366,9 @@ const AlertEdit: React.FC = () => {
 
       if (error) throw error
       const { data: clienteData } = await supabase
-      .from('clientes')
-      .select("*")
-      .eq('id_cliente', alertaData.id_cliente);
+        .from('clientes')
+        .select("*")
+        .eq('id_cliente', alertaData.id_cliente);
       
       const lists = JSON.parse(clienteData?.[0]?.listas_distribucion || "[]")
       const emailsCount = lists[0]?.correos?.length || 0;
@@ -325,8 +382,14 @@ const AlertEdit: React.FC = () => {
         newEmailsList: lists[0]?.correos || [],
         temas_subtemas: clienteData?.[0]?.temas_suscrit
       });
-      setAlert(alertaData)
-      setEditData(alertaData)
+      setAlert({
+        ...alertaData,
+        destinatarios: alertaData?.destinatarios?.split(',') || []
+      })
+      setEditData({
+        ...alertaData,
+        destinatarios: alertaData?.destinatarios?.split(',') || []
+      })
     } catch (error) {
       console.error('Error fetching alert:', error)
       setError('Error al cargar la alerta')
@@ -341,11 +404,12 @@ const AlertEdit: React.FC = () => {
 
   const aprobarAlerta = async () => {
     if (!alert || !asuntoCorreo.trim()) return
-
-    console.log(localImages);
+    if (!editData?.destinatarios?.length || editData?.destinatarios?.length === 0) {
+      setEmailError('Por favor agrega al menos un destinatario')
+      return
+    }
     
     setSaving(true);
-
     try {
       let finalHtml = editorContent;
 
@@ -412,6 +476,7 @@ const AlertEdit: React.FC = () => {
           asunto_email: asuntoCorreo,
           mensaje_email: mensajeAdjunto,
           id_analista: user?.id || null,
+          destinatarios: editData?.destinatarios?.join(','),
           alerta_html: finalHtml
         })
         .eq('id_alerta', alert.id_alerta)
@@ -588,6 +653,65 @@ const AlertEdit: React.FC = () => {
                 )}
               </>
             )}
+            {/* Lista de destinatarios */}
+            <div className="space-y-4">
+              <label className="form-label">Destinatarios</label>
+              {editData?.destinatarios && editData.destinatarios.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">
+                    Destinatarios agregados ({editData.destinatarios.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {editData.destinatarios.map((email, index) => (
+                      <div
+                        key={index}
+                        className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm border border-blue-200"
+                      >
+                        <span>{email}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeEmail(email)}
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-1 transition-colors"
+                          title="Eliminar destinatario"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !emailError && newEmail !== '') {
+                      e.preventDefault()
+                      addEmail()
+                    }
+                  }}
+                  placeholder="Ingresa un correo electrónico"
+                  className={`form-input flex-1 ${emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={addEmail}
+                  className="btn-primary px-4 py-2 whitespace-nowrap rounded-lg sm:max-w-[100px]"
+                  disabled={emailError !== null || newEmail === ''}
+                >
+                  Agregar
+                </button>
+              </div>
+
+              {emailError && (
+                <p className="text-red-600 text-sm !mt-0">{emailError}</p>
+              )}
+            </div>
 
             {/* Configuración del envío */}
             <div className="space-y-4">
@@ -619,16 +743,6 @@ const AlertEdit: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* Lista de destinatarios */}
-            {alert.listas_distribucion && alert.listas_distribucion.length > 0 && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h5 className="font-medium text-blue-900 mb-2">📬 Destinatarios ({alert.listas_distribucion.length})</h5>
-                <div className="text-sm text-blue-800 max-h-20 overflow-y-auto">
-                  {alert.listas_distribucion.map((item) => item.correo).join(', ')}
-                </div>
-              </div>
-            )}
 
             {/* Action buttons */}
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">

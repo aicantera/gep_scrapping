@@ -20,6 +20,7 @@ interface Alert {
   datetime_enviado_correo: string | null // timestamp nullable
   link_pdf_enviado?: string | null    // url del pdf enviado
   alerta_html?: string | null
+  destinatarios?: string[] | null
   
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
@@ -252,6 +253,7 @@ const AlertView: React.FC = () => {
           datetime_enviado_correo,
           link_pdf_enviado,
           alerta_html,
+          destinatarios,
           clientes (
             nombre_cliente,
             siglas,
@@ -320,7 +322,10 @@ const AlertView: React.FC = () => {
         newEmailsList: lists[0]?.correos || [],
         temas_subtemas: clienteData?.[0]?.temas_suscrit
       });
-      setAlert(alertaData)
+      setAlert({
+        ...alertaData,
+        destinatarios: alertaData?.destinatarios?.split(',') || []
+      })
     } catch (error) {
       console.error('Error fetching alert:', error)
       setError('Error al cargar la alerta')
@@ -494,6 +499,16 @@ const AlertView: React.FC = () => {
                     readOnly
                   />
                 </div>
+
+                {/* Lista de destinatarios */}
+                {alert.destinatarios && alert.destinatarios.length > 0 && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mt-4">
+                    <h5 className="font-medium text-blue-900 mb-2">📬 Destinatarios ({alert.destinatarios.length})</h5>
+                    <div className="text-sm text-blue-800 max-h-20 overflow-y-auto">
+                      {alert.destinatarios.join(', ')}
+                    </div>
+                  </div>
+                )}
 
                 {/* Estado de análisis */}
                 <div className="mt-4">

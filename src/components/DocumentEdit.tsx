@@ -64,10 +64,10 @@ const DocumentEdit: React.FC = () => {
     if (document && editData && (editData.documento_html === '' || editData.documento_html === null)) {
       const htmlContent = generateDocumentHTML(editData)
       setEditorContent(htmlContent)
-    } else if (document && editData && (document.documento_html !== null || document.documento_html !== '')) {
-      setEditorContent(document.documento_html || '')
+    } else if (document && editData && (editData.documento_html !== null || editData.documento_html !== '')) {
+      setEditorContent(editData.documento_html || '')
     }
-  }, [document, editData])
+  }, [document])
 
   const fetchDocument = async () => {
     if (!id) return
@@ -312,7 +312,7 @@ const DocumentEdit: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <form className="p-6 space-y-6">
             {/* Rich Text Editor */}
-            {document.fuente !== sources[2] && (
+            {editData.fuente !== sources[2] && (
               <div className="space-y-2">
                   <label className="form-label">Tipo de proyecto:</label>
                   <input
@@ -320,7 +320,7 @@ const DocumentEdit: React.FC = () => {
                       name="tipo"
                       placeholder="Tipo de proyecto"
                       type="text"
-                      value={document.tipo}
+                      value={editData.tipo}
                       onChange={(e) => handleChange('tipo', e.target.value)}
                       className="form-input"
                       disabled={true}
@@ -337,12 +337,12 @@ const DocumentEdit: React.FC = () => {
                 placeholder="Edita el contenido del documento aquí..."
               />
             </div>
-            {(document.fuente !== sources[2] && (document.tipo === docTypes[0] || document.tipo === docTypes[1])) && (
+            {(editData?.fuente !== sources[2] && (editData?.tipo === docTypes[0] || editData?.tipo === docTypes[1])) && (
               <div className="space-y-2">
                 <label className="form-label">Estatus</label>
-                {(editData.fuente === sources[0] || editData.fuente === sources[1] || editData.tipo === docTypes[0]) ? (
+                {(editData?.fuente === sources[0] || editData?.fuente === sources[1] || editData?.tipo === docTypes[0]) ? (
                   <Select2
-                    value={editData.resumen}
+                    value={editData?.resumen}
                     onChange={(value: string) => handleChange('resumen', value)}
                     options={ESTATUS_DOC_OPTIONS}
                     emptyOptionLabel="Sin estatus"
@@ -350,7 +350,7 @@ const DocumentEdit: React.FC = () => {
                 ) : (
                   <input
                     type="text"
-                    value={editData.resumen}
+                    value={editData?.resumen}
                     onChange={(e) => handleChange('resumen', e.target.value)}
                     className="form-input"
                     placeholder="Estatus de la iniciativa o propuesta"

@@ -71,6 +71,7 @@ const AlertEdit: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [alert, setAlert] = useState<Alert | null>(null)
+  const [editData, setEditData] = useState<Alert | null>(null)
   const [cliente, setCliente] = useState<any>(null)
   const [asuntoCorreo, setAsuntoCorreo] = useState<string>('')
   const [mensajeAdjunto, setMensajeAdjunto] = useState<string>('')
@@ -88,12 +89,12 @@ const AlertEdit: React.FC = () => {
   }, [id])
 
   useEffect(() => {
-    if(alert && alert.alerta_html && alert.alerta_html !== '') {
-      setEditorContent(alert.alerta_html)
-    } else if (alert && (!alert.alerta_html || alert.alerta_html === '') && alert.senado && alert.senado.documento_html && alert.senado.documento_html !== '') { 
-      setEditorContent(alert.senado.documento_html)
-    } else if (alert && (!alert.alerta_html || alert.alerta_html === '') && alert.senado && alert.senado.documento_html && alert.senado.documento_html === '') {
-      const htmlContent = generateDocumentHTML(alert.senado)
+    if(alert && editData && editData.alerta_html && editData.alerta_html !== '') {
+      setEditorContent(editData.alerta_html)
+    } else if (alert && editData && (!editData.alerta_html || editData.alerta_html === '') && editData.senado && editData.senado.documento_html && editData.senado.documento_html !== '') { 
+      setEditorContent(editData.senado.documento_html)
+    } else if (alert && editData && (!editData.alerta_html || editData.alerta_html === '') && editData.senado && editData.senado.documento_html && editData.senado.documento_html === '') {
+      const htmlContent = generateDocumentHTML(editData.senado)
       setEditorContent(htmlContent)
     }
   }, [alert])
@@ -101,15 +102,6 @@ const AlertEdit: React.FC = () => {
   useEffect(() => {
     fetchAlert()
   }, [id])
-
-  useEffect(() => {
-    if (alert && alert.senado && (!alert.senado.documento_html || alert.senado.documento_html === '')) {
-      const htmlContent = generateDocumentHTML(alert.senado)
-      setEditorContent(htmlContent)
-    } else if (alert && alert.senado && alert.senado.documento_html) {
-      setEditorContent(alert.senado.documento_html || '')
-    }
-  }, [alert])
 
   const generateDocumentHTML = (doc: any): string => {
     let html = ''
@@ -318,6 +310,7 @@ const AlertEdit: React.FC = () => {
         temas_subtemas: clienteData?.[0]?.temas_suscrit
       });
       setAlert(alertaData)
+      setEditData(alertaData)
     } catch (error) {
       console.error('Error fetching alert:', error)
       setError('Error al cargar la alerta')
@@ -336,7 +329,8 @@ const AlertEdit: React.FC = () => {
         const { error: docError } = await supabase
           .from('senado')
           .update({
-            documento_html: editorContent
+            documento_html: editorContent,
+            resumen: editData?.senado?.resumen || '',
           })
           .eq('id_senado_doc', alert.senado.id_senado_doc)
         
@@ -478,7 +472,7 @@ const AlertEdit: React.FC = () => {
               </div>
             </div>
 
-            {alert.senado && alert.senado.fuente !== sources[2] && (
+            {editData?.senado && editData?.senado.fuente !== sources[2] && (
               <div className="space-y-2">
                   <label className="form-label">Tipo de proyecto:</label>
                   <input
@@ -486,7 +480,7 @@ const AlertEdit: React.FC = () => {
                       name="tipo"
                       placeholder="Tipo de proyecto"
                       type="text"
-                      value={alert.senado?.tipo || ''}
+                      value={editData?.senado?.tipo || ''}
                       className="form-input"
                       disabled={true}
                   />
@@ -494,7 +488,7 @@ const AlertEdit: React.FC = () => {
             )}
 
             {/* Datos del Documento del Senado */}
-            {alert.senado && (
+            {editData?.senado && (
               <>
                 <div className="space-y-4">
                   <DocumentEditor
@@ -505,21 +499,21 @@ const AlertEdit: React.FC = () => {
                     placeholder="Edita el contenido del documento aquí..."
                   />
                 </div>
-                {alert.senado?.fuente !== sources[2] && (
+                {editData?.senado?.fuente !== sources[2] && (
                   <div className="space-y-2">
                     <label className="form-label">Estatus</label>
-                    {(alert.senado?.fuente === sources[0] || alert.senado?.fuente === sources[1] || alert.senado?.tipo === docTypes[0]) ? (
+                    {(editData?.senado?.fuente === sources[0] || editData?.senado?.fuente === sources[1] || editData?.senado?.tipo === docTypes[0]) ? (
                       <Select2
-                        value={alert.senado.resumen || ''}
-                        onChange={(value: string) => setAlert({ ...alert, senado: { ...alert.senado, resumen: value } })}
+                        value={editData?.senado?.resumen || ''}
+                        onChange={(value: string) => setEditData({ ...editData, senado: { ...editData?.senado, resumen: value } })}
                         options={ESTATUS_DOC_OPTIONS}
                         emptyOptionLabel="Sin estatus"
                       />
                     ) : (
                       <input
                         type="text"
-                        value={alert.senado?.resumen || ''}
-                        onChange={(e) => setAlert({ ...alert, senado: { ...alert.senado, resumen: e.target.value } })}
+                        value={editData?.senado?.resumen || ''}
+                        onChange={(e) => setEditData({ ...editData, senado: { ...editData?.senado, resumen: e.target.value } })}
                         className="form-input"
                         placeholder="Estatus de la iniciativa o propuesta"
                       />

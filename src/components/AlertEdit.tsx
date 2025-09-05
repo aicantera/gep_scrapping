@@ -8,6 +8,9 @@ import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
 import { DocumentEditor } from './DocumentEditor'
 import { useAuth } from '@/contexts/AuthContext'
 
+const supabaseUrl = 'https://masterd.gepdigital.ai'
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q'
+
 interface Alert {
   // Campos REALES de la tabla alertas_directorio
   id_alerta: number                    // bigint
@@ -82,6 +85,8 @@ const AlertEdit: React.FC = () => {
   const [editorContent, setEditorContent] = useState<string>('')
   const [newEmail, setNewEmail] = useState<string>('')
   const [emailError, setEmailError] = useState<string | null>(null)
+  const [localImages, setLocalImages] = useState<Map<string, File>>(new Map());
+
 
   // Source and document type constants
   const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación"]
@@ -393,28 +398,75 @@ const AlertEdit: React.FC = () => {
     }
   }
 
+  const handleImageAdded = (file: File, localUrl: string) => {
+    setLocalImages(prevMap => new Map(prevMap).set(localUrl, file));
+  };
+
   const aprobarAlerta = async () => {
     if (!alert || !asuntoCorreo.trim()) return
     if (!editData?.destinatarios?.length || editData?.destinatarios?.length === 0) {
       setEmailError('Por favor agrega al menos un destinatario')
       return
     }
+    
+    setSaving(true);
     try {
-      setSaving(true)
-      // Update document_html
+      let finalHtml = editorContent;
+
+      // 1. Iterar sobre las imágenes locales guardadas en el estado
+      for (const [localUrl, file] of localImages.entries()) {
+        // Solo subir si la URL local todavía está en el contenido del editor
+        if (finalHtml.includes(localUrl)) {
+          const fileName = `doc_${id}_${Date.now()}.${file.name.split('.').pop()}`;
+
+          // Subir la imagen a Supabase Storage usando fetch
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const resp = await fetch(supabaseUrl + '/storage/v1/object/documentos/' + fileName, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + supabaseServiceKey,
+            },
+            body: formData
+          });
+
+          if (!resp.ok) {
+            throw new Error(`Error al subir la imagen: ${resp.statusText}`);
+          }
+
+          // Obtener la URL pública de la imagen subida
+          const uploadData = await resp.json();
+          const publicURLName = uploadData.Key.split('/').pop();
+
+          const { data: publicUrlData } = supabase.storage
+            .from('documentos')
+            .getPublicUrl(publicURLName);
+          
+          const publicURL = publicUrlData.publicUrl;
+
+          // Reemplazar la URL del blob por la URL pública en el HTML
+          finalHtml = finalHtml.replace(new RegExp(localUrl, 'g'), publicURL);
+        }
+      }
+      
+      // 2. Preparar los datos finales para guardar
+      const dataToUpdate = {
+        documento_html: finalHtml,
+        resumen: editData?.senado?.resumen || '',
+      };
+
+      // 3. Guardar los datos actualizados en la base de datos
       if (alert.senado) {
         const { error: docError } = await supabase
           .from('senado')
-          .update({
-            documento_html: editorContent,
-            resumen: editData?.senado?.resumen || '',
-          })
+          .update(dataToUpdate)
           .eq('id_senado_doc', alert.senado.id_senado_doc)
         
         if (docError) throw docError;
       }
 
-      // Update alert status and send email
+      // 4. Actualizar el estado de la alerta
       const { error: alertError } = await supabase
         .from('alertas_directorio')
         .update({
@@ -424,8 +476,8 @@ const AlertEdit: React.FC = () => {
           asunto_email: asuntoCorreo,
           mensaje_email: mensajeAdjunto,
           id_analista: user?.id || null,
-          alerta_html: editorContent,
-          destinatarios: editData?.destinatarios?.join(',')
+          destinatarios: editData?.destinatarios?.join(','),
+          alerta_html: finalHtml
         })
         .eq('id_alerta', alert.id_alerta)
       
@@ -572,6 +624,7 @@ const AlertEdit: React.FC = () => {
                   <DocumentEditor
                     value={editorContent}
                     onChange={(html) => setEditorContent(html)}
+                    onImageAdded={handleImageAdded}
                     width="100%"
                     height="500px"
                     placeholder="Edita el contenido del documento aquí..."

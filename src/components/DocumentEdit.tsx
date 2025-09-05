@@ -8,6 +8,9 @@ import Select2 from './ui/select2'
 import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
 import SendAlertModal from './SendAlertModal'
 
+const supabaseUrl = 'https://masterd.gepdigital.ai'
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q'
+
 interface Document {
     id_senado_doc: number
     iniciativa_id: string
@@ -47,6 +50,7 @@ const DocumentEdit: React.FC = () => {
   const [document, setDocument] = useState<Document | null>(null)
   const [editData, setEditData] = useState<Document | null>(null)
   const [editorContent, setEditorContent] = useState<string>('')
+  const [localImages, setLocalImages] = useState<Map<string, File>>(new Map());
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -241,36 +245,79 @@ const DocumentEdit: React.FC = () => {
     setEditorContent(html)
   }
 
+  const handleImageAdded = (file: File, localUrl: string) => {
+    setLocalImages(prevMap => new Map(prevMap).set(localUrl, file));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editData) return
+    if (!editData || !id) return
 
+    console.log(localImages);
+    
+    setSaving(true)
     try {
-      setSaving(true)
-      
-      // Guardar contenido del editor en documento_html
-      const updatedData = {
-        ...editData,
-        documento_html: editorContent
+      let finalHtml = editorContent;
+
+      // 1. Iterar sobre las imágenes locales guardadas en el estado
+      for (const [localUrl, file] of localImages.entries()) {
+        // Solo subir si la URL local todavía está en el contenido del editor
+        if (finalHtml.includes(localUrl)) {
+          const fileName = `doc_${id}_${Date.now()}.${file.name.split('.').pop()}`;
+
+          // Subir la imagen a Supabase Storage usando fetch
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const resp = await fetch(supabaseUrl + '/storage/v1/object/documentos/' + fileName, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + supabaseServiceKey,
+            },
+            body: formData
+          });
+
+          if (!resp.ok) {
+            throw new Error(`Error al subir la imagen: ${resp.statusText}`);
+          }
+
+          // Obtener la URL pública de la imagen subida
+          const uploadData = await resp.json();
+          const publicURLName = uploadData.Key.split('/').pop();
+
+          const { data: publicUrlData } = supabase.storage
+            .from('documentos')
+            .getPublicUrl(publicURLName);
+          
+          const publicURL = publicUrlData.publicUrl;
+
+          // Reemplazar la URL del blob por la URL pública en el HTML
+          finalHtml = finalHtml.replace(new RegExp(localUrl, 'g'), publicURL);
+        }
       }
-      
-      const { error } = await supabase
+
+      // 2. Preparar los datos finales para guardar
+      const dataToUpdate = {
+        ...editData,
+        documento_html: finalHtml,
+      };
+
+      // 3. Guardar los datos actualizados en la base de datos
+      const { error: updateError } = await supabase
         .from('senado')
-        .update({
-            documento_html: updatedData.documento_html,
-            resumen: updatedData.resumen
-        })
-        .eq('id_senado_doc', updatedData.id_senado_doc)
+        .update(dataToUpdate)
+        .eq('id_senado_doc', parseInt(id));
 
-      if (error) throw error
+      if (updateError) {
+        throw new Error(`Error al guardar el documento: ${updateError.message}`);
+      }
 
-      toast.success('Documento actualizado exitosamente')
-      navigate('/gestion-documental', { 
-        state: { successMessage: 'Documento actualizado exitosamente' }
-      })
-    } catch (error) {
+      toast.success('Documento guardado con éxito');
+      navigate('/gestion-documental');
+
+    } catch (error: any) {
       console.error('Error saving document:', error)
-      toast.error('Error al guardar el documento')
+      toast.error(error.message || 'Error al guardar el documento')
     } finally {
       setSaving(false)
     }
@@ -344,6 +391,7 @@ const DocumentEdit: React.FC = () => {
               <DocumentEditor
                 value={editorContent}
                 onChange={handleEditorChange}
+                onImageAdded={handleImageAdded}
                 width="100%"
                 height="500px"
                 placeholder="Edita el contenido del documento aquí..."

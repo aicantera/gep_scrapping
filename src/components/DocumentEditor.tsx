@@ -84,7 +84,8 @@ interface DocumentEditorProps {
   height?: string | number
   className?: string
   placeholder?: string
-  readOnly?: boolean
+  readOnly?: boolean;
+  onImageAdded?: (file: File, localUrl: string) => void;
 }
 
 // Custom Indent Extension
@@ -302,7 +303,8 @@ export function DocumentEditor({
   height = "600px",
   className = "",
   placeholder = "Comienza a escribir aquí...",
-  readOnly = false
+  readOnly = false,
+  onImageAdded,
 }: DocumentEditorProps) {
   const isMobile = useIsMobile()
   const { height: windowHeight } = useWindowSize()
@@ -345,7 +347,13 @@ export function DocumentEditor({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
         limit: 3,
-        upload: handleImageUpload,
+        upload: async (file) => {
+          const localUrl = await handleImageUpload(file);
+          if (onImageAdded && file) {
+            onImageAdded(file, localUrl);
+          }
+          return localUrl;
+        },
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],

@@ -42,6 +42,7 @@ interface Document {
     imagen_link: string | null
     documento_html: string | null
     keywords: string
+    estado: string | null
   }
 
 const DocumentEdit: React.FC = () => {
@@ -252,8 +253,6 @@ const DocumentEdit: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editData || !id) return
-
-    console.log(localImages);
     
     setSaving(true)
     try {
@@ -402,16 +401,16 @@ const DocumentEdit: React.FC = () => {
                 <label className="form-label">Estatus</label>
                 {(editData?.fuente === sources[0] || editData?.fuente === sources[1] || editData?.tipo === docTypes[0]) ? (
                   <Select2
-                    value={editData?.resumen}
-                    onChange={(value: string) => handleChange('resumen', value)}
+                    value={editData?.estado || ''}
+                    onChange={(value: string) => handleChange('estado', value)}
                     options={ESTATUS_DOC_OPTIONS}
                     emptyOptionLabel="Sin estatus"
                   />
                 ) : (
                   <input
                     type="text"
-                    value={editData?.resumen}
-                    onChange={(e) => handleChange('resumen', e.target.value)}
+                    value={editData?.estado || ''}
+                    onChange={(e) => handleChange('estado', e.target.value)}
                     className="form-input"
                     placeholder="Estatus de la iniciativa o propuesta"
                   />

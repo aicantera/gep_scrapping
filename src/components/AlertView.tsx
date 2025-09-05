@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { X, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { DocumentEditor } from './DocumentEditor'
+import Select2 from './ui/select2'
+import { ESTATUS_DOC_OPTIONS } from '@/utils/SelectOptions'
 
 interface Alert {
   // Campos REALES de la tabla alertas_directorio
@@ -55,7 +57,8 @@ interface Alert {
     link_documento?: string
     id_senado_doc?: number
     [key: string]: any // Para campos adicionales
-    titulo?: string    
+    titulo?: string
+    estado?: string | null
   } | null
 
   enviado_por?: any;
@@ -287,7 +290,8 @@ const AlertView: React.FC = () => {
             titulo,
             link_documento,
             documento_html,
-            id_senado_doc
+            id_senado_doc,
+            estado
           )
         `)
         .eq('id_alerta', parseInt(id))
@@ -499,6 +503,28 @@ const AlertView: React.FC = () => {
                     readOnly
                   />
                 </div>
+
+                {alert?.senado?.fuente !== sources[2] && (
+                  <div className="space-y-2 mt-4">
+                    <label className="form-label">Estatus</label>
+                    {(alert?.senado?.fuente === sources[0] || alert?.senado?.fuente === sources[1] || alert?.senado?.tipo === docTypes[0]) ? (
+                      <Select2
+                        value={alert?.senado?.estado || ''}
+                        onChange={() => {}}
+                        options={ESTATUS_DOC_OPTIONS}
+                        emptyOptionLabel="Sin estatus"
+                        disabled={true}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={alert?.senado?.estado || ''}
+                        className="form-input"
+                        placeholder="Estatus de la iniciativa o propuesta"
+                      />
+                    )}
+                  </div>
+                )}
 
                 {/* Lista de destinatarios */}
                 {alert.destinatarios && alert.destinatarios.length > 0 && (

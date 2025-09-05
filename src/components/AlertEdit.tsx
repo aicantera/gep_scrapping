@@ -63,6 +63,7 @@ interface Alert {
     id_senado_doc?: number
     [key: string]: any // Para campos adicionales
     titulo?: string    
+    estado?: string | null
   } | null
 
   enviado_por?: any;
@@ -358,7 +359,8 @@ const AlertEdit: React.FC = () => {
             titulo,
             link_documento,
             documento_html,
-            id_senado_doc
+            id_senado_doc,
+            estado
           )
         `)
         .eq('id_alerta', parseInt(id))
@@ -453,7 +455,7 @@ const AlertEdit: React.FC = () => {
       // 2. Preparar los datos finales para guardar
       const dataToUpdate = {
         documento_html: finalHtml,
-        resumen: editData?.senado?.resumen || '',
+        estado: editData?.senado?.estado || '',
       };
 
       // 3. Guardar los datos actualizados en la base de datos
@@ -635,16 +637,16 @@ const AlertEdit: React.FC = () => {
                     <label className="form-label">Estatus</label>
                     {(editData?.senado?.fuente === sources[0] || editData?.senado?.fuente === sources[1] || editData?.senado?.tipo === docTypes[0]) ? (
                       <Select2
-                        value={editData?.senado?.resumen || ''}
-                        onChange={(value: string) => setEditData({ ...editData, senado: { ...editData?.senado, resumen: value } })}
+                        value={editData?.senado?.estado || ''}
+                        onChange={(value: string) => setEditData({ ...editData, senado: { ...editData?.senado, estado: value } })}
                         options={ESTATUS_DOC_OPTIONS}
                         emptyOptionLabel="Sin estatus"
                       />
                     ) : (
                       <input
                         type="text"
-                        value={editData?.senado?.resumen || ''}
-                        onChange={(e) => setEditData({ ...editData, senado: { ...editData?.senado, resumen: e.target.value } })}
+                        value={editData?.senado?.estado || ''}
+                        onChange={(e) => setEditData({ ...editData, senado: { ...editData?.senado, estado: e.target.value } })}
                         className="form-input"
                         placeholder="Estatus de la iniciativa o propuesta"
                       />

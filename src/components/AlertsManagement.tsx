@@ -32,6 +32,7 @@ interface Alerta {
   enviado_correo: boolean | null      // boolean nullable
   datetime_enviado_correo: string | null // timestamp nullable
   link_pdf_enviado?: string | null    // url del pdf enviado
+  tipo_alerta?: string | null         // text nullable
   
   // Campos calculados/derivados para la UI
   nombre_cliente?: string
@@ -224,6 +225,7 @@ const AlertsManagement: React.FC = () => {
           enviado_correo,
           datetime_enviado_correo,
           link_pdf_enviado,
+          tipo_alerta,
           clientes (
             nombre_cliente,
             siglas,
@@ -258,7 +260,7 @@ const AlertsManagement: React.FC = () => {
             link_documento
           )
         `)
-        .order('created_at', { ascending: false })
+        .order('id_alerta', { ascending: false })
 
       if (error) {
         console.error('❌ Error cargando alertas:', error)
@@ -340,6 +342,7 @@ const AlertsManagement: React.FC = () => {
           enviado_correo: alerta.enviado_correo,
           datetime_enviado_correo: alerta.datetime_enviado_correo,
           link_pdf_enviado: alerta.link_pdf_enviado || null,
+          tipo_alerta: alerta.tipo_alerta || null,
           
           // Campos derivados para UI (siempre arrays)
           nombre_cliente: nombreCliente,
@@ -756,8 +759,8 @@ const AlertsManagement: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900">
                           {alerta.nombre_cliente}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          Cliente ID: {alerta.id_cliente.slice(0, 8)}...
+                        <div className="text-xs text-gray-500 capitalize">
+                          {alerta?.tipo_alerta}
                         </div>
                       </td>
                       <td className="px-6 py-4 max-w-sm">

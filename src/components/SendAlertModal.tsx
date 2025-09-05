@@ -139,7 +139,7 @@ const SendAlertModal: React.FC<{
     const clientes = getSelectedStructure();
     const body = {
       clientes,
-      id_senado_doc: document?.id_senado_doc,
+      id_doc_senado: document?.id_senado_doc,
       fuente: document?.fuente,
       temas: document?.temas,
       titulo: document?.titulo,

@@ -13,6 +13,7 @@ interface Select2Props {
   className?: string;
   title?: string;
   emptyOptionLabel?: string;
+  disabled?: boolean;
 }
 
 const Select2: React.FC<Select2Props> = ({
@@ -21,7 +22,8 @@ const Select2: React.FC<Select2Props> = ({
   options,
   className = "form-input",
   title,
-  emptyOptionLabel = "Sin selección"
+  emptyOptionLabel = "Sin selección",
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,6 +94,7 @@ const Select2: React.FC<Select2Props> = ({
         className={`${className} flex items-center justify-between w-full text-left`}
         onClick={() => setIsOpen(!isOpen)}
         title={title}
+        disabled={disabled}
       >
         <span className={!selectedOption ? 'text-gray-500' : ''}>{displayText}</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -111,6 +114,7 @@ const Select2: React.FC<Select2Props> = ({
                 onKeyDown={handleKeyDown}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Buscar opciones..."
+                disabled={disabled}
               />
             </div>
           </div>
@@ -124,6 +128,7 @@ const Select2: React.FC<Select2Props> = ({
               className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
                 value === '' ? 'bg-blue-50 text-blue-600' : 'text-gray-500'
               }`}
+              disabled={disabled}
             >
               {emptyOptionLabel}
             </button>
@@ -138,6 +143,7 @@ const Select2: React.FC<Select2Props> = ({
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
                     value === option.value ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
                   }`}
+                  disabled={disabled}
                 >
                   {option.label}
                 </button>

@@ -511,7 +511,10 @@ const DashboardHome = () => {
             title="Alertas pendientes - Diputados"
           >
             <p className="text-sm font-medium text-gray-600 truncate text-left">
-              Alertas pendientes - Diputados
+              Alertas pendientes
+            </p>
+            <p className="text-sm font-bold text-gray-700 truncate text-left">
+              Diputados
             </p>
           </div>
           <div className="flex items-center justify-between">
@@ -538,7 +541,10 @@ const DashboardHome = () => {
         >
           <div className="min-w-0 flex-1" title="Alertas pendientes - Senado">
             <p className="text-sm font-medium text-gray-600 truncate text-left">
-              Alertas pendientes - Senado
+              Alertas pendientes
+            </p>
+            <p className="text-sm font-bold text-gray-700 truncate text-left">
+              Senado
             </p>
           </div>
           <div className="flex items-center justify-between">
@@ -565,7 +571,10 @@ const DashboardHome = () => {
         >
           <div className="min-w-0 flex-1" title="Alertas pendientes - DOF">
             <p className="text-sm font-medium text-gray-600 truncate text-left">
-              Alertas pendientes - DOF
+              Alertas pendientes
+            </p>
+            <p className="text-sm font-bold text-gray-700 truncate text-left">
+              DOF
             </p>
           </div>
           <div className="flex items-center justify-between">

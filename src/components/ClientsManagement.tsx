@@ -78,6 +78,7 @@ const ClientsManagement: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [modalError, setModalError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
+  const [modalSuccessMessage, setModalSuccessMessage] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -528,6 +529,7 @@ const ClientsManagement: React.FC = () => {
     setShowModal(false)
     setSelectedClient(null)
     setModalError(null)
+    setModalSuccessMessage(null)
   }
 
   // Manejar búsqueda
@@ -630,6 +632,8 @@ const ClientsManagement: React.FC = () => {
     })
     
     setModalError(null)
+    setModalSuccessMessage('Lista de distribución agregada exitosamente');
+    setTimeout(() => setModalSuccessMessage(null), 3000);
   }
 
   const removeListaDistribucion = (id: string) => {
@@ -1814,6 +1818,11 @@ const ClientsManagement: React.FC = () => {
                                 );
                               })}
                           </div>
+                          {modalSuccessMessage && (
+                            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+                              <p className="text-green-700 text-sm font-semibold">{modalSuccessMessage}</p>
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={addListaDistribucion}

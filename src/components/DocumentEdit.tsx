@@ -159,6 +159,12 @@ const DocumentEdit: React.FC = () => {
         html += `<p>${doc.Proponente}</p>`
       }
 
+      // Temas
+      if (doc.temas) {
+        html += `<h3>Temas</h3>`
+        html += `<p>${doc.temas}</p>`
+      }
+
       // Objeto
       if (doc.objeto) {
         html += `<h3>Objeto</h3>`
@@ -201,6 +207,12 @@ const DocumentEdit: React.FC = () => {
       if (doc.Proponente) {
         html += `<h3>Proponente</h3>`
         html += `<p>${doc.Proponente}</p>`
+      }
+
+      // Temas
+      if (doc.temas) {
+        html += `<h3>Temas</h3>`
+        html += `<p>${doc.temas}</p>`
       }
 
       // Objeto

@@ -144,6 +144,7 @@ const SendAlertModal: React.FC<{
       temas: document?.temas,
       titulo: document?.titulo,
       documento_html: document?.documento_html,
+      estado: document?.estado,
     };
 
     try {

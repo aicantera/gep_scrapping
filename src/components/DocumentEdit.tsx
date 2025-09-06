@@ -460,7 +460,7 @@ const DocumentEdit: React.FC = () => {
         <SendAlertModal
           isOpen={isAlertModalOpen}
           onClose={() => setIsAlertModalOpen(false)}
-          document={{ ...document, documento_html: editorContent }}
+          document={{ ...document, documento_html: editorContent, estado: editData.estado }}
         />
       )}
     </>

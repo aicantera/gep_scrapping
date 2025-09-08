@@ -66,6 +66,10 @@ const DocumentEdit: React.FC = () => {
   }, [id])
 
   useEffect(() => {
+    console.log(editorContent);
+  }, [editorContent]);
+
+  useEffect(() => {
     if (document && editData && (editData.documento_html === '' || editData.documento_html === null)) {
       const htmlContent = generateDocumentHTML(editData)
       setEditorContent(htmlContent)
@@ -295,13 +299,18 @@ const DocumentEdit: React.FC = () => {
         }
       }
 
-      // 2. Preparar los datos finales para guardar
+      // 2. colocar una etiqueta p al final del contenido, con el estatus si existe
+      if (editData.estado && editData.estado.trim() !== '') {
+        finalHtml += `<p><strong>Estatus:</strong> ${editData.estado}</p>`;
+      }
+
+      // 3. Preparar los datos finales para guardar
       const dataToUpdate = {
         ...editData,
         documento_html: finalHtml,
       };
 
-      // 3. Guardar los datos actualizados en la base de datos
+      // 4. Guardar los datos actualizados en la base de datos
       const { error: updateError } = await supabase
         .from('senado')
         .update(dataToUpdate)

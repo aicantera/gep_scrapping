@@ -79,7 +79,7 @@ const BotsExecution = () => {
       description: "Extracción de documentos de CONAMER",
       webhookUrl: "https://dbd.gepdigital.ai/webhook/conamer",
       icon: <Building className="w-6 h-6" />,
-      color: "bg-[#B52244] hover:bg-[#D4133D]",
+      color: "bg-[#999996] hover:bg-[#A1A3A5]",
     }
   ];
 

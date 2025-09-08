@@ -3,7 +3,7 @@ import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
-import { Image } from "@tiptap/extension-image"
+// import { Image } from "@tiptap/extension-image"
 import { TaskItem, TaskList } from "@tiptap/extension-list"
 import { TextAlign } from "@tiptap/extension-text-align"
 import { Typography } from "@tiptap/extension-typography"
@@ -34,7 +34,7 @@ import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
-import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
+// import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -256,9 +256,10 @@ const MainToolbarContent = ({
 
       <ToolbarSeparator />
 
-      <ToolbarGroup>
+      {/* Se ocultó el botón para añadir imagenes */}
+      {/* <ToolbarGroup>
         <ImageUploadButton text="Imagen" />
-      </ToolbarGroup>
+      </ToolbarGroup> */}
 
       <Spacer />
 
@@ -338,7 +339,7 @@ export function DocumentEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
-      Image,
+      // Image,
       Typography,
       Superscript,
       Subscript,

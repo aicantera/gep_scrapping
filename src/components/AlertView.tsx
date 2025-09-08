@@ -453,7 +453,7 @@ const AlertView: React.FC = () => {
                   cliente.temas_subtemas.map((tema: string, index: number) => (
                     <span
                       key={index}
-                      className="inline-flex px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
+                      className="inline-flex px-3 py-1 text-sm bg-gray-100 text-stone-800 rounded-full"
                     >
                       {tema}
                     </span>

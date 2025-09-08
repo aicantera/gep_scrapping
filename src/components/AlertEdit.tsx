@@ -21,6 +21,7 @@ interface Alert {
   sub_tema: string[] | null           // ARRAY nullable
   fuente: string | null               // text nullable
   estado: string | null               // text nullable ('pendientes' | 'enviadas' | 'rechazadas')
+  estado_documento?: string | null
   id_doc_senado: number | null        // bigint nullable
   id_analista: string | null          // text nullable
   enviado_correo: boolean | null      // boolean nullable
@@ -90,7 +91,7 @@ const AlertEdit: React.FC = () => {
 
 
   // Source and document type constants
-  const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación"]
+  const sources = ["Cámara de Diputados", "Cámara de Senadores", "Diario Oficial de la Federación", "CONAMER"]
   const docTypes = ["INICIATIVA", "PUNTO DE ACUERDO"]
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -319,6 +320,7 @@ const AlertEdit: React.FC = () => {
           sub_tema,
           fuente,
           estado,
+          estado_documento,
           id_doc_senado,
           id_analista,
           enviado_correo,
@@ -632,21 +634,21 @@ const AlertEdit: React.FC = () => {
                     placeholder="Edita el contenido del documento aquí..."
                   />
                 </div>
-                {editData?.senado?.fuente !== sources[2] && (
+                {(editData?.senado?.fuente === sources[0] || editData?.senado?.fuente === sources[1]) && (
                   <div className="space-y-2">
                     <label className="form-label">Estatus</label>
                     {(editData?.senado?.fuente === sources[0] || editData?.senado?.fuente === sources[1] || editData?.senado?.tipo === docTypes[0]) ? (
                       <Select2
-                        value={editData?.senado?.estado || ''}
-                        onChange={(value: string) => setEditData({ ...editData, senado: { ...editData?.senado, estado: value } })}
+                        value={editData?.estado_documento || ''}
+                        onChange={(value: string) => setEditData({ ...editData, estado_documento: value })}
                         options={ESTATUS_DOC_OPTIONS}
                         emptyOptionLabel="Sin estatus"
                       />
                     ) : (
                       <input
                         type="text"
-                        value={editData?.senado?.estado || ''}
-                        onChange={(e) => setEditData({ ...editData, senado: { ...editData?.senado, estado: e.target.value } })}
+                        value={editData?.estado_documento || ''}
+                        onChange={(e) => setEditData({ ...editData, estado_documento: e.target.value })}
                         className="form-input"
                         placeholder="Estatus de la iniciativa o propuesta"
                       />

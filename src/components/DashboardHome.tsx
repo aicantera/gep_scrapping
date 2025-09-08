@@ -58,6 +58,8 @@ interface Document {
   objeto: string;
   correspondier: string;
   tipo: string;
+  Proponente: string;
+  dependencia: string;
 }
 
 const DashboardHome = () => {
@@ -336,48 +338,46 @@ const DashboardHome = () => {
     }
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Documentos del Día");
+
+
     // Encabezados con todos los campos de la interfaz Document
     const headers = [
       "ID",
       "Fecha de creación",
-      "Sinopsis",
       "Título",
-      "ID Iniciativa",
-      "Gaceta",
       "Link Iniciativa",
       "Fuente",
-      "Imagen Link",
       "Temas",
-      "Personas",
       "Partidos",
-      "Leyes",
       "Resumen",
       "Análisis",
-      "Objeto",
       "Proponente",
       "Tipo",
       "Correspondiente",
     ];
     worksheet.addRow(headers);
     documentsToday.forEach((doc) => {
+      // Preparar información de proponente
+      let proponenteInfo = "";
+      if (doc.tipo === "INICIATIVA" || doc.tipo === "PUNTO DE ACUERDO") {
+        proponenteInfo = doc.Proponente;
+      };
+
+      if (doc.fuente === "Diario Oficial de la Federación" || doc.fuente === "CONAMER") {
+        proponenteInfo = doc.dependencia;
+      }
+
       worksheet.addRow([
         doc.id_senado_doc,
         doc.created_at,
-        doc.sinopsis,
         doc.iniciativa_texto,
-        doc.iniciativa_id,
-        doc.gaceta,
         doc.link_iniciativa,
         doc.fuente,
-        doc.imagen_link,
         doc.temas,
-        doc.personas,
         doc.partidos,
-        doc.leyes,
         doc.resumen,
         doc.analisis,
-        doc.objeto,
-        doc.correspondier,
+        proponenteInfo,
         doc.tipo,
         // Correspondiente puede ser null, pero lo incluimos para mantener el orden
       ]);

@@ -73,6 +73,14 @@ const BotsExecution = () => {
       icon: <Newspaper className="w-6 h-6" />,
       color: "bg-[#B52244] hover:bg-[#D4133D]",
     },
+    {
+      id: "conamer",
+      name: "CONAMER",
+      description: "Extracción de documentos de CONAMER",
+      webhookUrl: "https://dbd.gepdigital.ai/webhook/conamer",
+      icon: <Building className="w-6 h-6" />,
+      color: "bg-[#B52244] hover:bg-[#D4133D]",
+    }
   ];
 
   const [history, setHistory] = useState<BotExecutionHistory[]>([]);
@@ -484,6 +492,7 @@ const BotsExecution = () => {
             <option value="Cámara de Diputados">Cámara de Diputados</option>
             <option value="Senado">Senado</option>
             <option value="DOF">DOF</option>
+            <option value="CONAMER">CONAMER</option>
           </select>
         </div>
         <div>

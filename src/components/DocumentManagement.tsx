@@ -82,7 +82,8 @@ const DocumentManagement: React.FC = () => {
   const sources = [
     'Cámara de Diputados',
     'Cámara de Senadores',
-    'Diario Oficial de la Federación'
+    'Diario Oficial de la Federación',
+    'CONAMER'
   ]
 
   useEffect(() => {

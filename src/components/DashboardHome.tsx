@@ -23,12 +23,14 @@ interface KPIData {
     diputados: number;
     senado: number;
     dof: number;
+    conamer: number;
   };
   pendingAlerts: {
     general: number;
     diputados: number;
     senado: number;
     dof: number;
+    conamer: number;
   };
 }
 
@@ -71,24 +73,28 @@ const DashboardHome = () => {
       diputados: 0,
       senado: 0,
       dof: 0,
+      conamer: 0,
     },
     pendingAlerts: {
       general: 0,
       diputados: 0,
       senado: 0,
       dof: 0,
+      conamer: 0,
     },
   });
   const [chartData, setChartData] = useState<ChartData[]>([
     { source: "Cámara de Diputados", documents: 0 },
     { source: "Cámara de Senadores", documents: 0 },
     { source: "Diario Oficial de la Federación", documents: 0 },
+    { source: "CONAMER", documents: 0 },
   ]);
   const [documentsToday, setDocumentsToday] = useState<Document[]>([]);
   const fuentesDocumentos: string[] = [
     "Cámara de Diputados",
     "Cámara de Senadores",
     "Diario Oficial de la Federación",
+    "CONAMER",
   ];
 
   const loadDashboardData = async () => {
@@ -238,6 +244,9 @@ const DashboardHome = () => {
       const alertasPendientesDOF = alertasPendientesGeneral?.filter(
         (alerta) => alerta.fuente === "Diario Oficial de la Federación"
       );
+      const alertasPendientesCONAMER = alertasPendientesGeneral?.filter(
+        (alerta) => alerta.fuente === "CONAMER"
+      );
 
       // Contar alertas enviadas por fuente
       const alertasEnviadasPorFuente: Record<string, number> = {
@@ -245,6 +254,7 @@ const DashboardHome = () => {
         diputados: 0,
         senado: 0,
         dof: 0,
+        conamer: 0,
       };
 
       // Crear KPIs según nuevas especificaciones
@@ -255,12 +265,14 @@ const DashboardHome = () => {
           diputados: alertasEnviadasPorFuente.diputados,
           senado: alertasEnviadasPorFuente.senado,
           dof: alertasEnviadasPorFuente.dof,
+          conamer: alertasEnviadasPorFuente.conamer,
         },
         pendingAlerts: {
           general: alertasPendientesHoy?.length || 0,
           diputados: alertasPendientesDiputados?.length || 0,
           senado: alertasPendientesSenado?.length || 0,
           dof: alertasPendientesDOF?.length || 0,
+          conamer: alertasPendientesCONAMER?.length || 0,
         },
       };
 
@@ -278,6 +290,10 @@ const DashboardHome = () => {
           source: "Diario Oficial de la Federación",
           documents: fuenteCount["dof"] || 0,
         },
+        {
+          source: "CONAMER",
+          documents: fuenteCount["conamer"] || 0,
+        }
       ];
 
       console.log("✅ KPIs calculados:", realKpiData);
@@ -580,6 +596,36 @@ const DashboardHome = () => {
           <div className="flex items-center justify-between">
             <p className="text-xl md:text-2xl font-bold text-gray-900">
               {kpiData.pendingAlerts.dof}
+            </p>
+            <div className="p-3 bg-[#A1A3A5]/25 rounded-full flex-shrink-0">
+              <Newspaper className="text-[#999996]" size={20} />
+            </div>
+          </div>
+          <div className="flex items-center mt-4">
+            <Calendar className="text-black mr-1 flex-shrink-0" size={14} />
+            <span className="text-xs md:text-sm text-black truncate">
+              Requieren atención
+            </span>
+          </div>
+        </button>
+
+        {/* Alertas pendientes - CONAMER */}
+        <button
+          type="button"
+          className="metric-card hover:shadow-md transition-shadow"
+          onClick={() => handleKpiClick("alertas-monitoreo")}
+        >
+          <div className="min-w-0 flex-1" title="Alertas pendientes - CONAMER">
+            <p className="text-sm font-medium text-gray-600 truncate text-left">
+              Alertas pendientes
+            </p>
+            <p className="text-sm font-bold text-gray-700 truncate text-left">
+              CONAMER
+            </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xl md:text-2xl font-bold text-gray-900">
+              {kpiData.pendingAlerts.conamer}
             </p>
             <div className="p-3 bg-[#A1A3A5]/25 rounded-full flex-shrink-0">
               <Newspaper className="text-[#999996]" size={20} />

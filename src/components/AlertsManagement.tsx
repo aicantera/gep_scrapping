@@ -99,7 +99,7 @@ const AlertsManagement: React.FC = () => {
   const [filterFecha, setFilterFecha] = useState({ desde: '', hasta: '' })
 
   // Tipos de fuente disponibles
-  type TipoFuente = 'Cámaras' | 'DOF'
+  type TipoFuente = 'Cámaras' | 'DOF' | 'CONAMER'
 
   // Estados de paginación
   const [currentPage, setCurrentPage] = useState(1)
@@ -648,7 +648,7 @@ const AlertsManagement: React.FC = () => {
                 <option value="Cámara de Diputados">Cámara de Diputados</option>
                 <option value="Cámara de Senadores">Cámara de Senadores</option>
                 <option value="Diario Oficial de la Federación">DOF</option>
-
+                <option value="CONAMER">CONAMER</option>
               </select>
             </div>
 

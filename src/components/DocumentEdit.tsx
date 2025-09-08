@@ -299,9 +299,26 @@ const DocumentEdit: React.FC = () => {
         }
       }
 
-      // 2. colocar una etiqueta p al final del contenido, con el estatus si existe
-      if (editData.estado && editData.estado.trim() !== '') {
-        finalHtml += `<p><strong>Estatus:</strong> ${editData.estado}</p>`;
+      // 2. Colocar una etiqueta p al final del contenido, con el estatus si existe. Si ya hay una etiqueta p al final, solo cambiar el estatus dentro de esa etiqueta. 
+      if (editData.estado) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(finalHtml, 'text/html');
+        const body = doc.body;
+
+        let statusParagraph = body.querySelector('p.document-status');
+
+        if (statusParagraph) {
+          // Si ya existe el párrafo de estatus, actualiza su contenido
+          statusParagraph.innerHTML = `<strong>Estatus:</strong> ${editData.estado}`;
+        } else {
+          // Si no existe, crea uno nuevo y lo añade al final
+          const newStatusParagraph = doc.createElement('p');
+          newStatusParagraph.className = 'document-status';
+          newStatusParagraph.innerHTML = `<strong>Estatus:</strong> ${editData.estado}`;
+          body.appendChild(newStatusParagraph);
+        }
+        
+        finalHtml = body.innerHTML;
       }
 
       // 3. Preparar los datos finales para guardar

@@ -16,6 +16,7 @@ interface Alert {
   sub_tema: string[] | null           // ARRAY nullable
   fuente: string | null               // text nullable
   estado: string | null               // text nullable ('pendientes' | 'enviadas' | 'rechazadas')
+  estado_documento: string | null     // text nullable (estatus del documento)
   id_doc_senado: number | null        // bigint nullable
   id_analista: string | null          // text nullable
   enviado_correo: boolean | null      // boolean nullable
@@ -250,6 +251,7 @@ const AlertView: React.FC = () => {
           sub_tema,
           fuente,
           estado,
+          estado_documento,
           id_doc_senado,
           id_analista,
           enviado_correo,
@@ -509,7 +511,7 @@ const AlertView: React.FC = () => {
                     <label className="form-label">Estatus</label>
                     {(alert?.senado?.fuente === sources[0] || alert?.senado?.fuente === sources[1] || alert?.senado?.tipo === docTypes[0]) ? (
                       <Select2
-                        value={alert?.senado?.estado || ''}
+                        value={alert?.estado_documento || ''}
                         onChange={() => {}}
                         options={ESTATUS_DOC_OPTIONS}
                         emptyOptionLabel="Sin estatus"
@@ -518,7 +520,7 @@ const AlertView: React.FC = () => {
                     ) : (
                       <input
                         type="text"
-                        value={alert?.senado?.estado || ''}
+                        value={alert?.estado_documento || ''}
                         className="form-input"
                         placeholder="Estatus de la iniciativa o propuesta"
                       />

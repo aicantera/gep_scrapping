@@ -18,6 +18,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { useRef } from 'react'
 import ExcelJS from 'exceljs';
+import clsx from 'clsx';
 
 // Interfaces para temas y subtemas
 interface Tema {
@@ -194,7 +195,7 @@ const ClientsManagement: React.FC = () => {
       // Obtener datos paginados
       const { data, error } = await query
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1)
-        .order('id_cliente_numerico', { ascending: true })
+        .order('id_cliente_numerico', { ascending: false })
       
       if (error) throw error
       
@@ -1291,13 +1292,37 @@ const ClientsManagement: React.FC = () => {
                             Logo (Opcional)
                           </label>
                           <div className="flex items-center gap-4">
+                            <button 
+                              onClick={() => fileInputRef?.current?.click()} 
+                              disabled={modalType === 'view'} 
+                              className={clsx(
+                                "px-3 h-12 w-full bg-neutral-100 border border-gray-400/50 text-gray-700 rounded-lg",
+                                modalType === 'view' && 'opacity-50 cursor-not-allowed',
+                                modalType !== 'view' && 'hover:bg-neutral-200 transition-colors'
+                              )}
+                              >
+                                <div className='flex flex-col items-center'>
+                                  {/* Acción a realizar */}
+                                  <span className='text-sm font-semibold'>
+                                    {formData.logo ? 'Cambiar Logo' : 'Subir Logo'}
+                                  </span>
+                                  {/* Nombre del archivo */}
+                                  {formData.logo && (
+                                    <span className="text-sm text-gray-500">
+                                      {formData.logo.split('/').pop()}
+                                    </span>
+                                  )}
+                                </div>
+                            </button>
                             <input
+                              id='logo-upload'
                               type="file"
                               accept="image/*"
                               ref={fileInputRef}
                               onChange={handleLogoUpload}
                               disabled={modalType === 'view'}
                               className="form-input w-full"
+                              hidden
                             />
                           </div>
                         </div>
@@ -1744,7 +1769,7 @@ const ClientsManagement: React.FC = () => {
                             onChange={e => setBusquedaTemaSubtema(e.target.value)}
                           />
                           {/* Listado filtrado de temas y subtemas con checkboxes */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {temas
                               .filter(tema => {
                                 const search = busquedaTemaSubtema.toLowerCase();

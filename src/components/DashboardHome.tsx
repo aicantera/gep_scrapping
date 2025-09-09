@@ -781,12 +781,15 @@ const DashboardHome = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 max-w-xs">
-                        {truncateText(
+                        {/* {truncateText(
                           document.correspondier ||
                             document.personas ||
                             "Sin proponente",
                           40
-                        )}
+                        )} */}
+                        {document.fuente === "Diario Oficial de la Federación" || document.fuente === "CONAMER"
+                          ? truncateText(document.dependencia || "Sin dependencia", 40)
+                          : truncateText(document.Proponente || "Sin proponente", 40)}
                       </div>
                     </td>
                     <td className="px-4 py-3">

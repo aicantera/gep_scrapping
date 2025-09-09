@@ -594,7 +594,11 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.Proponente || 'Sin proponente', 40)}
+                            {
+                              document.fuente === 'Diario Oficial de la Federación' || document.fuente === 'CONAMER'
+                              ? truncateText(document.dependencia || 'Sin proponente', 40)
+                              : truncateText(document.Proponente || 'Sin proponente', 40)
+                            }
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -616,7 +620,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.objeto || document.sinopsis || 'Sin descripción')}
+                            {truncateText(document.analisis || 'Sin descripción')}
                           </div>
                         </td>
                         <td className="px-6 py-4">

@@ -1190,7 +1190,7 @@ const ClientsManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header del modal */}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-800">
@@ -1769,7 +1769,7 @@ const ClientsManagement: React.FC = () => {
                             onChange={e => setBusquedaTemaSubtema(e.target.value)}
                           />
                           {/* Listado filtrado de temas y subtemas con checkboxes */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {temas
                               .filter(tema => {
                                 const search = busquedaTemaSubtema.toLowerCase();

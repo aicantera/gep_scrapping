@@ -92,12 +92,12 @@ const DashboardHome = () => {
     { source: "CONAMER", documents: 0 },
   ]);
   const [documentsToday, setDocumentsToday] = useState<Document[]>([]);
-  const fuentesDocumentos: string[] = [
-    "Cámara de Diputados",
-    "Cámara de Senadores",
-    "Diario Oficial de la Federación",
-    "CONAMER",
-  ];
+  // const fuentesDocumentos: string[] = [
+  //   "Cámara de Diputados",
+  //   "Cámara de Senadores",
+  //   "Diario Oficial de la Federación",
+  //   "CONAMER",
+  // ];
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -828,11 +828,7 @@ const DashboardHome = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900">
-                        {document.tipo
-                          ? document.fuente === fuentesDocumentos[2]
-                            ? "Proyecto"
-                            : document.tipo
-                          : "Sin tipo"}
+                        {document.tipo ?? "Sin tipo"}
                       </div>
                     </td>
                   </tr>

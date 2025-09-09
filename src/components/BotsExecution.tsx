@@ -137,7 +137,10 @@ const BotsExecution = () => {
 
   const isBotAvailable = (botName: string): boolean => {
     const botStatus = botsAvailability.find(bot => bot.fuente === botName);
-    return botStatus?.status === 'ready';
+    if (!botStatus) return true; // Si no hay información, asumir disponible
+    if (botStatus.status === "cooldown") return false;
+    if (botStatus.status === "ready") return true;
+    return true; // Estado desconocido, asumir disponible
   };
 
   // Limpieza automática si supera 1200 registros

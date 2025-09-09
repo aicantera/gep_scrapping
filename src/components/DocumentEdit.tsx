@@ -299,35 +299,13 @@ const DocumentEdit: React.FC = () => {
         }
       }
 
-      // 2. Colocar una etiqueta p al final del contenido, con el estatus si existe. Si ya hay una etiqueta p al final, solo cambiar el estatus dentro de esa etiqueta. 
-      if (editData.estado) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(finalHtml, 'text/html');
-        const body = doc.body;
-
-        let statusParagraph = body.querySelector('p.document-status');
-
-        if (statusParagraph) {
-          // Si ya existe el párrafo de estatus, actualiza su contenido
-          statusParagraph.innerHTML = `<strong>Estatus:</strong> ${editData.estado}`;
-        } else {
-          // Si no existe, crea uno nuevo y lo añade al final
-          const newStatusParagraph = doc.createElement('p');
-          newStatusParagraph.className = 'document-status';
-          newStatusParagraph.innerHTML = `<strong>Estatus:</strong> ${editData.estado}`;
-          body.appendChild(newStatusParagraph);
-        }
-        
-        finalHtml = body.innerHTML;
-      }
-
-      // 3. Preparar los datos finales para guardar
+      // 2. Preparar los datos finales para guardar
       const dataToUpdate = {
         ...editData,
         documento_html: finalHtml,
       };
 
-      // 4. Guardar los datos actualizados en la base de datos
+      // 3. Guardar los datos actualizados en la base de datos
       const { error: updateError } = await supabase
         .from('senado')
         .update(dataToUpdate)
@@ -347,6 +325,46 @@ const DocumentEdit: React.FC = () => {
       setSaving(false)
     }
   }
+
+  const handleChangeStatus = (value: string) => {
+    if (!value) {
+      handleChange('estado', value);
+      return;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(editorContent || '', 'text/html');
+    const body = doc.body;
+    const statusLabel = ESTATUS_DOC_OPTIONS.find(opt => opt.value === value)?.label || value;
+
+    // Prefijo a buscar en texto (sin tags)
+    const STATUS_PREFIX = 'Estatus';
+
+    // Normaliza y comprueba si el elemento contiene el prefijo "Estatus:" al inicio
+    const isStatusNode = (el: Element) => {
+      const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      // Coincide "Estatus:" al inicio, case-insensitive
+      return new RegExp(`^\\s*${STATUS_PREFIX}\\s*:`, 'i').test(text);
+    };
+
+    // Busca todos los <p> y toma el último que cumpla la condición (por si hay duplicados)
+    const paragraphs = Array.from(body.querySelectorAll('p'));
+    const statusParagraph = paragraphs.reverse().find(p => isStatusNode(p)) as HTMLParagraphElement | undefined;
+
+    if (statusParagraph) {
+      // Actualiza el contenido del párrafo encontrado
+      statusParagraph.innerHTML = `<strong>Estatus:</strong> ${statusLabel}`;
+    } else {
+      // Crea uno nuevo al final
+      const newStatusParagraph = doc.createElement('p');
+      newStatusParagraph.className = 'document-status'; // opcional
+      newStatusParagraph.innerHTML = `<strong>Estatus:</strong> ${statusLabel}`;
+      body.appendChild(newStatusParagraph);
+    }
+
+    setEditorContent(body.innerHTML);
+    handleChange('estado', value);
+  };
 
   if (loading) {
     return (
@@ -428,7 +446,7 @@ const DocumentEdit: React.FC = () => {
                 {(editData?.fuente === sources[0] || editData?.fuente === sources[1] || editData?.tipo === docTypes[0]) ? (
                   <Select2
                     value={editData?.estado || ''}
-                    onChange={(value: string) => handleChange('estado', value)}
+                    onChange={(value: string) => handleChangeStatus(value)}
                     options={ESTATUS_DOC_OPTIONS}
                     emptyOptionLabel="Sin estatus"
                   />

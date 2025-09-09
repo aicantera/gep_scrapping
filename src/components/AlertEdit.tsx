@@ -457,7 +457,7 @@ const AlertEdit: React.FC = () => {
       // 2. Preparar los datos finales para guardar
       const dataToUpdate = {
         documento_html: finalHtml,
-        estado: editData?.senado?.estado || '',
+        estado: editData?.estado_documento || '',
       };
 
       // 3. Guardar los datos actualizados en la base de datos
@@ -498,6 +498,46 @@ const AlertEdit: React.FC = () => {
       setSaving(false)
     }
   }
+
+  const handleChangeStatus = (value: string) => {
+    if (!value) {
+      setEditData(prev => prev ? { ...prev, estado_documento: '' } : null);
+      return;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(editorContent || '', 'text/html');
+    const body = doc.body;
+    const statusLabel = ESTATUS_DOC_OPTIONS.find(opt => opt.value === value)?.label || value;
+
+    // Prefijo a buscar en texto (sin tags)
+    const STATUS_PREFIX = 'Estatus';
+
+    // Normaliza y comprueba si el elemento contiene el prefijo "Estatus:" al inicio
+    const isStatusNode = (el: Element) => {
+      const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      // Coincide "Estatus:" al inicio, case-insensitive
+      return new RegExp(`^\\s*${STATUS_PREFIX}\\s*:`, 'i').test(text);
+    };
+
+    // Busca todos los <p> y toma el último que cumpla la condición (por si hay duplicados)
+    const paragraphs = Array.from(body.querySelectorAll('p'));
+    const statusParagraph = paragraphs.reverse().find(p => isStatusNode(p)) as HTMLParagraphElement | undefined;
+
+    if (statusParagraph) {
+      // Actualiza el contenido del párrafo encontrado
+      statusParagraph.innerHTML = `<strong>Estatus:</strong> ${statusLabel}`;
+    } else {
+      // Crea uno nuevo al final
+      const newStatusParagraph = doc.createElement('p');
+      newStatusParagraph.className = 'document-status'; // opcional
+      newStatusParagraph.innerHTML = `<strong>Estatus:</strong> ${statusLabel}`;
+      body.appendChild(newStatusParagraph);
+    }
+
+    setEditorContent(body.innerHTML);
+    setEditData(prev => prev ? { ...prev, estado_documento: value } : null);
+  };
 
   const rechazarAlerta = async () => {
     if (!alert) return
@@ -640,7 +680,7 @@ const AlertEdit: React.FC = () => {
                     {(editData?.senado?.fuente === sources[0] || editData?.senado?.fuente === sources[1] || editData?.senado?.tipo === docTypes[0]) ? (
                       <Select2
                         value={editData?.estado_documento || ''}
-                        onChange={(value: string) => setEditData({ ...editData, estado_documento: value })}
+                        onChange={(value: string) => handleChangeStatus(value)}
                         options={ESTATUS_DOC_OPTIONS}
                         emptyOptionLabel="Sin estatus"
                       />

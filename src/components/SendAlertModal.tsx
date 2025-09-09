@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { ESTATUS_DOC_OPTIONS } from "@/utils/SelectOptions";
+// import { ESTATUS_DOC_OPTIONS } from "@/utils/SelectOptions";
 import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -136,36 +136,6 @@ const SendAlertModal: React.FC<{
 
     setErrorMsg(null);
 
-    // Actualiza el HTML del documento si se editó el estado para incluirlo
-    let finalHtml = document?.documento_html || "";
-    if (document?.estado) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(finalHtml, "text/html");
-      const body = doc.body;
-      const estadoLabel = ESTATUS_DOC_OPTIONS.find(
-        (opt) => opt.value === document.estado
-      );
-
-      let statusParagraph = body.querySelector("p.document-status");
-
-      if (statusParagraph) {
-        // Si ya existe el párrafo de estatus, actualiza su contenido
-        statusParagraph.innerHTML = `<strong>Estatus:</strong> ${
-          estadoLabel ? estadoLabel.label : document.estado
-        }`;
-      } else {
-        // Si no existe, crea uno nuevo y lo añade al final
-        const newStatusParagraph = doc.createElement("p");
-        newStatusParagraph.className = "document-status";
-        newStatusParagraph.innerHTML = `<strong>Estatus:</strong> ${
-          estadoLabel ? estadoLabel.label : document.estado
-        }`;
-        body.appendChild(newStatusParagraph);
-      }
-
-      finalHtml = body.innerHTML;
-    }
-
     // Estructura la info seleccionada
     const clientes = getSelectedStructure();
     const body = {
@@ -174,7 +144,7 @@ const SendAlertModal: React.FC<{
       fuente: document?.fuente,
       temas: document?.temas,
       titulo: document?.titulo,
-      documento_html: finalHtml,
+      documento_html: document?.documento_html,
       estado: document?.estado,
     };
 

@@ -157,10 +157,29 @@ const BotsExecution = () => {
     if (f.fuente !== "todas" && row.fuente !== f.fuente) ok = false;
     if (f.tipo !== "todos" && row.tipo !== f.tipo) ok = false;
     if (f.estatus !== "todos" && row.estatus !== f.estatus) ok = false;
-    if (f.desde && new Date(row.fecha) < new Date(f.desde)) ok = false;
-    if (f.hasta && new Date(row.fecha) > new Date(f.hasta)) ok = false;
+
+    // Filtrado por rango de fechas (inclusivo)
+    if (f.desde) {
+      // Desde: comparar solo la fecha, ignorando hora
+      const desdeDate = new Date(f.desde + "T00:00:00.000Z");
+      const rowDate = new Date(row.fecha);
+      if (rowDate < desdeDate) ok = false;
+    }
+    if (f.hasta) {
+      // Hasta: comparar solo la fecha, incluir todo el día
+      const hastaDate = new Date(f.hasta + "T23:59:59.999Z");
+      const rowDate = new Date(row.fecha);
+      if (rowDate > hastaDate) ok = false;
+    }
+
     return ok;
   });
+
+  // Restablecer la paginación al aplicar algún filtro
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -182,7 +201,7 @@ const BotsExecution = () => {
       fuente: bot.name,
       tipo: "Manual",
       ejecutado_por: user?.email || null,
-      estatus: "en proceso",
+      estatus: "En Proceso",
       detalles: { payload, initiated_at: new Date().toISOString() },
     };
 
@@ -242,7 +261,7 @@ const BotsExecution = () => {
           await supabase
             .from("bot_executions")
             .update({
-              estatus: "éxito",
+              estatus: "Éxito",
               detalles: {
                 ...executionStart.detalles,
                 completed_at: new Date().toISOString(),
@@ -266,7 +285,7 @@ const BotsExecution = () => {
           await supabase
             .from("bot_executions")
             .update({
-              estatus: "éxito",
+              estatus: "Éxito",
               detalles: {
                 ...executionStart.detalles,
                 completed_at: new Date().toISOString(),
@@ -294,7 +313,7 @@ const BotsExecution = () => {
           await supabase
             .from("bot_executions")
             .update({
-              estatus: "éxito",
+              estatus: "Éxito",
               detalles: {
                 ...executionStart.detalles,
                 completed_at: new Date().toISOString(),
@@ -353,6 +372,17 @@ const BotsExecution = () => {
       clearInterval(intervalId);
     };
   }, []);
+
+  // Limpiar filtros
+  const limpiarFiltros = () => {
+    setFilters({
+      fuente: "todas",
+      tipo: "todos",
+      estatus: "todos",
+      desde: "",
+      hasta: "",
+    })
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -494,7 +524,7 @@ const BotsExecution = () => {
             <option value="todas">Todas</option>
             <option value="Cámara de Diputados">Cámara de Diputados</option>
             <option value="Senado">Senado</option>
-            <option value="DOF">DOF</option>
+            <option value="Diario Oficial de la Federación">DOF</option>
             <option value="CONAMER">CONAMER</option>
           </select>
         </div>
@@ -511,7 +541,7 @@ const BotsExecution = () => {
           >
             <option value="todos">Todos</option>
             <option value="Manual">Manual</option>
-            <option value="Automática">Automática</option>
+            <option value="Automatizada">Automatizada</option>
           </select>
         </div>
         <div>
@@ -526,9 +556,9 @@ const BotsExecution = () => {
             }
           >
             <option value="todos">Todos</option>
-            <option value="éxito">Éxito</option>
-            <option value="falla">Falla</option>
-            <option value="en proceso">En proceso</option>
+            <option value="Éxito">Éxito</option>
+            <option value="Error">Error</option>
+            <option value="En Proceso">En Proceso</option>
           </select>
         </div>
         <div>
@@ -557,6 +587,12 @@ const BotsExecution = () => {
             }
           />
         </div>
+        <button
+          onClick={limpiarFiltros}
+          className="px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Limpiar
+        </button>
       </div>
 
       {/* Tabla de historial */}

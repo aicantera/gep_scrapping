@@ -765,11 +765,12 @@ const AlertsManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 max-w-sm">
                         <div className="text-sm font-medium text-gray-900 truncate">
-                          {alerta.fuente === 'Diario Oficial de la Federación' ? (
+                          {/* {alerta.fuente === 'Diario Oficial de la Federación' ? (
                             alerta.documento_senado?.titulo || 'Sin título'
                           ) : (
                             alerta.documento_senado?.sinopsis
-                          )}
+                          )} */}
+                          {alerta.documento_senado?.titulo || 'Sin título'}
                         </div>
                         <div className="text-xs text-gray-500 truncate">
                           {alerta.documento_senado?.Proponente && (

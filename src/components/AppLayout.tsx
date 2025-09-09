@@ -278,26 +278,6 @@ const AppLayout = () => {
               </li>
             </ul>
           </nav>
-
-          {/* Información del sistema */}
-          <div className="p-4 border-t border-gray-200">
-            {/* Versión del sistema */}
-            {(!sidebarCollapsed || mobileMenuOpen) && (
-              <div className="px-3 py-2 text-center">
-                <p className="text-xs text-gray-500">GEP AI</p>
-                <p className="text-xs text-gray-400 font-mono">v1.4.1</p>
-              </div>
-            )}
-
-            {/* Versión compacta para sidebar colapsado */}
-            {sidebarCollapsed && !mobileMenuOpen && (
-              <div className="text-center">
-                <p className="text-xs text-gray-400 font-mono transform rotate-90 whitespace-nowrap">
-                  v1.3.9
-                </p>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Contenido principal */}

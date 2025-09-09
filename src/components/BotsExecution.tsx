@@ -798,13 +798,14 @@ const BotsExecution = () => {
                 • Los bots se ejecutan de forma asíncrona en segundo plano
               </li>
               <li>
-                • Los datos actualizados estarán disponibles en aproximadamente
-                30 minutos
-              </li>
-              <li>• Solo los administradores pueden ejecutar los bots</li>
-              <li>
                 • Los resultados se reflejarán en el dashboard y módulos
                 correspondientes
+              </li>
+              <li>
+                • Los bots se ejecutan de forma automática cada 2 horas
+              </li>
+              <li>
+                • Los bots se podrán ejecutar de forma manual pasada 1 hora después de la última ejecución 
               </li>
             </ul>
           </div>

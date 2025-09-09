@@ -117,7 +117,7 @@ const ThemeManagement: React.FC = () => {
       const { data: themesData, error: themesError } = await supabase
         .from('temas')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('nombre_tema', { ascending: true })
       
       if (themesError) {
         console.error('❌ Error cargando temas:', themesError)
@@ -192,8 +192,8 @@ const ThemeManagement: React.FC = () => {
 
     // Función para crear tema
   const createTheme = async () => {
-    if (!themeFormData.nombre_tema.trim() || !themeFormData.desc_tema.trim()) {
-      setError('El nombre y la descripción del tema son obligatorios.')
+    if (!themeFormData.nombre_tema.trim()) {
+      setError('El nombre del tema es obligatorio.')
       return
     }
     
@@ -347,8 +347,8 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
 
   // Función para actualizar tema
   const updateTheme = async () => {
-    if (!selectedTheme || !themeFormData.nombre_tema.trim() || !themeFormData.desc_tema.trim()) {
-      setError('El nombre y la descripción del tema son obligatorios.')
+    if (!selectedTheme || !themeFormData.nombre_tema.trim()) {
+      setError('El nombre del tema es obligatorio.')
       return
     }
     
@@ -727,7 +727,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Gestión de Temas y Subtemas</h1>
           <p className="text-gray-600 mt-1">
-            Administra el catálogo semántico del sistema de extracción
+            Administra el catálogo de temas del sistema de extracción
           </p>
         </div>
         <div className="flex gap-2">
@@ -750,11 +750,11 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
       </div>
 
       {/* Mensajes */}
-      {error && (
+      {/* {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">{error}</p>
         </div>
-      )}
+      )} */}
 
       {successMessage && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -1123,7 +1123,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Descripción del Tema *
+                      Descripción del Tema
                     </label>
                     <textarea
                       value={themeFormData.desc_tema}

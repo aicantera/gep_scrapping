@@ -926,7 +926,7 @@ const UserManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header del modal */}
               <div className="flex items-center justify-between p-6 border-b">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -1094,7 +1094,7 @@ const UserManagement: React.FC = () => {
                     </div>
 
                     {(modalType === 'create' || modalType === 'edit') && (
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                             Contraseña {modalType === 'create' ? '*' : '(Opcional)'}

@@ -158,18 +158,24 @@ const BotsExecution = () => {
     if (f.tipo !== "todos" && row.tipo !== f.tipo) ok = false;
     if (f.estatus !== "todos" && row.estatus !== f.estatus) ok = false;
 
-    // Filtrado por rango de fechas (inclusivo)
+    // Filtrado por rango de fechas (inclusivo, usando fecha local)
+    const getLocalDateString = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
     if (f.desde) {
-      // Desde: comparar solo la fecha, ignorando hora
-      const desdeDate = new Date(f.desde + "T00:00:00.000Z");
-      const rowDate = new Date(row.fecha);
-      if (rowDate < desdeDate) ok = false;
+      const desdeStr = f.desde;
+      const rowDateStr = getLocalDateString(row.fecha);
+      if (rowDateStr < desdeStr) ok = false;
     }
     if (f.hasta) {
-      // Hasta: comparar solo la fecha, incluir todo el día
-      const hastaDate = new Date(f.hasta + "T23:59:59.999Z");
-      const rowDate = new Date(row.fecha);
-      if (rowDate > hastaDate) ok = false;
+      const hastaStr = f.hasta;
+      const rowDateStr = getLocalDateString(row.fecha);
+      if (rowDateStr > hastaStr) ok = false;
     }
 
     return ok;
@@ -582,6 +588,7 @@ const BotsExecution = () => {
             type="date"
             className="border rounded px-2 py-1 text-[#1F2937]"
             value={filters.hasta}
+            min={filters.desde || undefined}
             onChange={(e) =>
               setFilters((f) => ({ ...f, hasta: e.target.value }))
             }

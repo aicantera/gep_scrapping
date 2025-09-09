@@ -202,8 +202,9 @@ const ThemeManagement: React.FC = () => {
       st.subtema_text.trim() && st.subtema_desc.trim()
     )
     
-    if (themeFormData.subtemas.length > 0 && validSubthemes.length !== themeFormData.subtemas.length) {
-      setError('Todos los subtemas deben tener nombre y descripción.')
+    // Validar que si hay subtemas, todos tengan nombre (Descripción puede ser opcional)
+    if (validSubthemes.length > 0 && validSubthemes.some(st => !st.subtema_text.trim())) {
+      setError('Todos los subtemas deben tener nombre.')
       return
     }
     
@@ -1144,7 +1145,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                     <button
                       type="button"
                       onClick={addSubthemeToForm}
-                      className="flex items-center gap-2 px-3 py-1 text-sm bg-[#A1A3A5] text-black rounded-lg hover:bg-[#B52244] transition-colors"
+                      className="flex items-center gap-2 px-3 py-1 text-sm rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
                     >
                       <Plus size={14} />
                       Agregar Subtema
@@ -1175,7 +1176,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Nombre del Subtema
+                                Nombre del Subtema *
                               </label>
                               <input
                                 type="text"

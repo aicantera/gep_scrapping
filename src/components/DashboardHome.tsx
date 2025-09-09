@@ -461,7 +461,7 @@ const DashboardHome = () => {
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Documentos capturados hoy */}
         <button
           type="button"
@@ -627,8 +627,8 @@ const DashboardHome = () => {
             <p className="text-xl md:text-2xl font-bold text-gray-900">
               {kpiData.pendingAlerts.conamer}
             </p>
-            <div className="p-3 bg-[#A1A3A5]/25 rounded-full flex-shrink-0">
-              <Newspaper className="text-[#999996]" size={20} />
+            <div className="p-3 bg-[#D4133D]/25 rounded-full flex-shrink-0">
+              <Newspaper className="text-[#B52244]" size={20} />
             </div>
           </div>
           <div className="flex items-center mt-4">

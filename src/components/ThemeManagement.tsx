@@ -699,26 +699,26 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
   }, [searchTerm, statusFilter])
 
   // Cargar datos iniciales
-  useEffect(() => {
-    const initializeData = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        console.log('🚀 Inicializando carga de datos...')
-        const success = await loadThemes()
-        if (!success) {
-          console.error('❌ Falló la carga inicial de datos')
-        }
-      } catch (error) {
-        console.error('❌ Error en inicialización:', error)
-        setError('Error al cargar los datos iniciales')
-      } finally {
-        setLoading(false)
-      }
-    }
-    
+  useEffect(() => {    
     initializeData()
-  }, [])
+  }, []);
+
+  const initializeData = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      console.log('🚀 Inicializando carga de datos...')
+      const success = await loadThemes()
+      if (!success) {
+        console.error('❌ Falló la carga inicial de datos')
+      }
+    } catch (error) {
+      console.error('❌ Error en inicialización:', error)
+      setError('Error al cargar los datos iniciales')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="p-6">
@@ -732,7 +732,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => loadThemes()}
+            onClick={initializeData}
             disabled={loading}
             className="flex items-center gap-2 px-4 py-2 bg-[#999996] text-white rounded-lg hover:bg-[#A1A3A5] disabled:opacity-50 transition-colors"
           >

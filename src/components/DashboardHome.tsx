@@ -375,6 +375,7 @@ const DashboardHome = () => {
         doc.resumen,
         doc.analisis,
         proponenteInfo,
+        doc.tipo,
       ]);
     });
     worksheet.columns.forEach((col) => {

@@ -605,12 +605,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-xs text-gray-500 mt-1">
-                            { document.tipo ? 
-                                document.fuente === sources[2] ?  
-                                  'Proyecto'
-                                : document.tipo 
-                                : 'Sin tipo'
-                            }
+                            { document.tipo ?? "Sin tipo"}
                           </div>
                         </td>
                         <td className="px-6 py-4">

@@ -345,15 +345,13 @@ const DashboardHome = () => {
       "ID",
       "Fecha de creación",
       "Título",
-      "Link Iniciativa",
+      "Link",
       "Fuente",
       "Temas",
-      "Partidos",
       "Resumen",
       "Análisis",
       "Proponente",
       "Tipo",
-      "Correspondiente",
     ];
     worksheet.addRow(headers);
     documentsToday.forEach((doc) => {
@@ -374,12 +372,9 @@ const DashboardHome = () => {
         doc.link_iniciativa,
         doc.fuente,
         doc.temas,
-        doc.partidos,
         doc.resumen,
         doc.analisis,
         proponenteInfo,
-        doc.tipo,
-        // Correspondiente puede ser null, pero lo incluimos para mantener el orden
       ]);
     });
     worksheet.columns.forEach((col) => {

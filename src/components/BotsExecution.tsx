@@ -25,6 +25,7 @@ interface BotExecutionHistory {
   ejecutado_por: string | null;
   estatus: string;
   detalles: any;
+  archivado: boolean;
 }
 
 interface BotConfig {
@@ -102,6 +103,7 @@ const BotsExecution = () => {
       const { data, error } = await supabase
         .from("bot_executions")
         .select("*")
+        .eq("archivado", false)
         .order("fecha", { ascending: false })
         .limit(1000); // Limitar a 1000 registros más recientes
 
@@ -390,6 +392,32 @@ const BotsExecution = () => {
     })
   }
 
+  // Archivar registros
+  const archivarRegistros = async () => {
+    try {
+      const resp = await fetch('https://dbd.gepdigital.ai/webhook/borra', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!resp.ok) {
+        throw new Error('Error al archivar registros')
+      }
+
+      console.log("🚀 ~ archivarRegistros ~ response:", await resp.json())
+      toast.success('Registros borrados correctamente')
+
+      // Recargar historial
+      loadBotExecutions();
+      loadBotAvailability();
+    } catch (error) {
+      console.log("🚀 ~ archivarRegistros ~ error:", error)
+      
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -600,6 +628,17 @@ const BotsExecution = () => {
         >
           Limpiar
         </button>
+
+        {history.length > 0 && (
+          <div className="ml-auto">
+            <button
+              className="px-3 py-2 text-[#ed2736] border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+              onClick={archivarRegistros}
+            >
+              Borrar registros
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabla de historial */}

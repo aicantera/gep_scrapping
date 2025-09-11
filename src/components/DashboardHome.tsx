@@ -99,6 +99,11 @@ const DashboardHome = () => {
   //   "CONAMER",
   // ];
 
+  useEffect(() => {
+    const dateNow = new Date();
+    console.log("🚀 ~ DashboardHome ~ dateNow:", dateNow);
+  }, []);
+
   const loadDashboardData = async () => {
     setLoading(true);
     setError(null);
@@ -107,16 +112,21 @@ const DashboardHome = () => {
       console.log("📊 Cargando datos del dashboard del día actual...");
 
       // Calcular fecha del día actual
-      const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
+      const now = new Date();
+
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
 
       // 1. Documentos capturados durante el día (desde tabla senado)
       const { count: documentsTodayCount, error: docsTodayError } =
         await supabase
           .from("senado")
           .select("*", { count: "exact", head: true })
-          .gte("created_at", todayStr)
-          .lt("created_at", todayStr + "T23:59:59.999Z");
+          .gte("created_at", startOfDay.toISOString())
+          .lt("created_at", endOfDay.toISOString());
 
       if (docsTodayError) {
         console.error("Error obteniendo documentos del día:", docsTodayError);
@@ -126,8 +136,8 @@ const DashboardHome = () => {
       const { data: allDocumentsToday, error: allDocsError } = await supabase
         .from("senado")
         .select("*")
-        .gte("created_at", todayStr)
-        .lt("created_at", todayStr + "T23:59:59.999Z")
+        .gte("created_at", startOfDay.toISOString())
+        .lt("created_at", endOfDay.toISOString())
         .order("created_at", { ascending: false });
 
       if (allDocsError) {
@@ -148,8 +158,8 @@ const DashboardHome = () => {
         await supabase
           .from("senado")
           .select("fuente")
-          .gte("created_at", todayStr)
-          .lt("created_at", todayStr + "T23:59:59.999Z");
+          .gte("created_at", startOfDay.toISOString())
+          .lt("created_at", endOfDay.toISOString());
 
       if (docsTodayError2) {
         console.error(
@@ -213,8 +223,8 @@ const DashboardHome = () => {
           .select("id_alerta, created_at")
           .eq("status_alerta", 0)
           .eq("estado", "Pendiente")
-          .gte("created_at", todayStr)
-          .lt("created_at", todayStr + "T23:59:59.999Z");
+          .gte("created_at", startOfDay.toISOString())
+          .lt("created_at", endOfDay.toISOString());
 
       if (alertasPendientesError) {
         console.error(

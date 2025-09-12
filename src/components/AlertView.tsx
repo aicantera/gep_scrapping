@@ -506,7 +506,7 @@ const AlertView: React.FC = () => {
                   />
                 </div>
 
-                {alert?.senado?.fuente !== sources[2] && (
+                {(alert?.senado?.fuente === sources[0] || alert?.senado?.fuente === sources[1]) && (
                   <div className="space-y-2 mt-4">
                     <label className="form-label">Estatus</label>
                     {(alert?.senado?.fuente === sources[0] || alert?.senado?.fuente === sources[1] || alert?.senado?.tipo === docTypes[0]) ? (

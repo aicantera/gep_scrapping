@@ -440,7 +440,7 @@ const DocumentEdit: React.FC = () => {
                 placeholder="Edita el contenido del documento aquí..."
               />
             </div>
-            {(editData?.fuente !== sources[2] || editData?.fuente !== sources[3]) && (editData?.tipo === docTypes[0] || editData?.tipo === docTypes[1]) && (
+            {(editData?.fuente === sources[0] || editData?.fuente === sources[1]) && (editData?.tipo === docTypes[0] || editData?.tipo === docTypes[1]) && (
               <div className="space-y-2">
                 <label className="form-label">Estatus</label>
                 {(editData?.fuente === sources[0] || editData?.fuente === sources[1] || editData?.tipo === docTypes[0]) ? (

@@ -848,10 +848,10 @@ const BotsExecution = () => {
                 correspondientes
               </li>
               <li>
-                • Los bots se ejecutan de forma automática cada 2 horas
+                • Los bots se ejecutan de forma automática cada 2 horas para las cámaras y el CONAMER y cada hora para el DOF
               </li>
               <li>
-                • Los bots se podrán ejecutar de forma manual pasada 1 hora después de la última ejecución 
+                • Los bots se podrán ejecutar de forma manual pasada media hora después de la última ejecución
               </li>
             </ul>
           </div>

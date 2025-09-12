@@ -481,7 +481,8 @@ const AlertEdit: React.FC = () => {
           mensaje_email: mensajeAdjunto,
           id_analista: user?.id || null,
           destinatarios: editData?.destinatarios?.join(','),
-          alerta_html: finalHtml
+          alerta_html: finalHtml,
+          estado_documento: editData?.estado_documento || ''
         })
         .eq('id_alerta', alert.id_alerta)
       

@@ -11,9 +11,9 @@ jobs:
       group: deploy-gepdash
       cancel-in-progress: true
 
+    # Evita el '|| 22' en expresiones (a veces da lata).
     env:
-      # Si no tienes SSH_PORT como secreto, puedes dejar 22 fijo:
-      SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
       SERVER_HOST: ${{ secrets.SERVER_HOST }}
       SERVER_USER: root
 
@@ -28,7 +28,6 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/ci_key
           chmod 600 ~/.ssh/ci_key
-          # Derivar la pública desde la privada del secreto
           ssh-keygen -y -f ~/.ssh/ci_key > ~/.ssh/ci_key.pub
           echo "Runner public key:"
           cat ~/.ssh/ci_key.pub
@@ -38,16 +37,15 @@ jobs:
       - name: Trust host
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "$SSH_PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${SSH_PORT:-22}" -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
-      # Opcional pero útil para diagnóstico inicial
       - name: Test SSH (-vvv)
         run: |
-          ssh -vvv -o IdentitiesOnly=yes -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" true
+          ssh -vvv -o IdentitiesOnly=yes -p "${SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" true
 
       - name: Remote deploy (inline)
         run: |
-          ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" 'bash -s' <<'REMOTE'
+          ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p "${SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
 
           APP_DIR="/var/www/gepdash"
@@ -56,8 +54,6 @@ jobs:
           echo "===== DEPLOY START $(date) =====" | tee -a "$LOG_FILE"
 
           cd "$APP_DIR"
-
-          # Evita 'detected dubious ownership'
           git config --global --add safe.directory "$APP_DIR"
 
           echo "[GIT] fetch/reset/clean" | tee -a "$LOG_FILE"
@@ -66,7 +62,6 @@ jobs:
           rm -rf dist build 2>/dev/null || true
           git clean -fdx 2>&1 | tee -a "$LOG_FILE"
 
-          # Node/npm
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true
           if ! command -v npm >/dev/null 2>&1; then
@@ -102,4 +97,4 @@ jobs:
       - name: Show last deploy log
         if: always()
         run: |
-          ssh -o IdentitiesOnly=yes -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" 'tail -n 200 /var/www/gepdash/.deploy.log || true'
+          ssh -o IdentitiesOnly=yes -p "${SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'tail -n 200 /var/www/gepdash/.deploy.log || true'

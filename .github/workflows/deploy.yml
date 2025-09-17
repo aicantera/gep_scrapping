@@ -12,6 +12,7 @@ jobs:
       cancel-in-progress: true
 
     env:
+      # Si no tienes SSH_PORT como secreto, puedes dejar 22 fijo:
       SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
       SERVER_HOST: ${{ secrets.SERVER_HOST }}
       SERVER_USER: root
@@ -22,10 +23,27 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Debug: print key fingerprint
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/ci_key
+          chmod 600 ~/.ssh/ci_key
+          # Derivar la pública desde la privada del secreto
+          ssh-keygen -y -f ~/.ssh/ci_key > ~/.ssh/ci_key.pub
+          echo "Runner public key:"
+          cat ~/.ssh/ci_key.pub
+          echo "Runner key fingerprint:"
+          ssh-keygen -lf ~/.ssh/ci_key.pub
+
       - name: Trust host
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "$SSH_PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+
+      # Opcional pero útil para diagnóstico inicial
+      - name: Test SSH (-vvv)
+        run: |
+          ssh -vvv -o IdentitiesOnly=yes -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" true
 
       - name: Remote deploy (inline)
         run: |

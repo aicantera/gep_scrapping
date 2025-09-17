@@ -1,6 +1,6 @@
 # 🚀 GEP AI - Sistema de Gestión Empresarial
 
-**Versión 1.4.1** | Un CRM completo y moderno desarrollado con tecnologías de vanguardia
+**Versión 1.4.3** | Un CRM completo y moderno desarrollado con tecnologías de vanguardia
 
 ![Estado del Proyecto](https://img.shields.io/badge/Estado-Producción-brightgreen)
 ![Versión](https://img.shields.io/badge/Versión-1.4.1-blue)

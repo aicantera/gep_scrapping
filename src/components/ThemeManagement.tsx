@@ -199,24 +199,18 @@ const ThemeManagement: React.FC = () => {
     
     // Validar subtemas si los hay
     const validSubthemes = themeFormData.subtemas.filter(st => 
-      st.subtema_text.trim() && st.subtema_desc.trim()
+      st.subtema_text.trim()
     )
-    
+
     // Validar que si hay subtemas, todos tengan nombre (Descripción puede ser opcional)
     if (validSubthemes.length > 0 && validSubthemes.some(st => !st.subtema_text.trim())) {
       setError('Todos los subtemas deben tener nombre.')
       return
     }
-    
+
     setLoading(true)
     setError(null)
-    
     try {
-      // Crear tema - PostgreSQL debe generar el ID automáticamente
-      console.log('🚀 Creando tema SIN especificar ID:', {
-        nombre_tema: themeFormData.nombre_tema.trim(),
-        desc_tema: themeFormData.desc_tema.trim()
-      })
       
       // Preparar datos para inserción (sin ID)
       const themeToCreate: ThemeCreate = {
@@ -229,9 +223,7 @@ const ThemeManagement: React.FC = () => {
         .from('temas')
         .insert([themeToCreate])
         .select('*')
-        .single()
-      
-      console.log('📄 Resultado de inserción:', { tema, error: themeError })
+        .single()      
       
       if (themeError) {
         console.error('❌ Error al insertar tema:', themeError)
@@ -241,9 +233,7 @@ const ThemeManagement: React.FC = () => {
       if (!tema) {
         console.error('❌ No se recibió el tema creado')
         throw new Error('No se pudo obtener el tema creado')
-      }
-      
-      console.log('✅ Tema creado exitosamente:', tema)
+      }      
       
       // Crear subtemas si los hay
       let subtemasCreados = 0
@@ -255,9 +245,7 @@ const ThemeManagement: React.FC = () => {
             subtema_text: st.subtema_text.trim(),
             subtema_desc: st.subtema_desc.trim()
             // ✅ NO incluye id_subtema - se genera automáticamente
-          }))
-          
-          console.log('🔄 Creando subtemas SIN especificar ID:', subtemasToInsert)
+          }))          
           
           const { data: subtemasData, error: subthemesError } = await supabase
             .from('subtemas')
@@ -280,7 +268,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
           }
           
           subtemasCreados = subtemasData?.length || 0
-          console.log('✅ Subtemas creados exitosamente:', subtemasCreados)
         } catch (subthemeError) {
           console.error('❌ Error en creación de subtemas:', subthemeError)
           // No fallar toda la operación si solo fallan los subtemas
@@ -290,11 +277,9 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
       }
       
       // Actualizar UI
-      console.log('🔄 Recargando lista de temas...')
       const reloadSuccess = await loadThemes()
       
       if (reloadSuccess) {
-        console.log('✅ Lista de temas actualizada correctamente')
         setSuccessMessage(`✅ Tema "${tema.nombre_tema}" creado correctamente${subtemasCreados > 0 ? ` con ${subtemasCreados} subtemas` : ''}.`)
         setShowThemeModal(false)
         resetForm()
@@ -778,6 +763,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
           </div>
           <div>
             <select
+              title="Filtrar por estado"
               className="form-input w-full"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -964,6 +950,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
             <div className="flex items-center space-x-2">
               {/* Botón Anterior */}
               <button
+                type="button"
+                title="Anterior"
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1071,6 +1059,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
 
               {/* Botón Siguiente */}
               <button
+                type="button"
+                title="Siguiente"
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1091,6 +1081,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                 {modalType === 'create' ? 'Crear Nuevo Tema' : 'Editar Tema'}
               </h3>
               <button
+                type="button"
+                title="Cerrar"
                 onClick={() => setShowThemeModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -1140,14 +1132,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                     <label className="block text-sm font-medium text-gray-700">
                       Subtemas Asociados
                     </label>
-                    <button
-                      type="button"
-                      onClick={addSubthemeToForm}
-                      className="flex items-center gap-2 px-3 py-1 text-sm rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
-                    >
-                      <Plus size={14} />
-                      Agregar Subtema
-                    </button>
                   </div>
 
                   {themeFormData.subtemas.length === 0 ? (
@@ -1165,6 +1149,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                             </h4>
                             <button
                               type="button"
+                              title="Eliminar Subtema"
                               onClick={() => removeSubthemeFromForm(index)}
                               className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
                             >
@@ -1205,7 +1190,15 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+            <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={addSubthemeToForm}
+                className="h-[42px] flex justify-center items-center gap-2 px-3 py-1 text-sm rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+              >
+                <Plus size={16} />
+                Agregar Subtema
+              </button>
               <button
                 onClick={() => setShowThemeModal(false)}
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -1215,7 +1208,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
               <button
                 onClick={modalType === 'create' ? createTheme : updateTheme}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Save size={16} />
                 {loading ? 'Guardando...' : modalType === 'create' ? 'Crear Tema' : 'Guardar Cambios'}
@@ -1234,6 +1227,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                 Detalles del Tema
               </h3>
               <button
+                type="button"
+                title="Cerrar"
                 onClick={() => setShowDetailModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >

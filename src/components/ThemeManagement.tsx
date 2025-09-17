@@ -351,9 +351,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
       if (themeError) {
         console.error('❌ Error actualizando tema:', themeError)
         throw themeError
-      }
-      
-      console.log('✅ Tema actualizado exitosamente')
+      }      
       
       // Manejar subtemas
       const validSubthemes = themeFormData.subtemas.filter(st => st.subtema_text.trim())

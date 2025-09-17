@@ -108,10 +108,8 @@ const ThemeManagement: React.FC = () => {
 
   // Función para cargar todos los temas con sus subtemas
   const loadThemes = async () => {
-    console.log('🔄 Iniciando carga de temas...')
     
     try {
-      console.log('🔄 Cargando temas...')
       
       // Cargar temas
       const { data: themesData, error: themesError } = await supabase
@@ -144,8 +142,6 @@ const ThemeManagement: React.FC = () => {
       
       setThemes(themesWithStatus)
       setAllSubthemes(subthemesData || [])
-      console.log('✅ Temas cargados exitosamente:', themesWithStatus.length)
-      console.log('✅ Subtemas cargados exitosamente:', (subthemesData || []).length)
       
       return true // Indicar éxito
       
@@ -342,7 +338,6 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
     setError(null)
     
     try {
-      console.log('🔄 Actualizando tema:', selectedTheme.id_tema)
       
       // Actualizar tema
       const { error: themeError } = await supabase
@@ -406,10 +401,10 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
             }
             
             throw subthemesError
-          }
-          
-          const subtemasCreados = subtemasData?.length || 0
-          console.log('✅ Subtemas actualizados exitosamente:', subtemasCreados)
+          } else if (subtemasData?.length > 0) {
+            //Se deja el console.log debido a que se ocupa utilizar la variable subtemasData
+            console.log('✅ Subtemas actualizados exitosamente:')
+          }          
           
         } catch (subthemeError) {
           console.error('❌ Error manejando subtemas:', subthemeError)
@@ -420,7 +415,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
         }
       } else {
         // Si no hay subtemas válidos, eliminar los existentes
-        console.log('🔄 Eliminando todos los subtemas (sin subtemas válidos)...')
         const { error: deleteAllError } = await supabase
           .from('subtemas')
           .delete()
@@ -428,8 +422,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
         
         if (deleteAllError) {
           console.error('❌ Error eliminando subtemas:', deleteAllError)
-        } else {
-          console.log('✅ Subtemas eliminados')
         }
       }
       
@@ -437,7 +429,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
       const reloadSuccess = await loadThemes()
       
       if (reloadSuccess) {
-        console.log('✅ Lista actualizada correctamente')
         setSuccessMessage(`✅ Tema "${themeFormData.nombre_tema}" actualizado correctamente.`)
         setShowThemeModal(false)
         resetForm()
@@ -512,7 +503,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
     setError(null)
 
     try {
-      console.log('🔄 Cambiando estado del tema:', theme.id_tema, 'a', newStatus ? 'ACTIVO' : 'INACTIVO')
       
       // Actualizar estado en la base de datos
       const { error } = await supabase
@@ -531,7 +521,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
           throw error
         }
       } else {
-        console.log('✅ Estado actualizado correctamente en la BD')
         setSuccessMessage(`✅ Tema "${theme.nombre_tema}" ${newStatus ? 'activado' : 'desactivado'} correctamente.`)
       }
       
@@ -691,7 +680,6 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
     setLoading(true)
     setError(null)
     try {
-      console.log('🚀 Inicializando carga de datos...')
       const success = await loadThemes()
       if (!success) {
         console.error('❌ Falló la carga inicial de datos')

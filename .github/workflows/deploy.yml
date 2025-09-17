@@ -11,21 +11,25 @@ jobs:
       group: deploy-gepdash
       cancel-in-progress: true
 
+    env:
+      SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: root
+
     steps:
-      - name: Setup SSH
+      - name: Start ssh-agent and add key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Trust host
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p "${{ secrets.SSH_PORT || 22 }}" -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$SSH_PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
       - name: Remote deploy (inline)
-        env:
-          PORT: ${{ secrets.SSH_PORT || 22 }}
-          HOST: ${{ secrets.SERVER_HOST }}
-          USER: ${{ secrets.SERVER_USER }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USER@$HOST" 'bash -s' <<'REMOTE'
+          ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
 
           APP_DIR="/var/www/gepdash"
@@ -33,65 +37,51 @@ jobs:
 
           echo "===== DEPLOY START $(date) =====" | tee -a "$LOG_FILE"
 
-          # 0) Normaliza permisos del repo (por si el build anterior dejó dist/ como www-data)
-          sudo chown -R "$USER":"$USER" "$APP_DIR" || true
-
           cd "$APP_DIR"
 
-          # 1) Evita 'detected dubious ownership'
+          # Evita 'detected dubious ownership'
           git config --global --add safe.directory "$APP_DIR"
 
-          # 2) Actualiza código
           echo "[GIT] fetch/reset/clean" | tee -a "$LOG_FILE"
           git fetch origin main 2>&1 | tee -a "$LOG_FILE"
           git reset --hard origin/main 2>&1 | tee -a "$LOG_FILE"
-          # elimina builds viejos aunque no sean tuyos
-          sudo rm -rf dist build 2>/dev/null || true
+          rm -rf dist build 2>/dev/null || true
           git clean -fdx 2>&1 | tee -a "$LOG_FILE"
 
-          # 3) Asegura Node/npm disponible
-          #   - intenta cargar nvm si existe
+          # Node/npm
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true
-          command -v npm >/dev/null 2>&1 || {
+          if ! command -v npm >/dev/null 2>&1; then
             echo "[NODE] Instalando Node LTS (NodeSource)..." | tee -a "$LOG_FILE"
-            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - 2>&1 | tee -a "$LOG_FILE"
-            sudo apt-get install -y nodejs 2>&1 | tee -a "$LOG_FILE"
-          }
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - 2>&1 | tee -a "$LOG_FILE"
+            apt-get install -y nodejs 2>&1 | tee -a "$LOG_FILE"
+          fi
           node -v 2>&1 | tee -a "$LOG_FILE" || true
           npm -v  2>&1 | tee -a "$LOG_FILE" || true
 
-          # 4) Instalar deps + build
           echo "[NPM] install" | tee -a "$LOG_FILE"
           npm ci 2>&1 | tee -a "$LOG_FILE" || npm install 2>&1 | tee -a "$LOG_FILE"
 
           echo "[BUILD] npm run build" | tee -a "$LOG_FILE"
           npm run build 2>&1 | tee -a "$LOG_FILE"
 
-          # 5) Detecta carpeta de salida
           if   [ -d dist  ]; then BUILD_DIR="dist"
           elif [ -d build ]; then BUILD_DIR="build"
           else echo "[ERROR] No encontré dist/ ni build/" | tee -a "$LOG_FILE"; exit 1
           fi
           echo "[INFO] BUILD_DIR=$BUILD_DIR" | tee -a "$LOG_FILE"
 
-          # 6) Permisos sólo-lectura (Nginx solo necesita leer)
           find "$APP_DIR/$BUILD_DIR" -type d -exec chmod 755 {} \; 2>&1 | tee -a "$LOG_FILE"
           find "$APP_DIR/$BUILD_DIR" -type f -exec chmod 644 {} \; 2>&1 | tee -a "$LOG_FILE"
 
-          # 7) Recarga Nginx
           echo "[NGINX] test & reload" | tee -a "$LOG_FILE"
-          sudo nginx -t 2>&1 | tee -a "$LOG_FILE" || true
-          sudo systemctl reload nginx 2>&1 | tee -a "$LOG_FILE" || true
+          nginx -t 2>&1 | tee -a "$LOG_FILE" || true
+          systemctl reload nginx 2>&1 | tee -a "$LOG_FILE" || true
 
           echo "===== DEPLOY OK $(date) =====" | tee -a "$LOG_FILE"
           REMOTE
 
       - name: Show last deploy log
         if: always()
-        env:
-          PORT: ${{ secrets.SSH_PORT || 22 }}
-          HOST: ${{ secrets.SERVER_HOST }}
-          USER: ${{ secrets.SERVER_USER }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USER@$HOST" 'tail -n 200 /var/www/gepdash/.deploy.log || true'
+          ssh -o IdentitiesOnly=yes -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" 'tail -n 200 /var/www/gepdash/.deploy.log || true'

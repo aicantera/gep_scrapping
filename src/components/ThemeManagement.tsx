@@ -19,7 +19,7 @@ interface Theme {
   id_tema: number // Auto-generado por PostgreSQL
   created_at: string
   nombre_tema: string
-  desc_tema: string
+  desc_tema?: string
   activo?: boolean
   subtemas?: Subtheme[]
 }
@@ -27,7 +27,7 @@ interface Theme {
 // Tipo para crear un tema (sin ID - se genera automáticamente)
 interface ThemeCreate {
   nombre_tema: string
-  desc_tema: string
+  desc_tema?: string
 }
 
 interface Subtheme {
@@ -35,20 +35,20 @@ interface Subtheme {
   created_at: string
   id_tema: number
   subtema_text: string
-  subtema_desc: string
+  subtema_desc?: string
 }
 
 // Tipo para crear un subtema (sin ID - se genera automáticamente)
 interface SubthemeCreate {
   id_tema: number
   subtema_text: string
-  subtema_desc: string
+  subtema_desc?: string
 }
 
 interface ThemeFormData {
   nombre_tema: string
-  desc_tema: string
-  subtemas: { subtema_text: string; subtema_desc: string }[]
+  desc_tema?: string
+  subtemas: { subtema_text: string; subtema_desc?: string }[]
 }
 
 interface ClienteRelacionado {
@@ -211,7 +211,7 @@ const ThemeManagement: React.FC = () => {
       // Preparar datos para inserción (sin ID)
       const themeToCreate: ThemeCreate = {
         nombre_tema: themeFormData.nombre_tema.trim(),
-        desc_tema: themeFormData.desc_tema.trim()
+        desc_tema: themeFormData.desc_tema?.trim() || ''
         // ✅ NO incluye id_tema - se genera automáticamente
       }
 
@@ -239,7 +239,7 @@ const ThemeManagement: React.FC = () => {
           const subtemasToInsert: SubthemeCreate[] = validSubthemes.map(st => ({
             id_tema: tema.id_tema,
             subtema_text: st.subtema_text.trim(),
-            subtema_desc: st.subtema_desc.trim()
+            subtema_desc: st.subtema_desc?.trim() || ''
             // ✅ NO incluye id_subtema - se genera automáticamente
           }))          
           
@@ -344,21 +344,20 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
         .from('temas')
         .update({
           nombre_tema: themeFormData.nombre_tema.trim(),
-          desc_tema: themeFormData.desc_tema.trim()
+          desc_tema: themeFormData.desc_tema?.trim() || ''
         })
         .eq('id_tema', selectedTheme.id_tema)
       
       if (themeError) {
         console.error('❌ Error actualizando tema:', themeError)
         throw themeError
-      }      
+      }
       
       // Manejar subtemas
       const validSubthemes = themeFormData.subtemas.filter(st => st.subtema_text.trim())
       
       if (validSubthemes.length > 0) {
         try {
-          console.log('🔄 Eliminando subtemas existentes...')
           // Primero eliminar subtemas existentes
           const { error: deleteError } = await supabase
             .from('subtemas')
@@ -370,12 +369,11 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
             throw deleteError
           }
           
-          console.log('🔄 Creando nuevos subtemas...')
           // Crear nuevos subtemas (sin ID - se genera automáticamente)
           const subtemasToInsert: SubthemeCreate[] = validSubthemes.map(st => ({
             id_tema: selectedTheme.id_tema,
             subtema_text: st.subtema_text.trim(),
-            subtema_desc: st.subtema_desc.trim()
+            subtema_desc: st.subtema_desc?.trim() || ''
             // ✅ NO incluye id_subtema - se genera automáticamente
           }))
           
@@ -646,10 +644,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
   const filteredThemes = themes.filter(theme => {
     const matchesSearch = searchTerm === '' || 
       theme.nombre_tema.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      theme.desc_tema.toLowerCase().includes(searchTerm.toLowerCase()) ||
       getSubthemesByTheme(theme.id_tema).some(st => 
-        st.subtema_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        st.subtema_desc.toLowerCase().includes(searchTerm.toLowerCase())
+        st.subtema_text.toLowerCase().includes(searchTerm.toLowerCase())
       )
     
     const matchesStatus = statusFilter === '' || 
@@ -1085,7 +1081,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
 
               <div className="space-y-6">
                 {/* Datos del tema */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Nombre del Tema *
@@ -1098,7 +1094,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                       placeholder="Ingresa el nombre del tema"
                     />
                   </div>
-                  <div>
+                  {/* Comentado por peticion de cliente */}
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Descripción del Tema
                     </label>
@@ -1109,7 +1106,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                       className="form-input w-full resize-none"
                       placeholder="Describe el propósito y alcance del tema"
                     />
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Subtemas */}
@@ -1142,7 +1139,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                               <X size={14} />
                             </button>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
                                 Nombre del Subtema *
@@ -1155,7 +1152,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                                 placeholder="Nombre del subtema"
                               />
                             </div>
-                            <div>
+                            {/* Comentado por peticion de cliente */}
+                            {/* <div>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
                                 Descripción
                               </label>
@@ -1166,7 +1164,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                                 className="form-input w-full text-sm"
                                 placeholder="Descripción del subtema"
                               />
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       ))}
@@ -1232,10 +1230,11 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                       <span className="text-xs font-medium text-gray-600">Nombre:</span>
                       <p className="text-sm text-gray-900">{detailData.tema.nombre_tema}</p>
                     </div>
-                    <div>
+                    {/* Comentado por peticion de cliente */}
+                    {/* <div>
                       <span className="text-xs font-medium text-gray-600">Descripción:</span>
                       <p className="text-sm text-gray-900">{detailData.tema.desc_tema}</p>
-                    </div>
+                    </div> */}
                     <div>
                       <span className="text-xs font-medium text-gray-600">Estado:</span>
                       <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
@@ -1269,7 +1268,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                           {subtemas.map(subtema => (
                             <div key={subtema.id_subtema} className="border-b border-gray-200 pb-2 last:border-b-0">
                               <p className="text-sm font-medium text-gray-900">{subtema.subtema_text}</p>
-                              <p className="text-xs text-gray-600">{subtema.subtema_desc}</p>
+                              {/* Comentado por peticion de cliente */}
+                              {/* <p className="text-xs text-gray-600">{subtema.subtema_desc}</p> */}
                             </div>
                           ))}
                         </div>

@@ -530,7 +530,14 @@ const ClientsManagement: React.FC = () => {
     setShowModal(false)
     setSelectedClient(null)
     setModalError(null)
-    setModalSuccessMessage(null)
+    setModalSuccessMessage(null)    
+    setNewLista({
+      nombre: '',
+      temas_subtemas: [],
+      correos: [{nombre: '', correo: ''}]
+    })
+    setBusquedaTemaSubtema('')
+    setBusquedaTemasPorLista({})
   }
 
   // Manejar búsqueda
@@ -1357,8 +1364,6 @@ const ClientsManagement: React.FC = () => {
                               <span className="text-sm font-mono text-gray-800">{selectedClient.id_cliente_numerico || 'N/A'}</span>
                             </div>
                           </div>
-                          
-
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1603,7 +1608,9 @@ const ClientsManagement: React.FC = () => {
                                                               </svg>
                                                             )}
                                                           </button>
-                                                          <span className="text-xs bg-gray-200 text-slate-800 rounded-full px-2 py-1 break-words flex-1 min-w-0 inline-block leading-relaxed">{st.subtema_text}</span>
+                                                          <span className="text-xs bg-gray-200 text-slate-800 rounded-full px-2 py-1 break-all max-w-full">
+                                                            {st.subtema_text}
+                                                          </span>
                                                         </div>
                                                       );
                                                     })

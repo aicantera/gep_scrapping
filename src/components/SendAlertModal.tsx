@@ -161,7 +161,7 @@ const SendAlertModal: React.FC<{
         }
       );
       if (!resp.ok) throw new Error("Error en la solicitud");
-      toast.success("Alerta enviada con éxito");
+      toast.success("Alerta creada con éxito");
       onClose();
     } catch (error) {
       console.log("🚀 ~ handleSendAlert ~ error:", error);

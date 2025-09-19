@@ -1583,7 +1583,8 @@ const ClientsManagement: React.FC = () => {
                                                   {/* Subtemas */}
                                                   {temaSubtemas.length > 0 ? (
                                                     temaSubtemas.map((st) => {
-                                                      const subtemaSeleccionado = lista.temas_subtemas.includes(st.subtema_text);
+                                                      const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
+                                                      const subtemaSeleccionado = lista.temas_subtemas.includes(subtemaId);
                                                       
                                                       return (
                                                         <div key={st.id_subtema} className="flex items-start gap-2 ml-6 w-full">
@@ -1591,9 +1592,9 @@ const ClientsManagement: React.FC = () => {
                                                             type="button"
                                                             onClick={() => {
                                                               if (subtemaSeleccionado) {
-                                                                removeTemaSubtemaFromLista(lista.id, st.subtema_text);
+                                                                removeTemaSubtemaFromLista(lista.id, subtemaId);
                                                               } else {
-                                                                addTemaSubtemaToLista(lista.id, st.subtema_text);
+                                                                addTemaSubtemaToLista(lista.id, subtemaId);
                                                               }
                                                             }}
                                                             className={`w-4 h-4 rounded border flex-shrink-0 ${
@@ -1810,12 +1811,13 @@ const ClientsManagement: React.FC = () => {
                                         }}
                                         className="mr-2"
                                       />
-                                      <span className="font-medium text-gray-800 text-sm">{tema.nombre_tema}</span>
+                                      <span className="font-medium text-gray-800 text-sm break-words flex-1 min-w-0">{tema.nombre_tema}</span>
                                     </label>
                                     <div className="flex flex-wrap gap-1 ml-5">
                                       {temaSubtemas.length > 0 ? (
                                         temaSubtemas.map(st => {
-                                          const subtemaSeleccionado = newLista.temas_subtemas.includes(st.subtema_text);
+                                          const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
+                                          const subtemaSeleccionado = newLista.temas_subtemas.includes(subtemaId);
                                           return (
                                             <label key={st.id_subtema} className="inline-flex items-center mr-2 mb-1">
                                               <input
@@ -1825,12 +1827,12 @@ const ClientsManagement: React.FC = () => {
                                                   if (e.target.checked) {
                                                     setNewLista(prev => ({
                                                       ...prev,
-                                                      temas_subtemas: [...prev.temas_subtemas, st.subtema_text]
+                                                      temas_subtemas: [...prev.temas_subtemas, subtemaId]
                                                     }));
                                                   } else {
                                                     setNewLista(prev => ({
                                                       ...prev,
-                                                      temas_subtemas: prev.temas_subtemas.filter(t => t !== st.subtema_text)
+                                                      temas_subtemas: prev.temas_subtemas.filter(t => t !== subtemaId)
                                                     }));
                                                   }
                                                 }}

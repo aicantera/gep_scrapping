@@ -1583,8 +1583,9 @@ const ClientsManagement: React.FC = () => {
                                                   {/* Subtemas */}
                                                   {temaSubtemas.length > 0 ? (
                                                     temaSubtemas.map((st) => {
-                                                      const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
-                                                      const subtemaSeleccionado = lista.temas_subtemas.includes(subtemaId);
+                                                      //Solucion propuesta por si se llega a mencionar que se seleccionan 2 subtemas con el mismo nombre
+                                                      // const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
+                                                      const subtemaSeleccionado = lista.temas_subtemas.includes(st.subtema_text);
                                                       
                                                       return (
                                                         <div key={st.id_subtema} className="flex items-start gap-2 ml-6 w-full">
@@ -1592,9 +1593,9 @@ const ClientsManagement: React.FC = () => {
                                                             type="button"
                                                             onClick={() => {
                                                               if (subtemaSeleccionado) {
-                                                                removeTemaSubtemaFromLista(lista.id, subtemaId);
+                                                                removeTemaSubtemaFromLista(lista.id, st.subtema_text);
                                                               } else {
-                                                                addTemaSubtemaToLista(lista.id, subtemaId);
+                                                                addTemaSubtemaToLista(lista.id, st.subtema_text);
                                                               }
                                                             }}
                                                             className={`w-4 h-4 rounded border flex-shrink-0 ${
@@ -1816,8 +1817,9 @@ const ClientsManagement: React.FC = () => {
                                     <div className="flex flex-wrap gap-1 ml-5">
                                       {temaSubtemas.length > 0 ? (
                                         temaSubtemas.map(st => {
-                                          const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
-                                          const subtemaSeleccionado = newLista.temas_subtemas.includes(subtemaId);
+                                          //Solucion propuesta por si se llega a mencionar que se seleccionan 2 subtemas con el mismo nombre, sustituir la variable de abajo por st.subtema_text
+                                          // const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
+                                          const subtemaSeleccionado = newLista.temas_subtemas.includes(st.subtema_text);
                                           return (
                                             <label key={st.id_subtema} className="inline-flex items-center mr-2 mb-1">
                                               <input
@@ -1827,12 +1829,12 @@ const ClientsManagement: React.FC = () => {
                                                   if (e.target.checked) {
                                                     setNewLista(prev => ({
                                                       ...prev,
-                                                      temas_subtemas: [...prev.temas_subtemas, subtemaId]
+                                                      temas_subtemas: [...prev.temas_subtemas, st.subtema_text]
                                                     }));
                                                   } else {
                                                     setNewLista(prev => ({
                                                       ...prev,
-                                                      temas_subtemas: prev.temas_subtemas.filter(t => t !== subtemaId)
+                                                      temas_subtemas: prev.temas_subtemas.filter(t => t !== st.subtema_text)
                                                     }));
                                                   }
                                                 }}

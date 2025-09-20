@@ -546,7 +546,7 @@ const AlertsManagement: React.FC = () => {
     setFilterFecha({ desde: '', hasta: '' })
     setCurrentPage(1)
   }
-
+console.log(alertaSeleccionada)
   return (
     <div className="p-6">
       {/* Header */}
@@ -1029,7 +1029,7 @@ const AlertsManagement: React.FC = () => {
                 ¿Estás seguro?
               </h3>
               <p className="text-gray-600 mb-6">
-                Esta acción eliminará permanentemente la alerta "{alertaSeleccionada.documento_senado?.sinopsis || ''}". Esta acción no se puede deshacer.
+                Esta acción eliminará permanentemente la alerta "{alertaSeleccionada.documento_senado?.titulo || ''}". Esta acción no se puede deshacer.
               </p>
               <div className="flex justify-center space-x-3">
                 <button

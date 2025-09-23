@@ -859,6 +859,19 @@ const ClientsManagement: React.FC = () => {
     }
   };
 
+  // Agregar todos los temas y subtemas a la nueva lista
+  const addAllTemasSubtemasToList = () => {
+    // Agregar todos los temas y subtemas a la nueva lista
+    const todosLosTemasYSubtemas = [
+      ...temas.map(tema => tema.nombre_tema),
+      ...subtemas.map(subtema => subtema.subtema_text)
+    ];
+    setNewLista(prev => ({
+      ...prev,
+      temas_subtemas: Array.from(new Set([...prev.temas_subtemas, ...todosLosTemasYSubtemas]))
+    }));
+  }
+
   useEffect(() => {
     if(showModal) {
       setBusquedaTemasPorLista({});
@@ -945,7 +958,7 @@ const ClientsManagement: React.FC = () => {
                       Cliente
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Temas y subtemas
+                      Temas
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Fecha Registro
@@ -996,11 +1009,17 @@ const ClientsManagement: React.FC = () => {
                         <div className="text-sm text-gray-900">
                           {(Array.isArray(client.temas_suscrit) && client.temas_suscrit.length > 0) ? (
                             <div className="flex flex-wrap gap-1">
-                              {client.temas_suscrit.map((tema, index) => (
+                              {/* Limitar a 10 elementos, después, mostrar '...' */}
+                              {client.temas_suscrit.slice(0, 10).map((tema, index) => (
                                 <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-gray-200 text-slate-800">
                                   {tema || 'Sin tema'}
                                 </span>
                               ))}
+                              {client.temas_suscrit.length > 10 && (
+                                <span className="text-slate-800">
+                                  ... y {client.temas_suscrit.length - 10} más
+                                </span>
+                              )}
                             </div>
                           ) : (
                             <span className="text-gray-400 text-xs">Sin temas asignados</span>
@@ -1770,13 +1789,29 @@ const ClientsManagement: React.FC = () => {
                             </div>
                           </div>
                           {/* Buscador de temas y subtemas */}
-                          <input
-                            type="text"
-                            placeholder="Buscar tema o subtema..."
-                            className="form-input mb-3 w-full"
-                            value={busquedaTemaSubtema}
-                            onChange={e => setBusquedaTemaSubtema(e.target.value)}
-                          />
+                          <div className='flex items-center justify-between gap-3 mb-3'>
+                            <input
+                              type="text"
+                              placeholder="Buscar tema o subtema..."
+                              className="form-input w-full"
+                              value={busquedaTemaSubtema}
+                              onChange={e => setBusquedaTemaSubtema(e.target.value)}
+                            />
+                            <button 
+                              type='button' 
+                              className='w-56 px-4 py-0 sm:py-2 h-[50px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed' 
+                              onClick={addAllTemasSubtemasToList}
+                              disabled={
+                                new Set(newLista.temas_subtemas).size === 
+                                new Set([
+                                  ...temas.map(t => t.nombre_tema),
+                                  ...subtemas.map(st => st.subtema_text)
+                                ]).size
+                              }
+                            >
+                              Agregar todos
+                            </button>
+                          </div>
                           {/* Listado filtrado de temas y subtemas con checkboxes */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {temas
@@ -1794,24 +1829,34 @@ const ClientsManagement: React.FC = () => {
                                 return (
                                   <div key={tema.id_tema} className="border border-gray-200 rounded-lg p-3">
                                     <label className="flex items-center mb-2">
-                                      <input
-                                        type="checkbox"
-                                        checked={temaSeleccionado}
-                                        onChange={e => {
-                                          if (e.target.checked) {
-                                            setNewLista(prev => ({
-                                              ...prev,
-                                              temas_subtemas: [...prev.temas_subtemas, tema.nombre_tema]
-                                            }));
-                                          } else {
-                                            setNewLista(prev => ({
-                                              ...prev,
-                                              temas_subtemas: prev.temas_subtemas.filter(t => t !== tema.nombre_tema)
-                                            }));
-                                          }
-                                        }}
-                                        className="mr-2"
-                                      />
+                                    <input
+                                      type="checkbox"
+                                      checked={temaSeleccionado}
+                                      onChange={e => {
+                                        if (e.target.checked) {
+                                          // Seleccionar el tema y todos sus subtemas
+                                          const subtemasDelTema = temaSubtemas.map(st => st.subtema_text);
+                                          setNewLista(prev => ({
+                                            ...prev,
+                                            temas_subtemas: Array.from(new Set([
+                                              ...prev.temas_subtemas,
+                                              tema.nombre_tema,
+                                              ...subtemasDelTema
+                                            ]))
+                                          }));
+                                        } else {
+                                          // Quitar el tema y todos sus subtemas asociados
+                                          const subtemasDelTema = temaSubtemas.map(st => st.subtema_text);
+                                          setNewLista(prev => ({
+                                            ...prev,
+                                            temas_subtemas: prev.temas_subtemas.filter(
+                                              t => t !== tema.nombre_tema && !subtemasDelTema.includes(t)
+                                            )
+                                          }));
+                                        }
+                                      }}
+                                      className="mr-2"
+                                    />
                                       <span className="font-medium text-gray-800 text-sm break-words flex-1 min-w-0">{tema.nombre_tema}</span>
                                     </label>
                                     <div className="flex flex-wrap gap-1 ml-5">

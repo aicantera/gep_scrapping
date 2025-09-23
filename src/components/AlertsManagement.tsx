@@ -515,14 +515,21 @@ const AlertsManagement: React.FC = () => {
     const alertasParaExcel = alertasFiltradas.map(alerta => ({
       'ID': alerta.id_alerta,
       'Fecha de Creación': new Date(alerta.created_at).toLocaleDateString('es-MX'),
-      'Cliente': alerta.nombre_cliente || 'N/A',
+      'Titulo': alerta.documento_senado?.iniciativa_texto || 'N/A',
+      'Link': alerta.documento_senado?.link_documento || 'N/A',
       'Fuente': alerta.fuente,
-      'Documento': alerta.documento_senado?.sinopsis || alerta.documento_senado?.iniciativa_texto || 'Sin documento',
       'Temas': (alerta.temas || []).join(', '),
-      'Subtemas': (alerta.sub_tema || []).join(', '),
-      'Estado': alerta.estado,
-      'Enviado por Correo': alerta.enviado_correo ? 'Sí' : 'No',
-      'Fecha de Envío': alerta.datetime_enviado_correo ? new Date(alerta.datetime_enviado_correo).toLocaleDateString('es-MX') : 'N/A'
+      'Resumen': alerta.documento_senado?.resumen || 'N/A',
+      'Análisis': alerta.documento_senado?.analisis || 'N/A',
+      'Proponente':
+        alerta.documento_senado?.tipo === "INICIATIVA" ||
+        alerta.documento_senado?.tipo === "PUNTO DE ACUERDO"
+          ? alerta.documento_senado?.Proponente
+          : alerta.fuente === "Diario Oficial de la Federación" ||
+            alerta.fuente === "CONAMER"
+          ? alerta.documento_senado?.dependencia
+          : "N/A",
+      'Tipo': alerta.documento_senado?.tipo || 'N/A',
     }))
     
     const worksheet = XLSX.utils.json_to_sheet(alertasParaExcel)

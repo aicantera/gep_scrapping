@@ -557,7 +557,7 @@ const BotsExecution = () => {
           >
             <option value="todas">Todas</option>
             <option value="Cámara de Diputados">Cámara de Diputados</option>
-            <option value="Senado">Senado</option>
+            <option value="Cámara de Senadores">Cámara de Senadores</option>
             <option value="Diario Oficial de la Federación">DOF</option>
             <option value="CONAMER">CONAMER</option>
           </select>

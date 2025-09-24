@@ -444,7 +444,8 @@ const AlertsManagement: React.FC = () => {
         const searchNormalized = normalizeText(searchTerm)
         return (
           normalizeText(alerta.nombre_cliente || '').includes(searchNormalized) ||
-          normalizeText(alerta.documento_senado?.sinopsis || '').includes(searchNormalized) ||
+          normalizeText(alerta.documento_senado?.titulo || '').includes(searchNormalized) ||
+          normalizeText(alerta.documento_senado?.Proponente || '').includes(searchNormalized) ||
           (alerta.temas_subtemas || []).some(tema => normalizeText(tema).includes(searchNormalized))
         )
       }

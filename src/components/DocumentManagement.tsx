@@ -97,29 +97,25 @@ const DocumentManagement: React.FC = () => {
     setError(null)
 
     try {
-      const andFilters: string[] = []
+      // Construir los filtros como parámetros
+      let params: string[] = []
 
       // Fuente
       if (filters.fuente) {
-        andFilters.push(`fuente.ilike.%${filters.fuente}%`)
+        params.push(`fuente=ilike.%${filters.fuente}%`)
       }
 
       // Fechas
       if (filters.fechaDesde) {
-        andFilters.push(`created_at.gte.${filters.fechaDesde}T00:00:00`)
+        params.push(`created_at=gte.${filters.fechaDesde}T00:00:00`)
       }
       if (filters.fechaHasta) {
-        andFilters.push(`created_at.lte.${filters.fechaHasta}T23:59:59`)
+        params.push(`created_at=lte.${filters.fechaHasta}T23:59:59`)
       }
 
-      // Búsqueda en varios campos con variantes
-      let orSearch = ''
+      // Búsqueda en varios campos
       if (filters.busqueda && filters.busqueda.trim()) {
-        const searchTerm = filters.busqueda.trim()
-        // Quitar acentos
-        const sinAcentos = searchTerm.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        // Variantes de capitalización
-        const variantes = new Set([searchTerm, sinAcentos, searchTerm.toLowerCase(), searchTerm.toUpperCase()])
+        const searchTerm = filters.busqueda.trim().toLowerCase()
         const fields = [
           'iniciativa_texto',
           'sinopsis',
@@ -128,37 +124,24 @@ const DocumentManagement: React.FC = () => {
           'leyes',
           'objeto',
           'resumen',
-          'Proponente'
+          'Proponente',
+          'dependencia',
         ]
-        // Genera todas las combinaciones campo/variante
-        const conditions = Array.from(variantes).flatMap(term =>
-          fields.map(f => `${f}.ilike.%${term}%`)
-        )
-        orSearch = `or(${conditions.join(',')})`
-      }
-
-      // Construir el filtro AND
-      let andQuery = andFilters.join(',')
-      if (andQuery && orSearch) {
-        andQuery = `and=(${andQuery},${orSearch})`
-      } else if (andQuery) {
-        andQuery = `and=(${andQuery})`
-      } else if (orSearch) {
-        andQuery = orSearch
+        const orConditions = fields.map(f => `${f}.ilike.*${searchTerm}*`).join(',')
+        params.push(`or=(${orConditions})`)
       }
 
       // Paginación
       const from = (currentPage - 1) * documentsPerPage
-      // const to = from + documentsPerPage - 1
 
       // URL final
       let url = `${supabaseUrl}/rest/v1/senado?select=*&order=created_at.desc`
-      if (andQuery) url += `&${andQuery}`
+      if (params.length > 0) url += `&${params.join('&')}`
       url += `&limit=${documentsPerPage}&offset=${from}`
 
       // Para contar total de documentos (sin paginación)
       let countUrl = `${supabaseUrl}/rest/v1/senado?select=id_senado_doc`
-      if (andQuery) countUrl += `&${andQuery}`
+      if (params.length > 0) countUrl += `&${params.join('&')}`
 
       // Fetch documentos paginados
       const response = await fetch(url, {

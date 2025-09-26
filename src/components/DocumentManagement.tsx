@@ -60,6 +60,7 @@ interface Filters {
 
 const DocumentManagement: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([])
+  const [documentIds, setDocumentIds] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<Filters>({
@@ -75,6 +76,7 @@ const DocumentManagement: React.FC = () => {
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -177,16 +179,48 @@ const DocumentManagement: React.FC = () => {
           if (match) total = parseInt(match[1], 10)
         }
       }
-
+      await fetchAllDocumentIds()
       setDocuments(data || [])
       setTotalDocuments(total)
       setTotalPages(Math.ceil(total / documentsPerPage))
 
     } catch (error) {
-      console.log("🚀 ~ fetchDocuments ~ error:", error)
+      console.error("fetchDocuments:", error)
       setError('No se pudieron cargar los documentos. Intenta de nuevo más tarde.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAllDocumentIds = async () => {
+    try {
+      let params: string[] = []
+      
+      if (filters.fuente) params.push(`fuente=ilike.%${filters.fuente}%`)
+      if (filters.fechaDesde) params.push(`created_at=gte.${filters.fechaDesde}T00:00:00`)
+      if (filters.fechaHasta) params.push(`created_at=lte.${filters.fechaHasta}T23:59:59`)
+      
+      if (filters.busqueda?.trim()) {
+        const searchTerm = filters.busqueda.trim().toLowerCase()
+        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'resumen', 'Proponente', 'dependencia']
+        params.push(`or=(${fields.map(f => `${f}.ilike.*${searchTerm}*`).join(',')})`)
+      }
+
+      let url = `${supabaseUrl}/rest/v1/senado?select=id_senado_doc`
+      if (params.length > 0) url += `&${params.join('&')}`
+
+      const response = await fetch(url, {
+        headers: {
+          'apikey': supabaseServiceKey,
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data: { id_senado_doc: number }[] = await response.json()
+      setDocumentIds(data.map(doc => doc.id_senado_doc))
+    } catch (error) {
+      console.error("Error:", error)
     }
   }
 
@@ -370,6 +404,51 @@ const DocumentManagement: React.FC = () => {
     if (!text) return 'Sin información'
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
   }
+  
+  const handleDownloadReport = async () => {
+    setIsDownloadingReport(true)
+    
+    try {    
+      const baseUrl = 'https://dbd.gepdigital.ai/webhook/docs_compilados'
+      const params = new URLSearchParams()
+      params.append('id_doc', documentIds.slice(0, 100).join(','))      
+      if (filters.fuente) {
+        const sourceMapping = {
+          'Diario Oficial de la Federación': 'DOF',
+          'Cámara de Diputados': 'Cámara de Diputados', 
+          'Cámara de Senadores': 'Cámara de Senadores',
+          'CONAMER': 'CONAMER'
+        };
+        params.append('fuentes', sourceMapping[filters.fuente] || filters.fuente)
+      }
+      
+      if (filters.fechaDesde) {
+        const [year, month, day] = filters.fechaDesde.split('-')
+        params.append('fecha_desde', `${day}-${month}-${year}`)
+      }
+      
+      if (filters.fechaHasta) {
+        const [year, month, day] = filters.fechaHasta.split('-')
+        params.append('fecha_hasta', `${day}-${month}-${year}`)
+      }
+      
+      const finalUrl = `${baseUrl}?${params.toString()}`      
+      const response = await fetch(finalUrl)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `Reporte documentos de ${filters.fuente}.pdf`
+      link.click()
+      URL.revokeObjectURL(url)
+      
+    } catch (error) {
+      console.error('Error al generar reporte:', error)
+      alert('Error al generar el reporte PDF. Intenta nuevamente.')
+    } finally {
+      setIsDownloadingReport(false)
+    }
+  }
 
   useEffect(() => {
     if (successMessage) {
@@ -484,16 +563,34 @@ const DocumentManagement: React.FC = () => {
               </span>
             )}
           </div>
-          
-          {(filters.fuente || filters.fechaDesde || filters.fechaHasta || filters.busqueda) && (
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300 text-sm flex items-center space-x-2"
+          <div className='flex items-center gap-2'>
+          <button
+              onClick={handleDownloadReport}
+              disabled={isDownloadingReport || documents.length === 0 || documentIds.length > 100}
+              className="px-4 py-2 bg-[#d4133d] text-white rounded-lg hover:bg-[#d4133d]/80 transition-colors border border-[#d4133d] text-sm text-center disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <X className="w-4 h-4" />
-              <span>Limpiar filtros</span>
+              {isDownloadingReport ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Descargar reporte PDF
+                </>
+              )}
             </button>
-          )}
+            {(filters.fuente || filters.fechaDesde || filters.fechaHasta || filters.busqueda) && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300 text-sm flex items-center space-x-2"
+              >
+                <X className="w-4 h-4" />
+                <span>Limpiar filtros</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

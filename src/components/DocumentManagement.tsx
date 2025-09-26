@@ -413,7 +413,7 @@ const DocumentManagement: React.FC = () => {
       const params = new URLSearchParams()
       params.append('id_doc', documentIds.slice(0, 100).join(','))      
       if (filters.fuente) {
-        const sourceMapping = {
+        const sourceMapping: { [key: string]: string } = {
           'Diario Oficial de la Federación': 'DOF',
           'Cámara de Diputados': 'Cámara de Diputados', 
           'Cámara de Senadores': 'Cámara de Senadores',

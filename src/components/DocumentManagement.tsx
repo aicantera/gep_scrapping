@@ -75,6 +75,7 @@ const DocumentManagement: React.FC = () => {
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -370,6 +371,54 @@ const DocumentManagement: React.FC = () => {
     if (!text) return 'Sin información'
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
   }
+  
+  const handleDownloadReport = async () => {
+    setIsDownloadingReport(true)
+    
+    try {
+      const documentIds = documents.map(doc => doc.id_senado_doc).join(',')
+      
+      const baseUrl = 'https://dbd.gepdigital.ai/webhook/docs_compilados'
+      const params = new URLSearchParams()
+      params.append('id_doc', documentIds)
+      
+      if (filters.fuente) {
+        const sourceMapping = {
+          'Diario Oficial de la Federación': 'DOF',
+          'Cámara de Diputados': 'Cámara de Diputados', 
+          'Cámara de Senadores': 'Cámara de Senadores',
+          'CONAMER': 'CONAMER'
+        };
+        params.append('fuentes', sourceMapping[filters.fuente] || filters.fuente)
+      }
+      
+      if (filters.fechaDesde) {
+        const [year, month, day] = filters.fechaDesde.split('-')
+        params.append('fecha_desde', `${day}-${month}-${year}`)
+      }
+      
+      if (filters.fechaHasta) {
+        const [year, month, day] = filters.fechaHasta.split('-')
+        params.append('fecha_hasta', `${day}-${month}-${year}`)
+      }
+      
+      const finalUrl = `${baseUrl}?${params.toString()}`      
+      const response = await fetch(finalUrl)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `Reporte documentos de ${filters.fuente}.pdf`
+      link.click()
+      URL.revokeObjectURL(url)
+      
+    } catch (error) {
+      console.error('Error al generar reporte:', error)
+      alert('Error al generar el reporte PDF. Intenta nuevamente.')
+    } finally {
+      setIsDownloadingReport(false)
+    }
+  }
 
   useEffect(() => {
     if (successMessage) {
@@ -484,16 +533,34 @@ const DocumentManagement: React.FC = () => {
               </span>
             )}
           </div>
-          
-          {(filters.fuente || filters.fechaDesde || filters.fechaHasta || filters.busqueda) && (
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300 text-sm flex items-center space-x-2"
+          <div className='flex items-center gap-2'>
+          <button
+              onClick={handleDownloadReport}
+              disabled={isDownloadingReport || documents.length === 0}
+              className="px-4 py-2 bg-[#d4133d] text-white rounded-lg hover:bg-[#d4133d]/80 transition-colors border border-[#d4133d] text-sm text-center disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <X className="w-4 h-4" />
-              <span>Limpiar filtros</span>
+              {isDownloadingReport ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Descargar reporte PDF
+                </>
+              )}
             </button>
-          )}
+            {(filters.fuente || filters.fechaDesde || filters.fechaHasta || filters.busqueda) && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300 text-sm flex items-center space-x-2"
+              >
+                <X className="w-4 h-4" />
+                <span>Limpiar filtros</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

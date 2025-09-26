@@ -60,6 +60,7 @@ interface Filters {
 
 const DocumentManagement: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([])
+  const [documentIds, setDocumentIds] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<Filters>({
@@ -178,16 +179,48 @@ const DocumentManagement: React.FC = () => {
           if (match) total = parseInt(match[1], 10)
         }
       }
-
+      await fetchAllDocumentIds()
       setDocuments(data || [])
       setTotalDocuments(total)
       setTotalPages(Math.ceil(total / documentsPerPage))
 
     } catch (error) {
-      console.log("🚀 ~ fetchDocuments ~ error:", error)
+      console.error("fetchDocuments:", error)
       setError('No se pudieron cargar los documentos. Intenta de nuevo más tarde.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAllDocumentIds = async () => {
+    try {
+      let params: string[] = []
+      
+      if (filters.fuente) params.push(`fuente=ilike.%${filters.fuente}%`)
+      if (filters.fechaDesde) params.push(`created_at=gte.${filters.fechaDesde}T00:00:00`)
+      if (filters.fechaHasta) params.push(`created_at=lte.${filters.fechaHasta}T23:59:59`)
+      
+      if (filters.busqueda?.trim()) {
+        const searchTerm = filters.busqueda.trim().toLowerCase()
+        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'resumen', 'Proponente', 'dependencia']
+        params.push(`or=(${fields.map(f => `${f}.ilike.*${searchTerm}*`).join(',')})`)
+      }
+
+      let url = `${supabaseUrl}/rest/v1/senado?select=id_senado_doc`
+      if (params.length > 0) url += `&${params.join('&')}`
+
+      const response = await fetch(url, {
+        headers: {
+          'apikey': supabaseServiceKey,
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data: { id_senado_doc: number }[] = await response.json()
+      setDocumentIds(data.map(doc => doc.id_senado_doc))
+    } catch (error) {
+      console.error("Error:", error)
     }
   }
 
@@ -375,13 +408,10 @@ const DocumentManagement: React.FC = () => {
   const handleDownloadReport = async () => {
     setIsDownloadingReport(true)
     
-    try {
-      const documentIds = documents.map(doc => doc.id_senado_doc).join(',')
-      
+    try {    
       const baseUrl = 'https://dbd.gepdigital.ai/webhook/docs_compilados'
       const params = new URLSearchParams()
-      params.append('id_doc', documentIds)
-      
+      params.append('id_doc', documentIds.slice(0, 100).join(','))      
       if (filters.fuente) {
         const sourceMapping = {
           'Diario Oficial de la Federación': 'DOF',
@@ -536,7 +566,7 @@ const DocumentManagement: React.FC = () => {
           <div className='flex items-center gap-2'>
           <button
               onClick={handleDownloadReport}
-              disabled={isDownloadingReport || documents.length === 0}
+              disabled={isDownloadingReport || documents.length === 0 || documentIds.length > 100}
               className="px-4 py-2 bg-[#d4133d] text-white rounded-lg hover:bg-[#d4133d]/80 transition-colors border border-[#d4133d] text-sm text-center disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isDownloadingReport ? (

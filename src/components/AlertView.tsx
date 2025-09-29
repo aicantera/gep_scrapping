@@ -555,7 +555,7 @@ const AlertView: React.FC = () => {
                 {/* Enlaces adicionales si existen */}
                 {alert.senado.link_iniciativa && (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Enlace Iniciativa</label>
+                    <label className="block text-sm font-medium text-gray-700">Enlace</label>
                     <div className="mt-1">
                       <a 
                         href={alert.senado.link_iniciativa}

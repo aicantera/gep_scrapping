@@ -564,7 +564,7 @@ const AlertsManagement: React.FC = () => {
     setFilterFecha({ desde: '', hasta: '' })
     setCurrentPage(1)
   }
-console.log(alertaSeleccionada)
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -658,6 +658,7 @@ console.log(alertaSeleccionada)
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <select
+                title='Filtro por fuente'
                 value={filterFuente}
                 onChange={(e) => setFilterFuente(e.target.value as TipoFuente)}
                 className="form-input pl-10 w-full"
@@ -845,13 +846,13 @@ console.log(alertaSeleccionada)
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col space-y-1">
-                          <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                          <span className={`inline-flex px-2 py-1 text-xs rounded-full capitalize ${
                             alerta.estado === 'pendientes' ? 'bg-yellow-100 text-yellow-800' :
                             alerta.estado === 'enviadas' ? 'bg-green-100 text-green-800' :
                             alerta.estado === 'rechazadas' ? 'bg-red-100 text-red-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {alerta.estado || 'Sin estado'}
+                            {alerta?.estado?.slice(0, alerta?.estado?.length - 1) || 'Sin estado'}
                           </span>
                           {alerta.enviado_correo && (
                             <span className="text-xs text-green-600">
@@ -910,11 +911,12 @@ console.log(alertaSeleccionada)
             {totalPaginas > 1 && (
               <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  Mostrando {((currentPage - 1) * alertasPorPagina) + 1} a {Math.min(currentPage * alertasPorPagina, alertas?.length)} de {alertas?.length} resultados
+                  Mostrando {((currentPage - 1) * alertasPorPagina) + 1} a {Math.min(currentPage * alertasPorPagina, alertasFiltradas?.length)} de {alertasFiltradas?.length} resultados
                 </div>
                 <div className="flex items-center space-x-2">
                   {/* Botón Anterior */}
                   <button
+                    title='Regresar'
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                     className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1022,6 +1024,7 @@ console.log(alertaSeleccionada)
 
                   {/* Botón Siguiente */}
                   <button
+                    title='Siguiente'
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPaginas))}
                     disabled={currentPage === totalPaginas}
                     className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"

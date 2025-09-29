@@ -40,7 +40,7 @@ const adminRoutes = [
   },
   {
     icon: <Settings size={20} />,
-    label: "Gestión de temas",
+    label: "Gestión de Temas",
     href: "/gestion-temas",
   },
   {

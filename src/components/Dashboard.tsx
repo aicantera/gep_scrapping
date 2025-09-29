@@ -228,9 +228,6 @@ const BotsExecution: React.FC = () => {
         executionId = insertData?.id
       }
 
-      console.log(`🤖 Ejecutando bot ${bot.name}...`)
-      console.log(`🔗 URL: ${bot.webhookUrl}`)
-
       // 1) Intento estándar con JSON (si el servidor tiene CORS correcto, funcionará)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 20000)
@@ -275,7 +272,7 @@ const BotsExecution: React.FC = () => {
             .eq('id', executionId)
         }
 
-        setSuccessMessage(`✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`)
+        setSuccessMessage(`Ejecución iniciada exitosamente.`)
         loadBotExecutions() // Recargar lista
         return
       }
@@ -296,8 +293,7 @@ const BotsExecution: React.FC = () => {
             .eq('id', executionId)
         }
         
-        setSuccessMessage(`✅ Bot ${bot.name} ejecutado exitosamente. En 30 minutos los datos estarán actualizados.`)
-        console.log(`✅ Bot ${bot.name} ejecutado correctamente`)
+        setSuccessMessage(`✅ Ejecución iniciada exitosamente.`)
       } else {
         console.warn('⚠️ Respuesta no exitosa. Aplicando fallback no-cors...')
         await fetch(`${bot.webhookUrl}?ts=${Date.now()}`, {
@@ -322,7 +318,7 @@ const BotsExecution: React.FC = () => {
             .eq('id', executionId)
         }
 
-        setSuccessMessage(`✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`)
+        setSuccessMessage(`✅ Ejecución iniciada exitosamente.`)
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
@@ -462,7 +458,7 @@ const BotsExecution: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-4 flex flex-wrap gap-4 items-end">
           <div>
             <label className="block text-xs font-medium text-[#1F2937] mb-1">Fuente</label>
-            <select className="border rounded px-2 py-1 text-[#1F2937]" value={filters.fuente} onChange={e => setFilters(f => ({ ...f, fuente: e.target.value }))}>
+            <select title='Fuente' className="border rounded px-2 py-1 text-[#1F2937]" value={filters.fuente} onChange={e => setFilters(f => ({ ...f, fuente: e.target.value }))}>
               <option value="todas">Todas</option>
               <option value="Cámara de Diputados">Cámara de Diputados</option>
               <option value="Senado">Senado</option>
@@ -471,7 +467,7 @@ const BotsExecution: React.FC = () => {
           </div>
           <div>
             <label className="block text-xs font-medium text-[#1F2937] mb-1">Tipo</label>
-            <select className="border rounded px-2 py-1 text-[#1F2937]" value={filters.tipo} onChange={e => setFilters(f => ({ ...f, tipo: e.target.value }))}>
+            <select title='Tipo' className="border rounded px-2 py-1 text-[#1F2937]" value={filters.tipo} onChange={e => setFilters(f => ({ ...f, tipo: e.target.value }))}>
               <option value="todos">Todos</option>
               <option value="Manual">Manual</option>
               <option value="Automática">Automática</option>
@@ -479,7 +475,7 @@ const BotsExecution: React.FC = () => {
           </div>
           <div>
             <label className="block text-xs font-medium text-[#1F2937] mb-1">Estatus</label>
-            <select className="border rounded px-2 py-1 text-[#1F2937]" value={filters.estatus} onChange={e => setFilters(f => ({ ...f, estatus: e.target.value }))}>
+            <select title='Estatus' className="border rounded px-2 py-1 text-[#1F2937]" value={filters.estatus} onChange={e => setFilters(f => ({ ...f, estatus: e.target.value }))}>
               <option value="todos">Todos</option>
               <option value="éxito">Éxito</option>
               <option value="falla">Falla</option>
@@ -488,11 +484,11 @@ const BotsExecution: React.FC = () => {
           </div>
           <div>
             <label className="block text-xs font-medium text-[#1F2937] mb-1">Desde</label>
-            <input type="date" className="border rounded px-2 py-1 text-[#1F2937]" value={filters.desde} onChange={e => setFilters(f => ({ ...f, desde: e.target.value }))} />
+            <input type="date" title='Desde' className="border rounded px-2 py-1 text-[#1F2937]" value={filters.desde} onChange={e => setFilters(f => ({ ...f, desde: e.target.value }))} />
           </div>
           <div>
             <label className="block text-xs font-medium text-[#1F2937] mb-1">Hasta</label>
-            <input type="date" className="border rounded px-2 py-1 text-[#1F2937]" value={filters.hasta} onChange={e => setFilters(f => ({ ...f, hasta: e.target.value }))} />
+            <input type="date" title='Hasta' className="border rounded px-2 py-1 text-[#1F2937]" value={filters.hasta} onChange={e => setFilters(f => ({ ...f, hasta: e.target.value }))} />
           </div>
         </div>
 
@@ -691,7 +687,6 @@ const Dashboard: React.FC = () => {
     setError(null)
     
     try {
-      console.log('📊 Cargando datos del dashboard del día actual...')
       
       // Calcular fecha del día actual
       const today = new Date()
@@ -881,11 +876,6 @@ const Dashboard: React.FC = () => {
           documents: fuenteCount['dof'] || 0
         }
       ]
-      
-      console.log('✅ KPIs calculados:', realKpiData)
-      console.log('✅ Datos del gráfico:', realChartData)
-      console.log('✅ Total de documentos en KPIs:', realKpiData.documentsToday)
-      console.log('✅ Total de documentos en gráficos:', realChartData.reduce((sum, item) => sum + item.documents, 0))
       
       setKpiData(realKpiData)
       setChartData(realChartData)
@@ -1436,6 +1426,7 @@ const Dashboard: React.FC = () => {
           {/* Botón de cerrar para móvil */}
           <button
             onClick={() => setMobileMenuOpen(false)}
+            title='Cerrar menú'
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <X size={20} />
@@ -1536,6 +1527,7 @@ const Dashboard: React.FC = () => {
               {/* Botón hamburger para móvil */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
+                title='Menú'
                 className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Menu size={20} />

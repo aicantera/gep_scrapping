@@ -582,8 +582,13 @@ const ClientsManagement: React.FC = () => {
       const matchesListaCorreos = lista.correos?.some(correo => 
         correo.correo.toLowerCase().includes(searchLower)
       ) || false
+
+      //Buscar en nombre de los correos
+      const matchesListaCorreosNombre = lista.correos?.some(correo => 
+        correo.nombre.toLowerCase().includes(searchLower)
+      ) || false
       
-      return matchesListaName || matchesListaTemas || matchesListaCorreos
+      return matchesListaName || matchesListaTemas || matchesListaCorreos || matchesListaCorreosNombre
     }) || false
     
     return matchesBasicInfo || matchesTemasSuscritos || matchesListasDistribucion
@@ -1093,6 +1098,7 @@ const ClientsManagement: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   {/* Botón Anterior */}
                   <button
+                    title='Anterior'
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                     className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1200,6 +1206,7 @@ const ClientsManagement: React.FC = () => {
     
                   {/* Botón Siguiente */}
                   <button
+                    title='Siguiente'
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                     className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1226,6 +1233,7 @@ const ClientsManagement: React.FC = () => {
                 {modalType === 'delete' && 'Confirmar Eliminación'}
               </h3>
               <button
+                title='Cerrar'
                 onClick={closeModal}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -1358,6 +1366,7 @@ const ClientsManagement: React.FC = () => {
                             Estado *
                           </label>
                           <select
+                            title='Estado'
                             value={formData.estado}
                             onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value }))}
                             disabled={modalType === 'view'}
@@ -1507,6 +1516,7 @@ const ClientsManagement: React.FC = () => {
                                 </div>
                                 {modalType !== 'view' && (
                                   <button
+                                    title='Eliminar'
                                     type="button"
                                     onClick={() => removeListaDistribucion(lista.id)}
                                     className="text-red-600 hover:text-red-800"
@@ -1531,6 +1541,7 @@ const ClientsManagement: React.FC = () => {
                                             <span key={temaIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-slate-800">
                                               {tema}
                                               <button
+                                                title='Eliminar'
                                                 type="button"
                                                 onClick={() => removeTemaSubtemaFromLista(lista.id, tema)}
                                                 className="ml-1 text-slate-600 hover:text-slate-800"
@@ -1687,6 +1698,7 @@ const ClientsManagement: React.FC = () => {
                                           </div>
                                           {modalType !== 'view' && lista.correos.length > 1 && (
                                             <button
+                                              title='Eliminar'
                                               type="button"
                                               onClick={() => removeCorreoFromLista(lista.id, correoIndex)}
                                               className="text-red-600 hover:text-red-800"
@@ -1765,6 +1777,7 @@ const ClientsManagement: React.FC = () => {
                                   />
                                   {newLista.correos.length > 1 && (
                                     <button
+                                      title='Eliminar'
                                       type="button"
                                       className="text-red-600 hover:text-red-800"
                                       onClick={() => {

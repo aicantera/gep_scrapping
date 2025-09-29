@@ -428,15 +428,8 @@ const DocumentManagement: React.FC = () => {
         params.append('fecha_hasta', `${day}-${month}-${year}`)
       }
       
-      const finalUrl = `${baseUrl}?${params.toString()}`      
-      const response = await fetch(finalUrl)
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `Reporte documentos de ${filters.fuente}.pdf`
-      link.click()
-      URL.revokeObjectURL(url)
+      const finalUrl = `${baseUrl}?${params.toString()}`
+      window.open(finalUrl, '_blank')
       
     } catch (error) {
       console.error('Error al generar reporte:', error)
@@ -561,6 +554,8 @@ const DocumentManagement: React.FC = () => {
           </div>
           <div className='flex items-center gap-2'>
           <button
+              title='Descargar reporte PDF'
+              type='button'
               onClick={handleDownloadReport}
               disabled={isDownloadingReport || documents.length === 0 || documentIds.length > 100}
               className="px-4 py-2 bg-[#d4133d] text-white rounded-lg hover:bg-[#d4133d]/80 transition-colors border border-[#d4133d] text-sm text-center disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"

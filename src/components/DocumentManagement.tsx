@@ -126,6 +126,7 @@ const DocumentManagement: React.FC = () => {
           'leyes',
           'objeto',
           'resumen',
+          'analisis',
           'Proponente',
           'dependencia',
         ]
@@ -202,7 +203,7 @@ const DocumentManagement: React.FC = () => {
       
       if (filters.busqueda?.trim()) {
         const searchTerm = filters.busqueda.trim().toLowerCase()
-        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'resumen', 'Proponente', 'dependencia']
+        const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'resumen', 'analisis', 'Proponente', 'dependencia']
         params.push(`or=(${fields.map(f => `${f}.ilike.*${searchTerm}*`).join(',')})`)
       }
 

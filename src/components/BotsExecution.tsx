@@ -280,9 +280,9 @@ const BotsExecution = () => {
         }
 
         setSuccessMessage(
-          `✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`
+          `Ejecución iniciada exitosamente.`
         );
-        toast.success(`Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`);
+        toast.success(`Ejecución iniciada exitosamente.`);
         loadBotExecutions(); // Recargar lista
         return;
       }
@@ -304,7 +304,7 @@ const BotsExecution = () => {
         }
 
         setSuccessMessage(
-          `✅ Bot ${bot.name} ejecutado exitosamente. En 30 minutos los datos estarán actualizados.`
+          `Ejecución iniciada exitosamente.`
         );
         console.log(`✅ Bot ${bot.name} ejecutado correctamente`);
       } else {
@@ -332,7 +332,7 @@ const BotsExecution = () => {
         }
 
         setSuccessMessage(
-          `✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`
+          `Ejecución iniciada exitosamente.`
         );
       }
     } catch (error: unknown) {
@@ -549,6 +549,7 @@ const BotsExecution = () => {
             Fuente
           </label>
           <select
+            title="Fuente"
             className="border rounded px-2 py-1 text-[#1F2937]"
             value={filters.fuente}
             onChange={(e) =>
@@ -567,6 +568,7 @@ const BotsExecution = () => {
             Tipo
           </label>
           <select
+            title="Tipo"
             className="border rounded px-2 py-1 text-[#1F2937]"
             value={filters.tipo}
             onChange={(e) =>
@@ -583,6 +585,7 @@ const BotsExecution = () => {
             Estatus
           </label>
           <select
+            title="Estatus"
             className="border rounded px-2 py-1 text-[#1F2937]"
             value={filters.estatus}
             onChange={(e) =>
@@ -600,6 +603,7 @@ const BotsExecution = () => {
             Desde
           </label>
           <input
+            title="Desde"
             type="date"
             className="border rounded px-2 py-1 text-[#1F2937]"
             value={filters.desde}
@@ -613,6 +617,7 @@ const BotsExecution = () => {
             Hasta
           </label>
           <input
+            title="Hasta"
             type="date"
             className="border rounded px-2 py-1 text-[#1F2937]"
             value={filters.hasta}
@@ -715,6 +720,7 @@ const BotsExecution = () => {
             <div className="flex items-center space-x-2">
               {/* Botón Anterior */}
               <button
+                title="Anterior"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -822,6 +828,7 @@ const BotsExecution = () => {
 
               {/* Botón Siguiente */}
               <button
+                title="Siguiente"
                 onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={page === totalPages}
                 className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"

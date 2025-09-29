@@ -228,9 +228,6 @@ const BotsExecution: React.FC = () => {
         executionId = insertData?.id
       }
 
-      console.log(`🤖 Ejecutando bot ${bot.name}...`)
-      console.log(`🔗 URL: ${bot.webhookUrl}`)
-
       // 1) Intento estándar con JSON (si el servidor tiene CORS correcto, funcionará)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 20000)
@@ -275,7 +272,7 @@ const BotsExecution: React.FC = () => {
             .eq('id', executionId)
         }
 
-        setSuccessMessage(`✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`)
+        setSuccessMessage(`Ejecución iniciada exitosamente.`)
         loadBotExecutions() // Recargar lista
         return
       }
@@ -296,8 +293,7 @@ const BotsExecution: React.FC = () => {
             .eq('id', executionId)
         }
         
-        setSuccessMessage(`✅ Bot ${bot.name} ejecutado exitosamente. En 30 minutos los datos estarán actualizados.`)
-        console.log(`✅ Bot ${bot.name} ejecutado correctamente`)
+        setSuccessMessage(`✅ Ejecución iniciada exitosamente.`)
       } else {
         console.warn('⚠️ Respuesta no exitosa. Aplicando fallback no-cors...')
         await fetch(`${bot.webhookUrl}?ts=${Date.now()}`, {
@@ -322,7 +318,7 @@ const BotsExecution: React.FC = () => {
             .eq('id', executionId)
         }
 
-        setSuccessMessage(`✅ Bot ${bot.name} ejecutado. En 30 minutos los datos estarán actualizados.`)
+        setSuccessMessage(`✅ Ejecución iniciada exitosamente.`)
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
@@ -691,7 +687,6 @@ const Dashboard: React.FC = () => {
     setError(null)
     
     try {
-      console.log('📊 Cargando datos del dashboard del día actual...')
       
       // Calcular fecha del día actual
       const today = new Date()
@@ -881,11 +876,6 @@ const Dashboard: React.FC = () => {
           documents: fuenteCount['dof'] || 0
         }
       ]
-      
-      console.log('✅ KPIs calculados:', realKpiData)
-      console.log('✅ Datos del gráfico:', realChartData)
-      console.log('✅ Total de documentos en KPIs:', realKpiData.documentsToday)
-      console.log('✅ Total de documentos en gráficos:', realChartData.reduce((sum, item) => sum + item.documents, 0))
       
       setKpiData(realKpiData)
       setChartData(realChartData)

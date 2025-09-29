@@ -188,25 +188,32 @@ const ThemeManagement: React.FC = () => {
 
     // Función para crear tema
   const createTheme = async () => {
-    if (!themeFormData.nombre_tema.trim()) {
-      setError('El nombre del tema es obligatorio.')
-      return
-    }
-    
-    // Validar subtemas si los hay
-    const validSubthemes = themeFormData.subtemas.filter(st => 
-      st.subtema_text.trim()
-    )
-
-    // Validar que si hay subtemas, todos tengan nombre (Descripción puede ser opcional)
-    if (validSubthemes.length > 0 && validSubthemes.some(st => !st.subtema_text.trim())) {
-      setError('Todos los subtemas deben tener nombre.')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
     try {
+      if (!themeFormData.nombre_tema.trim()) {
+        setError('El nombre del tema es obligatorio.')
+        return
+      }
+      
+      // Validar subtemas si los hay
+      const validSubthemes = themeFormData.subtemas.filter(st => 
+        st.subtema_text.trim()
+      )
+
+      // Validar que si hay subtemas, todos tengan nombre (Descripción puede ser opcional)
+      if (validSubthemes.length > 0 && validSubthemes.some(st => !st.subtema_text.trim())) {
+        setError('Todos los subtemas deben tener nombre.')
+        return
+      }
+
+      // Verificar duplicados
+      const { data } = await supabase.from('temas').select('nombre_tema')
+      if ((data || []).some(t => t.nombre_tema.trim().toLowerCase() === themeFormData.nombre_tema.trim().toLowerCase())) {
+        setError('Ya existe un tema con este nombre.')
+        return
+      }
+
+      setLoading(true)
+      setError(null)
       
       // Preparar datos para inserción (sin ID)
       const themeToCreate: ThemeCreate = {
@@ -329,15 +336,24 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
 
   // Función para actualizar tema
   const updateTheme = async () => {
-    if (!selectedTheme || !themeFormData.nombre_tema.trim()) {
-      setError('El nombre del tema es obligatorio.')
-      return
-    }
-    
-    setLoading(true)
-    setError(null)
-    
     try {
+      if (!selectedTheme || !themeFormData.nombre_tema.trim()) {
+        setError('El nombre del tema es obligatorio.')
+        return
+      }
+
+      // Verificar duplicados (excluyendo el tema actual)
+      const { data } = await supabase.from('temas').select('nombre_tema, id_tema')
+      if ((data || []).some(t => 
+        t.id_tema !== selectedTheme.id_tema && 
+        t.nombre_tema.trim().toLowerCase() === themeFormData.nombre_tema.trim().toLowerCase()
+      )) {
+        setError('Ya existe un tema con este nombre.')
+        return
+      }
+      
+      setLoading(true)
+      setError(null)
       
       // Actualizar tema
       const { error: themeError } = await supabase

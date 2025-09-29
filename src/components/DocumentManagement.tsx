@@ -250,18 +250,14 @@ const DocumentManagement: React.FC = () => {
   }
 
   const clearFilters = () => {
-    setFilters({
+    setFilters((prev) => ({
+      ...prev,
       fuente: '',
       fechaDesde: '',
       fechaHasta: '',
       busqueda: ''
-    })
+    }))
     setCurrentPage(1)
-    
-    // Recargar documentos sin filtros
-    setTimeout(() => {
-      fetchDocuments()
-    }, 100)
   }
 
   const handleDownload = (document: Document) => {

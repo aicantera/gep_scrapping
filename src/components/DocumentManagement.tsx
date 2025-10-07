@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Importar configuración de Supabase
 const supabaseUrl = 'https://masterd.gepdigital.ai'
@@ -59,6 +60,7 @@ interface Filters {
 }
 
 const DocumentManagement: React.FC = () => {
+  const { user } = useAuth()
   const [documents, setDocuments] = useState<Document[]>([])
   const [documentIds, setDocumentIds] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
@@ -408,7 +410,12 @@ const DocumentManagement: React.FC = () => {
     try {    
       const baseUrl = 'https://dbd.gepdigital.ai/webhook/docs_compilados'
       const params = new URLSearchParams()
-      params.append('id_doc', documentIds.slice(0, 100).join(','))      
+      params.append('id_doc', documentIds.slice(0, 100).join(','))
+      
+      if (user?.email) {
+        params.append('usuario', user.email)
+      }
+      
       if (filters.fuente) {
         const sourceMapping: { [key: string]: string } = {
           'Diario Oficial de la Federación': 'DOF',
@@ -657,9 +664,9 @@ const DocumentManagement: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 max-w-xs">
+                          <p className="text-sm font-medium text-gray-900 max-w-xs" title={document.iniciativa_texto || 'SIN TÍTULO'}>
                             {truncateText(document.iniciativa_texto?.toUpperCase() || 'SIN TÍTULO', 80)}
-                          </div>
+                          </p>
                           <div className="text-xs text-gray-500 mt-1">
                             {document.tipo || 'Sin tipo'}
                           </div>

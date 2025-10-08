@@ -664,8 +664,8 @@ const DocumentManagement: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-900 max-w-xs" title={document.iniciativa_texto || 'SIN TÍTULO'}>
-                            {truncateText(document.iniciativa_texto?.toUpperCase() || 'SIN TÍTULO', 80)}
+                          <p className="text-sm font-medium text-gray-900 max-w-xs" title={document.titulo || 'SIN TÍTULO'}>
+                            {truncateText(document.titulo?.toUpperCase() || 'SIN TÍTULO', 80)}
                           </p>
                           <div className="text-xs text-gray-500 mt-1">
                             {document.tipo || 'Sin tipo'}

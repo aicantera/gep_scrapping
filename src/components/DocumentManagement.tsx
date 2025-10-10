@@ -420,7 +420,7 @@ const DocumentManagement: React.FC = () => {
         const sourceMapping: { [key: string]: string } = {
           'Diario Oficial de la Federación': 'DOF',
           'Cámara de Diputados': 'Cámara de Diputados', 
-          'Cámara de Senadores': 'Cámara de Senadores',
+          'Cámara de Senadores': 'Senado de la República',
           'CONAMER': 'CONAMER'
         };
         params.append('fuentes', sourceMapping[filters.fuente] || filters.fuente)

@@ -119,7 +119,7 @@ const DocumentManagement: React.FC = () => {
 
       // Búsqueda en varios campos
       if (filters.busqueda && filters.busqueda.trim()) {
-        const searchTerm = filters.busqueda.trim().toLowerCase()
+        const searchTerm = filters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
         const fields = [
           'iniciativa_texto',
           'sinopsis',
@@ -132,7 +132,8 @@ const DocumentManagement: React.FC = () => {
           'Proponente',
           'dependencia',
         ]
-        const orConditions = fields.map(f => `${f}.ilike.*${searchTerm}*`).join(',')
+        const encodedTerm = encodeURIComponent(searchTerm)
+        const orConditions = fields.map(f => `${f}.ilike.*${encodedTerm}*`).join(',')
         params.push(`or=(${orConditions})`)
       }
 
@@ -204,9 +205,10 @@ const DocumentManagement: React.FC = () => {
       if (filters.fechaHasta) params.push(`created_at=lte.${filters.fechaHasta}T23:59:59`)
       
       if (filters.busqueda?.trim()) {
-        const searchTerm = filters.busqueda.trim().toLowerCase()
+        const searchTerm = filters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
         const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'resumen', 'analisis', 'Proponente', 'dependencia']
-        params.push(`or=(${fields.map(f => `${f}.ilike.*${searchTerm}*`).join(',')})`)
+        const encodedTerm = encodeURIComponent(searchTerm)
+        params.push(`or=(${fields.map(f => `${f}.ilike.*${encodedTerm}*`).join(',')})`)
       }
 
       let url = `${supabaseUrl}/rest/v1/senado?select=id_senado_doc`

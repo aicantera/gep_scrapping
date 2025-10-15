@@ -131,6 +131,7 @@ const DocumentManagement: React.FC = () => {
           'analisis',
           'Proponente',
           'dependencia',
+          'titulo'
         ]
         const encodedTerm = encodeURIComponent(searchTerm)
         const orConditions = fields.map(f => `${f}.ilike.*${encodedTerm}*`).join(',')

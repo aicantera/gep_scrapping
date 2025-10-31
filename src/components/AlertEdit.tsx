@@ -780,11 +780,19 @@ const AlertEdit: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Mensaje Adjunto
                 </label>
-                <textarea
+                {/* <textarea
                   value={mensajeAdjunto}
                   onChange={(e) => setMensajeAdjunto(e.target.value)}
                   className="form-input w-full h-24 resize-none"
                   placeholder="Mensaje adicional para el correo (opcional)"
+                /> */}
+                <DocumentEditor
+                  value={mensajeAdjunto}
+                  onChange={(html) => setMensajeAdjunto(html)}
+                  onImageAdded={handleImageAdded}
+                  width="100%"
+                  height="500px"
+                  placeholder="Edita el contenido del mensaje adjunto aquí..."
                 />
               </div>
             </div>

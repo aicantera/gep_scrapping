@@ -408,8 +408,21 @@ const AlertEdit: React.FC = () => {
 
   const aprobarAlerta = async () => {
     if (!alert || !asuntoCorreo.trim()) return
+
+    const trimmedEmail = newEmail.trim()
+    const hasValidEmailInInput = trimmedEmail && isValidEmail(trimmedEmail) && !editData?.destinatarios?.includes(trimmedEmail)
+
     if (!editData?.destinatarios?.length || editData?.destinatarios?.length === 0) {
-      setEmailError('Por favor agrega al menos un destinatario')
+      if(hasValidEmailInInput) {
+        toast.error('Por favor agrega al menos un destinatario')
+        return
+      }
+
+      if(trimmedEmail && !isValidEmail(trimmedEmail)) {
+        setEmailError('Por favor ingresa un correo electrónico válido')
+      } else {
+        setEmailError('Por favor ingresa al menos un destinatario')
+      }
       return
     }
     

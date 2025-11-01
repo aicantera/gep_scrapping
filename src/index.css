@@ -65,6 +65,12 @@
     @apply bg-background text-foreground;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
+  a {
+    color: var(--tt-gep-brand-color) !important;
+  }
+  a:hover {
+    color: var(--tt-gep-brand-color) !important;
+  }
 }
 
 @layer components {

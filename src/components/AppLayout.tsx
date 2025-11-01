@@ -221,8 +221,8 @@ const AppLayout = () => {
                       transition-all duration-200
                       ${
                         route.href !== currentPathname
-                          ? "hover:bg-gray-100"
-                          : ""
+                          ? "hover:!bg-gray-100"
+                          : "hover:!text-white"
                       }
                       
                       ${
@@ -232,8 +232,8 @@ const AppLayout = () => {
                       }
                       ${
                         route.href === currentPathname
-                          ? "bg-[#D4133D] text-white"
-                          : "text-gray-700"
+                          ? "!bg-[#D4133D] !text-white"
+                          : "!text-gray-700"
                       }
                     `}
                   >

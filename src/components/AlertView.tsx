@@ -578,7 +578,7 @@ const AlertView: React.FC = () => {
                   href={alert.link_pdf_enviado}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-6 py-2 bg-[#D4133D] text-white rounded-lg hover:bg-[#A1A3A5] transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-[#D4133D] !text-white rounded-lg hover:!bg-[#A1A3A5] hover:!text-white transition-colors"
                 >
                   <Download size={16} />
                   Descargar PDF

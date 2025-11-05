@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -81,6 +81,9 @@ const DocumentManagement: React.FC = () => {
   const [isDownloadingReport, setIsDownloadingReport] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const isInitializing = useRef(true)
+  const hasInitialized = useRef(false)
+  const initTimeoutRef = useRef<number | null>(null)
 
   const documentsPerPage = 10
   const sources = [
@@ -96,30 +99,33 @@ const DocumentManagement: React.FC = () => {
     }
   }, [location.state])
 
-  async function fetchDocuments() {
+  async function fetchDocuments(overrideFilters?: Filters, overridePage?: number) {
     setLoading(true)
     setError(null)
 
     try {
+      const activeFilters = overrideFilters || filters
+      const activePage = overridePage !== undefined ? overridePage : currentPage
+
       // Construir los filtros como parámetros
       let params: string[] = []
 
       // Fuente
-      if (filters.fuente) {
-        params.push(`fuente=ilike.%${filters.fuente}%`)
+      if (activeFilters.fuente) {
+        params.push(`fuente=ilike.%${activeFilters.fuente}%`)
       }
 
       // Fechas
-      if (filters.fechaDesde) {
-        params.push(`created_at=gte.${filters.fechaDesde}T00:00:00`)
+      if (activeFilters.fechaDesde) {
+        params.push(`created_at=gte.${activeFilters.fechaDesde}T00:00:00`)
       }
-      if (filters.fechaHasta) {
-        params.push(`created_at=lte.${filters.fechaHasta}T23:59:59`)
+      if (activeFilters.fechaHasta) {
+        params.push(`created_at=lte.${activeFilters.fechaHasta}T23:59:59`)
       }
 
       // Búsqueda en varios campos
-      if (filters.busqueda && filters.busqueda.trim()) {
-        const searchTerm = filters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
+      if (activeFilters.busqueda && activeFilters.busqueda.trim()) {
+        const searchTerm = activeFilters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
         const fields = [
           'iniciativa_texto',
           'sinopsis',
@@ -139,7 +145,7 @@ const DocumentManagement: React.FC = () => {
       }
 
       // Paginación
-      const from = (currentPage - 1) * documentsPerPage
+      const from = (activePage - 1) * documentsPerPage
 
       // URL final
       let url = `${supabaseUrl}/rest/v1/senado?select=*&order=created_at.desc`
@@ -184,7 +190,7 @@ const DocumentManagement: React.FC = () => {
           if (match) total = parseInt(match[1], 10)
         }
       }
-      await fetchAllDocumentIds()
+      await fetchAllDocumentIds(activeFilters)
       setDocuments(data || [])
       setTotalDocuments(total)
       setTotalPages(Math.ceil(total / documentsPerPage))
@@ -197,16 +203,19 @@ const DocumentManagement: React.FC = () => {
     }
   }
 
-  const fetchAllDocumentIds = async () => {
+  const fetchAllDocumentIds = async (overrideFilters?: Filters) => {
     try {
+      // Use override filters if provided, otherwise use state
+      const activeFilters = overrideFilters || filters
+      
       let params: string[] = []
       
-      if (filters.fuente) params.push(`fuente=ilike.%${filters.fuente}%`)
-      if (filters.fechaDesde) params.push(`created_at=gte.${filters.fechaDesde}T00:00:00`)
-      if (filters.fechaHasta) params.push(`created_at=lte.${filters.fechaHasta}T23:59:59`)
+      if (activeFilters.fuente) params.push(`fuente=ilike.%${activeFilters.fuente}%`)
+      if (activeFilters.fechaDesde) params.push(`created_at=gte.${activeFilters.fechaDesde}T00:00:00`)
+      if (activeFilters.fechaHasta) params.push(`created_at=lte.${activeFilters.fechaHasta}T23:59:59`)
       
-      if (filters.busqueda?.trim()) {
-        const searchTerm = filters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
+      if (activeFilters.busqueda?.trim()) {
+        const searchTerm = activeFilters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
         const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'resumen', 'analisis', 'Proponente', 'dependencia']
         const encodedTerm = encodeURIComponent(searchTerm)
         params.push(`or=(${fields.map(f => `${f}.ilike.*${encodedTerm}*`).join(',')})`)
@@ -232,17 +241,55 @@ const DocumentManagement: React.FC = () => {
 
   // Cargar documentos iniciales
   useEffect(() => {
-    fetchDocuments()
+    if (hasInitialized.current) {
+      return
+    }
+
+    hasInitialized.current = true
+    const savedFilters = localStorage.getItem('documentManagementFilters')
+    
+    if (savedFilters) {
+      const parsedFilters = JSON.parse(savedFilters)
+      const newFilters = {
+        fuente: parsedFilters.fuente || '',
+        fechaDesde: parsedFilters.fechaDesde || '',
+        fechaHasta: parsedFilters.fechaHasta || '',
+        busqueda: parsedFilters.busqueda || ''
+      }
+      const newPage = parsedFilters.currentPage || 1
+      
+      setFilters(newFilters)
+      setCurrentPage(newPage)
+      
+      initTimeoutRef.current = window.setTimeout(() => {
+        if (isInitializing.current) {
+          isInitializing.current = false
+          fetchDocuments(newFilters, newPage)
+        }
+        initTimeoutRef.current = null
+      }, 10)
+    } else {
+      isInitializing.current = false
+      fetchDocuments()
+    }
+    return () => {
+    }
   }, [])
 
   // Efecto para cambios en filtros y paginación
   useEffect(() => {
+    if (isInitializing.current) {
+      return
+    }
     // Ejecutar fetchDocuments siempre que cambien estos valores
     fetchDocuments()
   }, [currentPage, filters.fuente, filters.fechaDesde, filters.fechaHasta])
   
   // Efecto separado para la búsqueda con debounce
   useEffect(() => {
+    if (isInitializing.current) {
+      return
+    }
     const searchTimeout = setTimeout(() => {
       fetchDocuments()
     }, 500)
@@ -250,7 +297,17 @@ const DocumentManagement: React.FC = () => {
     return () => clearTimeout(searchTimeout)
   }, [filters.busqueda])
 
+  useEffect(() => {
+    if (isInitializing.current) {
+      return
+    }
+    const updatedFilters = { ...filters, currentPage }
+    localStorage.setItem('documentManagementFilters', JSON.stringify(updatedFilters))
+  }, [currentPage, filters])
+
   const handleFilterChange = (key: keyof Filters, value: string) => {
+    const saveFilters = { ...filters, [key]: value, currentPage: 1 }
+    localStorage.setItem('documentManagementFilters', JSON.stringify(saveFilters))
     setFilters(prev => ({ ...prev, [key]: value }))
     setCurrentPage(1) // Siempre resetear a página 1 cuando cambien los filtros
   }
@@ -264,6 +321,14 @@ const DocumentManagement: React.FC = () => {
       busqueda: ''
     }))
     setCurrentPage(1)
+    const clearedFilters = {
+      fuente: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      busqueda: '',
+      currentPage: 1
+    }
+    localStorage.setItem('documentManagementFilters', JSON.stringify(clearedFilters))
   }
 
   const handleDownload = (document: Document) => {
@@ -469,7 +534,7 @@ const DocumentManagement: React.FC = () => {
         </div>
                   <div className="flex gap-2">
             <button
-              onClick={fetchDocuments}
+              onClick={() => fetchDocuments()}
               className="flex items-center gap-2 px-4 py-2 bg-[#999996] text-white rounded-lg hover:bg-[#A1A3A5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm md:text-base"
               disabled={loading}
             >

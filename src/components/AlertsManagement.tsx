@@ -839,7 +839,7 @@ const AlertsManagement: React.FC = () => {
                         </div>
                         <div className="text-xs text-gray-500">
                           {alerta.documento_senado?.created_at 
-                            ? new Date(alerta.documento_senado.created_at).toLocaleDateString('es-MX')
+                            ? new Date(alerta.documento_senado.created_at).toLocaleDateString('es-MX') + ' ' + new Date(alerta.documento_senado.created_at).toLocaleTimeString('es-MX')
                             : 'Fecha N/A'
                           }
                         </div>

@@ -353,7 +353,7 @@ const DocumentManagement: React.FC = () => {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
-    })
+    }) + ' ' + new Date(dateString).toLocaleTimeString('es-MX')
   }
 
   const handleDeleteConfirm = async () => {

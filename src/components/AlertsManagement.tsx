@@ -515,7 +515,7 @@ const AlertsManagement: React.FC = () => {
   const descargarExcel = () => {
     const alertasParaExcel = alertasFiltradas.map(alerta => ({
       'ID': alerta.id_alerta,
-      'Fecha de Creación': new Date(alerta.created_at).toLocaleDateString('es-MX'),
+      'Fecha de Creación': new Date(alerta.created_at).toLocaleDateString('es-MX') + ' ' + new Date(alerta.created_at).toLocaleTimeString('es-MX'),
       'Cliente': alerta.nombre_cliente || 'N/A',
       'Titulo': alerta.documento_senado?.iniciativa_texto || 'N/A',
       'Link': alerta.documento_senado?.link_documento || 'N/A',
@@ -528,7 +528,7 @@ const AlertsManagement: React.FC = () => {
       'Estado': alerta.estado,
       'Enviado por Correo': alerta.enviado_correo ? 'Sí' : 'No',
       'Fecha de Envío': alerta.datetime_enviado_correo ? 
-        new Date(alerta.datetime_enviado_correo).toLocaleDateString('es-MX') : 
+        new Date(alerta.datetime_enviado_correo).toLocaleDateString('es-MX') + ' ' + new Date(alerta.datetime_enviado_correo).toLocaleTimeString('es-MX') : 
           'N/A',
       'Resumen': alerta.documento_senado?.resumen || 'N/A',
       'Análisis': alerta.documento_senado?.analisis || 'N/A',

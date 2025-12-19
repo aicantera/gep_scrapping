@@ -1012,7 +1012,7 @@ const Dashboard: React.FC = () => {
     documentsToday.forEach(doc => {
       worksheet.addRow([
         doc.id_senado_doc,
-        doc.created_at,
+        new Date(doc.created_at).toLocaleDateString('es-MX') + ' ' + new Date(doc.created_at).toLocaleTimeString('es-MX'),
         doc.sinopsis,
         doc.iniciativa_texto,
         doc.iniciativa_id,

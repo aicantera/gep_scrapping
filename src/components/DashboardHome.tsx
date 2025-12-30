@@ -60,6 +60,9 @@ interface Document {
   tipo: string;
   Proponente: string;
   dependencia: string;
+  id_proponente: string;
+  id_tema: string;
+  id_subtema: string;
 }
 
 const DashboardHome = () => {
@@ -358,9 +361,12 @@ const DashboardHome = () => {
       "Link",
       "Fuente",
       "Temas",
+      "ID Tema",
+      "ID Subtema",
       "Resumen",
       "Análisis",
       "Proponente",
+      "ID Proponente",
       "Tipo",
     ];
     worksheet.addRow(headers);
@@ -382,9 +388,12 @@ const DashboardHome = () => {
         doc.link_iniciativa,
         doc.fuente,
         doc.temas,
+        doc.id_tema,
+        doc.id_subtema,
         doc.resumen,
         doc.analisis,
         proponenteInfo,
+        doc.id_proponente,
         doc.tipo,
       ]);
     });

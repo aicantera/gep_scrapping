@@ -72,6 +72,8 @@ interface Alerta {
   enviado_por?: any;
   emailsCount?: number;
   newEmailsList?: string[];
+  id_tema_gep?: number | null;
+  id_subtema_gep?: number | null;
 }
 
 const AlertsManagement: React.FC = () => {
@@ -218,6 +220,8 @@ const AlertsManagement: React.FC = () => {
           status_alerta,
           temas,
           sub_tema,
+          id_tema_gep,
+          id_subtema_gep,
           fuente,
           estado,
           id_doc_senado,
@@ -343,6 +347,8 @@ const AlertsManagement: React.FC = () => {
           datetime_enviado_correo: alerta.datetime_enviado_correo,
           link_pdf_enviado: alerta.link_pdf_enviado || null,
           tipo_alerta: alerta.tipo_alerta || null,
+          id_tema_gep: alerta.id_tema_gep || null,
+          id_subtema_gep: alerta.id_subtema_gep || null,
           
           // Campos derivados para UI (siempre arrays)
           nombre_cliente: nombreCliente,
@@ -523,7 +529,9 @@ const AlertsManagement: React.FC = () => {
       'Documento': alerta.documento_senado?.sinopsis || 
         alerta.documento_senado?.iniciativa_texto || 
           'Sin documento',
+      "Id Tema": alerta?.id_tema_gep || 'N/A',
       'Temas': (alerta.temas || []).join(', '),
+      "Id Subtema": alerta?.id_subtema_gep || 'N/A',
       'Subtemas': (alerta.sub_tema || []).join(', '),
       'Estado': alerta.estado,
       'Enviado por Correo': alerta.enviado_correo ? 'Sí' : 'No',

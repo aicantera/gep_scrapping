@@ -27,6 +27,7 @@ interface Tema {
   nombre_tema: string
   desc_tema?: string
   id_usuario?: number
+  id_gep: number
 }
 
 interface Subtema {
@@ -35,6 +36,7 @@ interface Subtema {
   id_tema: number
   subtema_text: string
   subtema_desc?: string
+  id_gep: number
 }
 
 // Nueva interfaz para contactos de email
@@ -50,7 +52,7 @@ interface Client {
   siglas: string | null
   logo: string | null
   listas_distribucion: ListaDistribucion[]
-  temas_suscrit: string[] | null
+  temas_suscrit: TemaSubtemaGuardado[] | null
   estado: string
   creado_en: string
   activo?: boolean
@@ -59,8 +61,15 @@ interface Client {
 interface ListaDistribucion {
   id: string
   nombre: string
-  temas_subtemas: string[]
+  temas_subtemas: TemaSubtemaGuardado[]
   correos: EmailContact[]
+}
+
+interface TemaSubtemaGuardado {
+  nombre_tema?: string
+  subtema_text?: string
+  id_gep: number
+  id: number  // id_tema para temas, id_subtema para subtemas - usado para validación única
 }
 
 interface ClientFormData {
@@ -68,8 +77,55 @@ interface ClientFormData {
   siglas: string
   logo: string
   listas_distribucion: ListaDistribucion[]
-  temas_suscrit: string[]
+  temas_suscrit: TemaSubtemaGuardado[]
   estado: string
+}
+
+// Función helper para convertir string a objeto (retrocompatibilidad)
+const convertirStringAObjeto = (str: string, temas: Tema[], subtemas: Subtema[]): TemaSubtemaGuardado | null => {
+  // Buscar en temas
+  const tema = temas.find(t => t.nombre_tema === str)
+  if (tema) {
+    return { nombre_tema: tema.nombre_tema, id_gep: tema.id_gep, id: tema.id_tema }
+  }
+  
+  // Buscar en subtemas
+  const subtema = subtemas.find(s => s.subtema_text === str)
+  if (subtema) {
+    return { subtema_text: subtema.subtema_text, id_gep: subtema.id_gep, id: subtema.id_subtema }
+  }
+  
+  return null
+}
+
+// Función helper para convertir array de strings a objetos
+const convertirArrayAObjetos = (arr: any[], temas: Tema[], subtemas: Subtema[]): TemaSubtemaGuardado[] => {
+  return arr
+    .map(item => {
+      // Si ya es un objeto con la estructura correcta (tiene id_gep e id), retornarlo
+      if (typeof item === 'object' && item !== null && 'id_gep' in item && 'id' in item) {
+        return item as TemaSubtemaGuardado
+      }
+      // Si es string, puede ser un string JSON o un string simple
+      if (typeof item === 'string') {
+        // Si parece ser JSON (empieza con {), intentar parsearlo
+        if (item.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(item)
+            // Verificar que el objeto parseado tenga la estructura correcta
+            if (parsed && typeof parsed === 'object' && 'id_gep' in parsed && 'id' in parsed) {
+              return parsed as TemaSubtemaGuardado
+            }
+          } catch (e) {
+            // Si falla el parse, continuar como string simple
+          }
+        }
+        // Si es un string simple (nombre de tema/subtema), convertirlo usando la función helper
+        return convertirStringAObjeto(item, temas, subtemas)
+      }
+      return null
+    })
+    .filter((item): item is TemaSubtemaGuardado => item !== null)
 }
 
 const ClientsManagement: React.FC = () => {
@@ -201,8 +257,8 @@ const ClientsManagement: React.FC = () => {
       
       // Procesar los datos para parsear las listas de distribución y temas suscritos
       const processedClients = (data || []).map(client => {
-        let listas_distribucion = []
-        let temas_suscrit = []
+        let listas_distribucion: ListaDistribucion[] = []
+        let temas_suscrit: TemaSubtemaGuardado[] = []
         
         // Parsear listas de distribución si existe y es string
         if (client.listas_distribucion) {
@@ -210,6 +266,10 @@ const ClientsManagement: React.FC = () => {
             try {
               listas_distribucion = JSON.parse(client.listas_distribucion)
               listas_distribucion = listas_distribucion.map((lista: any) => {
+                // Convertir temas_subtemas de strings a objetos si es necesario
+                if (Array.isArray(lista.temas_subtemas)) {
+                  lista.temas_subtemas = convertirArrayAObjetos(lista.temas_subtemas, temas, subtemas)
+                }
                 lista.correos = lista.correos.map((correo: any) => {
                   if(correo?.nombre) {
                     return correo
@@ -227,21 +287,45 @@ const ClientsManagement: React.FC = () => {
               listas_distribucion = []
             }
           } else if (Array.isArray(client.listas_distribucion)) {
-            listas_distribucion = client.listas_distribucion
+            listas_distribucion = client.listas_distribucion.map((lista: any) => ({
+              ...lista,
+              temas_subtemas: convertirArrayAObjetos(lista.temas_subtemas || [], temas, subtemas)
+            }))
           }
         }
         
-        // Parsear temas suscritos si existe y es string
+        // Parsear temas suscritos si existe
         if (client.temas_suscrit) {
           if (typeof client.temas_suscrit === 'string') {
+            // Si es un string JSON, parsearlo primero
             try {
-              temas_suscrit = JSON.parse(client.temas_suscrit)
+              const parsed = JSON.parse(client.temas_suscrit)
+              temas_suscrit = convertirArrayAObjetos(parsed, temas, subtemas)
             } catch (e) {
               console.warn('Error parseando temas_suscrit para cliente:', client.id_cliente, e)
               temas_suscrit = []
             }
           } else if (Array.isArray(client.temas_suscrit)) {
-            temas_suscrit = client.temas_suscrit
+            // Si es un array, verificar si cada elemento es un string JSON o un string simple
+            temas_suscrit = client.temas_suscrit.map((item: any) => {
+              // Si el elemento es un string que parece JSON (empieza con {), parsearlo
+              if (typeof item === 'string' && item.trim().startsWith('{')) {
+                try {
+                  return JSON.parse(item) as TemaSubtemaGuardado
+                } catch (e) {
+                  // Si falla el parse, tratarlo como string simple
+                  return item
+                }
+              }
+              // Si ya es un objeto, retornarlo directamente
+              if (typeof item === 'object' && item !== null) {
+                return item
+              }
+              // Si es un string simple, retornarlo para conversión posterior
+              return item
+            })
+            // Convertir todos los elementos a objetos usando la función helper
+            temas_suscrit = convertirArrayAObjetos(temas_suscrit, temas, subtemas)
           }
         }
         
@@ -334,9 +418,19 @@ const ClientsManagement: React.FC = () => {
   // Guardar cliente
   const saveClient = async () => {
     // Unir todos los temas y subtemas de las listas de distribución, sin duplicados
-    const allTemasSubtemas = Array.from(new Set(
-      formData.listas_distribucion.flatMap(lista => lista.temas_subtemas)
-    ));
+    // Usar id único para evitar duplicados
+    const allTemasSubtemas: TemaSubtemaGuardado[] = []
+    const seenIds = new Set<number>()
+    
+    formData.listas_distribucion.forEach(lista => {
+      lista.temas_subtemas.forEach(item => {
+        if (!seenIds.has(item.id)) {
+          seenIds.add(item.id)
+          allTemasSubtemas.push(item)
+        }
+      })
+    })
+    
     // Actualizar formData.temas_suscrit antes de guardar
     const dataToSave = {
       ...formData,
@@ -368,7 +462,7 @@ const ClientsManagement: React.FC = () => {
           siglas: dataToSave.siglas.trim() || null,
           logo: dataToSave.logo.trim() || null,
           listas_distribucion: JSON.stringify(dataToSave.listas_distribucion),
-          temas_suscrit: dataToSave.temas_suscrit, // Guardar siempre como array
+          temas_suscrit: dataToSave.temas_suscrit, // Guardar como array de objetos
           estado: dataToSave.estado,
           creado_en: now
         };
@@ -394,7 +488,7 @@ const ClientsManagement: React.FC = () => {
         siglas: dataToSave.siglas.trim() || null,
         logo: dataToSave.logo.trim() || null,
         listas_distribucion: JSON.stringify(dataToSave.listas_distribucion),
-        temas_suscrit: dataToSave.temas_suscrit, // Guardar siempre como array
+        temas_suscrit: dataToSave.temas_suscrit, // Guardar como array de objetos
         estado: dataToSave.estado
       };
       const { error } = await supabase
@@ -564,9 +658,10 @@ const ClientsManagement: React.FC = () => {
     )
     
     // Buscar en temas suscritos
-    const matchesTemasSuscritos = client.temas_suscrit?.some(tema => 
-      tema.toLowerCase().includes(searchLower)
-    ) || false
+    const matchesTemasSuscritos = client.temas_suscrit?.some(tema => {
+      const texto = typeof tema === 'string' ? tema : obtenerTexto(tema)
+      return texto.toLowerCase().includes(searchLower)
+    }) || false
     
     // Buscar en listas de distribución (temas/subtemas y correos)
     const matchesListasDistribucion = client.listas_distribucion?.some(lista => {
@@ -574,9 +669,10 @@ const ClientsManagement: React.FC = () => {
       const matchesListaName = lista.nombre?.toLowerCase().includes(searchLower)
       
       // Buscar en temas/subtemas de la lista
-      const matchesListaTemas = lista.temas_subtemas?.some(tema => 
-        tema.toLowerCase().includes(searchLower)
-      ) || false
+      const matchesListaTemas = lista.temas_subtemas?.some(tema => {
+        const texto = typeof tema === 'string' ? tema : obtenerTexto(tema)
+        return texto.toLowerCase().includes(searchLower)
+      }) || false
       
       // Buscar en correos de la lista
       const matchesListaCorreos = lista.correos?.some(correo => 
@@ -626,10 +722,35 @@ const ClientsManagement: React.FC = () => {
       return
     }
     
+    // Convertir temas_subtemas de strings a objetos con id
+    const temasSubtemasObjetos: TemaSubtemaGuardado[] = newLista.temas_subtemas
+      .map(item => {
+        // Si ya es un objeto, retornarlo directamente
+        if (typeof item !== 'string') {
+          return item
+        }
+        // Si es string, convertirlo a objeto
+        const tema = temas.find(t => t.nombre_tema === item)
+        if (tema) {
+          return { nombre_tema: tema.nombre_tema, id_gep: tema.id_gep, id: tema.id_tema }
+        }
+        const subtema = subtemas.find(s => s.subtema_text === item)
+        if (subtema) {
+          return { subtema_text: subtema.subtema_text, id_gep: subtema.id_gep, id: subtema.id_subtema }
+        }
+        return null
+      })
+      .filter((item): item is TemaSubtemaGuardado => item !== null)
+    
+    // Eliminar duplicados por id único
+    const temasSubtemasUnicos = temasSubtemasObjetos.filter((item, index, self) => 
+      index === self.findIndex(t => t.id === item.id)
+    )
+    
     const listaValida: ListaDistribucion = {
       id: Date.now().toString(),
       nombre: newLista.nombre.trim(),
-      temas_subtemas: newLista.temas_subtemas,
+      temas_subtemas: temasSubtemasUnicos,
       correos: newLista.correos.filter(correo => correo.correo.trim())
     }
     
@@ -724,33 +845,115 @@ const ClientsManagement: React.FC = () => {
   }
 
   // Función para agregar tema/subtema a una lista existente
-  const addTemaSubtemaToLista = (listaId: string, temaSubtema: string) => {
+  const addTemaSubtemaToLista = (listaId: string, temaSubtema: string | TemaSubtemaGuardado) => {
     setFormData(prev => ({
       ...prev,
-      listas_distribucion: prev.listas_distribucion.map(lista => 
-        lista.id === listaId 
-          ? { 
-              ...lista, 
-              temas_subtemas: [...lista.temas_subtemas, temaSubtema]
+      listas_distribucion: prev.listas_distribucion.map(lista => {
+        if (lista.id === listaId) {
+          let objeto: TemaSubtemaGuardado
+          
+          // Si es string, convertirlo a objeto
+          if (typeof temaSubtema === 'string') {
+            const tema = temas.find(t => t.nombre_tema === temaSubtema)
+            if (tema) {
+              objeto = { nombre_tema: tema.nombre_tema, id_gep: tema.id_gep, id: tema.id_tema }
+            } else {
+              const subtema = subtemas.find(s => s.subtema_text === temaSubtema)
+              if (subtema) {
+                objeto = { subtema_text: subtema.subtema_text, id_gep: subtema.id_gep, id: subtema.id_subtema }
+              } else {
+                return lista // No se encontró, retornar lista sin cambios
+              }
             }
-          : lista
-      )
+          } else {
+            objeto = temaSubtema
+          }
+          
+          // Verificar que no esté ya agregado (por id único)
+          const yaExiste = lista.temas_subtemas.some(item => item.id === objeto.id)
+          if (yaExiste) {
+            return lista
+          }
+          
+          return {
+            ...lista,
+            temas_subtemas: [...lista.temas_subtemas, objeto]
+          }
+        }
+        return lista
+      })
     }))
   }
 
   // Función para quitar tema/subtema de una lista existente
-  const removeTemaSubtemaFromLista = (listaId: string, temaSubtema: string) => {
+  const removeTemaSubtemaFromLista = (listaId: string, temaSubtema: string | TemaSubtemaGuardado | number) => {
     setFormData(prev => ({
       ...prev,
-      listas_distribucion: prev.listas_distribucion.map(lista => 
-        lista.id === listaId 
-          ? { 
-              ...lista, 
-              temas_subtemas: lista.temas_subtemas.filter(ts => ts !== temaSubtema)
+      listas_distribucion: prev.listas_distribucion.map(lista => {
+        if (lista.id === listaId) {
+          // Si es número, es un id directo
+          if (typeof temaSubtema === 'number') {
+            return {
+              ...lista,
+              temas_subtemas: lista.temas_subtemas.filter(item => item.id !== temaSubtema)
             }
-          : lista
-      )
+          }
+          // Si es string, buscar por nombre_tema o subtema_text
+          if (typeof temaSubtema === 'string') {
+            return {
+              ...lista,
+              temas_subtemas: lista.temas_subtemas.filter(item => 
+                item.nombre_tema !== temaSubtema && item.subtema_text !== temaSubtema
+              )
+            }
+          } else {
+            // Si es objeto, filtrar por id único
+            return {
+              ...lista,
+              temas_subtemas: lista.temas_subtemas.filter(item => item.id !== temaSubtema.id)
+            }
+          }
+        }
+        return lista
+      })
     }))
+  }
+
+  // Función helper para verificar si un tema/subtema está seleccionado (usando id único)
+  const estaSeleccionado = (lista: ListaDistribucion, idTema?: number, idSubtema?: number): boolean => {
+    if (idTema !== undefined) {
+      return lista.temas_subtemas.some(item => item.id === idTema && item.nombre_tema !== undefined)
+    }
+    if (idSubtema !== undefined) {
+      return lista.temas_subtemas.some(item => item.id === idSubtema && item.subtema_text !== undefined)
+    }
+    return false
+  }
+
+  // Función helper para verificar si está seleccionado en newLista (puede tener strings o objetos)
+  const estaSeleccionadoEnNuevaLista = (temasSubtemas: (string | TemaSubtemaGuardado)[], idTema?: number, idSubtema?: number): boolean => {
+    if (idTema !== undefined) {
+      return temasSubtemas.some(item => {
+        if (typeof item === 'string') {
+          return false // No podemos comparar string con id
+        }
+        return item.id === idTema && item.nombre_tema !== undefined
+      })
+    }
+    if (idSubtema !== undefined) {
+      return temasSubtemas.some(item => {
+        if (typeof item === 'string') {
+          return false // No podemos comparar string con id
+        }
+        return item.id === idSubtema && item.subtema_text !== undefined
+      })
+    }
+    return false
+  }
+
+  // Función helper para obtener el texto a mostrar de un tema/subtema
+  const obtenerTexto = (item: TemaSubtemaGuardado): string => {
+    return item.nombre_tema || item.subtema_text || ''
   }
 
   // Función para subir el logo a Supabase Storage
@@ -795,7 +998,7 @@ const ClientsManagement: React.FC = () => {
           else extension = 'png'; // fallback
           // exceljs en browser requiere Uint8Array
           logoId = workbook.addImage({
-            buffer: new Uint8Array(arrayBuffer),
+            buffer: new Uint8Array(arrayBuffer) as any,
             extension,
           });
           worksheet.addImage(logoId, {
@@ -819,18 +1022,38 @@ const ClientsManagement: React.FC = () => {
       rowIdx++;
 
       // Encabezados
-      worksheet.getRow(rowIdx).values = ['LISTA DE DISTRIBUCIÓN', 'TEMAS Y SUBTEMAS', 'CORREOS ELECTRÓNICOS', 'TOTAL CORREOS'];
+      worksheet.getRow(rowIdx).values = ['LISTA DE DISTRIBUCIÓN', 'ID GEP', 'TEMA/SUBTEMA', 'CORREOS ELECTRÓNICOS', 'TOTAL CORREOS'];
       worksheet.getRow(rowIdx).font = { bold: true };
       rowIdx++;
 
-      // Datos de cada lista
+      // Datos de cada lista - cada tema/subtema en una fila separada
       formData.listas_distribucion.forEach(lista => {
-        const temas = lista.temas_subtemas.join('; ');
         const correos = lista.correos.map(correo => correo.nombre + ' - ' + correo.correo).join('; ');
         const totalCorreos = lista.correos.length;
-        worksheet.addRow([lista.nombre, temas, correos, totalCorreos]);
+        
+        // Si hay temas/subtemas, crear una fila por cada uno
+        if (lista.temas_subtemas.length > 0) {
+          lista.temas_subtemas.forEach((item, index) => {
+            const idGep = item.id_gep;
+            const texto = obtenerTexto(item);
+            
+            // En la primera fila de cada lista, mostrar también los correos y total
+            if (index === 0) {
+              worksheet.addRow([lista.nombre, idGep, texto, correos, totalCorreos]);
+            } else {
+              // En las filas siguientes, dejar vacíos correos y total
+              worksheet.addRow([lista.nombre, idGep, texto, '', '']);
+            }
+          });
+        } else {
+          // Si no hay temas/subtemas, mostrar solo la información de la lista
+          worksheet.addRow([lista.nombre, '', 'Sin temas asignados', correos, totalCorreos]);
+        }
       });
-      rowIdx += formData.listas_distribucion.length;
+      rowIdx += formData.listas_distribucion.reduce((acc, lista) => {
+        // Contar filas: una por cada tema/subtema, o 1 si no hay temas
+        return acc + (lista.temas_subtemas.length > 0 ? lista.temas_subtemas.length : 1);
+      }, 0);
 
       // Resumen
       rowIdx++;
@@ -866,15 +1089,49 @@ const ClientsManagement: React.FC = () => {
 
   // Agregar todos los temas y subtemas a la nueva lista
   const addAllTemasSubtemasToList = () => {
-    // Agregar todos los temas y subtemas a la nueva lista
-    const todosLosTemasYSubtemas = [
-      ...temas.map(tema => tema.nombre_tema),
-      ...subtemas.map(subtema => subtema.subtema_text)
+    const todosLosTemasYSubtemas: TemaSubtemaGuardado[] = [
+      ...temas.map(tema => ({ nombre_tema: tema.nombre_tema, id_gep: tema.id_gep, id: tema.id_tema })),
+      ...subtemas.map(subtema => ({ subtema_text: subtema.subtema_text, id_gep: subtema.id_gep, id: subtema.id_subtema }))
     ];
-    setNewLista(prev => ({
-      ...prev,
-      temas_subtemas: Array.from(new Set([...prev.temas_subtemas, ...todosLosTemasYSubtemas]))
-    }));
+    
+    setNewLista(prev => {
+      // Convertir strings existentes a objetos
+      const objetosExistentes: TemaSubtemaGuardado[] = prev.temas_subtemas
+        .map(str => {
+          if (typeof str === 'string') {
+            const tema = temas.find(t => t.nombre_tema === str)
+            if (tema) {
+              return { nombre_tema: tema.nombre_tema, id_gep: tema.id_gep, id: tema.id_tema }
+            }
+            const subtema = subtemas.find(s => s.subtema_text === str)
+            if (subtema) {
+              return { subtema_text: subtema.subtema_text, id_gep: subtema.id_gep, id: subtema.id_subtema }
+            }
+          }
+          return str as TemaSubtemaGuardado
+        })
+        .filter((item): item is TemaSubtemaGuardado => typeof item !== 'string')
+      
+      // Combinar y eliminar duplicados por id único
+      const todosIds = new Set([
+        ...objetosExistentes.map(item => item.id),
+        ...todosLosTemasYSubtemas.map(item => item.id)
+      ])
+      
+      const todosObjetos = [
+        ...objetosExistentes,
+        ...todosLosTemasYSubtemas
+      ]
+      
+      const objetosUnicos = Array.from(todosIds).map(id => 
+        todosObjetos.find(item => item.id === id)!
+      )
+      
+      return {
+        ...prev,
+        temas_subtemas: objetosUnicos
+      }
+    });
   }
 
   useEffect(() => {
@@ -1015,11 +1272,14 @@ const ClientsManagement: React.FC = () => {
                           {(Array.isArray(client.temas_suscrit) && client.temas_suscrit.length > 0) ? (
                             <div className="flex flex-wrap gap-1">
                               {/* Limitar a 10 elementos, después, mostrar '...' */}
-                              {client.temas_suscrit.slice(0, 10).map((tema, index) => (
-                                <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-gray-200 text-slate-800">
-                                  {tema || 'Sin tema'}
-                                </span>
-                              ))}
+                              {client.temas_suscrit.slice(0, 10).map((tema, index) => {
+                                // tema ya debería ser un objeto TemaSubtemaGuardado después de loadClients
+                                return (
+                                  <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-gray-200 text-slate-800">
+                                    {typeof tema === 'string' ? tema : obtenerTexto(tema)}
+                                  </span>
+                                )
+                              })}
                               {client.temas_suscrit.length > 10 && (
                                 <span className="text-slate-800">
                                   ... y {client.temas_suscrit.length - 10} más
@@ -1420,11 +1680,13 @@ const ClientsManagement: React.FC = () => {
                         {formData.temas_suscrit && formData.temas_suscrit.length > 0 ? (
                           <div className="space-y-3">
                             <div className="flex flex-wrap gap-2">
-                              {formData.temas_suscrit.map((tema, index) => (
-                                <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-slate-800">
-                                  {tema}
-                                </span>
-                              ))}
+                              {formData.temas_suscrit.map((tema, index) => {
+                                return (
+                                  <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-slate-800">
+                                    {typeof tema === 'string' ? tema : obtenerTexto(tema)}
+                                  </span>
+                                )
+                              })}
                             </div>
                             <p className="text-sm text-gray-600">
                               Total de temas/subtemas suscritos: {formData.temas_suscrit.length}
@@ -1539,7 +1801,7 @@ const ClientsManagement: React.FC = () => {
                                         {lista.temas_subtemas.length > 0 ? (
                                           lista.temas_subtemas.map((tema, temaIndex) => (
                                             <span key={temaIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-slate-800">
-                                              {tema}
+                                              {typeof tema === 'string' ? tema : obtenerTexto(tema)}
                                               <button
                                                 title='Eliminar'
                                                 type="button"
@@ -1579,8 +1841,8 @@ const ClientsManagement: React.FC = () => {
                                             })
                                             .map(tema => {
                                               const temaSubtemas = subtemas.filter(s => s.id_tema === tema.id_tema);
-                                              // Determinar si el tema está seleccionado
-                                              const temaSeleccionado = lista.temas_subtemas.includes(tema.nombre_tema);
+                                              // Determinar si el tema está seleccionado usando id único
+                                              const temaSeleccionado = estaSeleccionado(lista, tema.id_tema);
                                               
                                               return (
                                                 <div key={tema.id_tema} className="space-y-1">
@@ -1590,7 +1852,7 @@ const ClientsManagement: React.FC = () => {
                                                       type="button"
                                                       onClick={() => {
                                                         if (temaSeleccionado) {
-                                                          removeTemaSubtemaFromLista(lista.id, tema.nombre_tema);
+                                                          removeTemaSubtemaFromLista(lista.id, tema.id_tema);
                                                         } else {
                                                           addTemaSubtemaToLista(lista.id, tema.nombre_tema);
                                                         }
@@ -1613,9 +1875,8 @@ const ClientsManagement: React.FC = () => {
                                                   {/* Subtemas */}
                                                   {temaSubtemas.length > 0 ? (
                                                     temaSubtemas.map((st) => {
-                                                      //Solucion propuesta por si se llega a mencionar que se seleccionan 2 subtemas con el mismo nombre
-                                                      // const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
-                                                      const subtemaSeleccionado = lista.temas_subtemas.includes(st.subtema_text);
+                                                      // Usar id único para verificar selección
+                                                      const subtemaSeleccionado = estaSeleccionado(lista, undefined, st.id_subtema);
                                                       
                                                       return (
                                                         <div key={st.id_subtema} className="flex items-start gap-2 ml-6 w-full">
@@ -1623,7 +1884,7 @@ const ClientsManagement: React.FC = () => {
                                                             type="button"
                                                             onClick={() => {
                                                               if (subtemaSeleccionado) {
-                                                                removeTemaSubtemaFromLista(lista.id, st.subtema_text);
+                                                                removeTemaSubtemaFromLista(lista.id, st.id_subtema);
                                                               } else {
                                                                 addTemaSubtemaToLista(lista.id, st.subtema_text);
                                                               }
@@ -1660,7 +1921,7 @@ const ClientsManagement: React.FC = () => {
                                       {lista.temas_subtemas.length > 0 ? (
                                         lista.temas_subtemas.map((tema, temaIndex) => (
                                           <span key={temaIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-slate-800">
-                                            {tema}
+                                            {typeof tema === 'string' ? tema : obtenerTexto(tema)}
                                           </span>
                                         ))
                                       ) : (
@@ -1815,10 +2076,19 @@ const ClientsManagement: React.FC = () => {
                               className='w-56 px-4 py-0 sm:py-2 h-[50px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed' 
                               onClick={addAllTemasSubtemasToList}
                               disabled={
-                                new Set(newLista.temas_subtemas).size === 
+                                new Set(newLista.temas_subtemas.map(item => {
+                                  if (typeof item === 'string') {
+                                    const t = temas.find(t => t.nombre_tema === item)
+                                    if (t) return t.id_tema
+                                    const s = subtemas.find(s => s.subtema_text === item)
+                                    if (s) return s.id_subtema
+                                    return -1
+                                  }
+                                  return item.id
+                                })).size === 
                                 new Set([
-                                  ...temas.map(t => t.nombre_tema),
-                                  ...subtemas.map(st => st.subtema_text)
+                                  ...temas.map(t => t.id_tema),
+                                  ...subtemas.map(st => st.id_subtema)
                                 ]).size
                               }
                             >
@@ -1837,8 +2107,8 @@ const ClientsManagement: React.FC = () => {
                               })
                               .map(tema => {
                                 const temaSubtemas = subtemas.filter(s => s.id_tema === tema.id_tema);
-                                // Determinar si el tema está seleccionado
-                                const temaSeleccionado = newLista.temas_subtemas.includes(tema.nombre_tema);
+                                // Determinar si el tema está seleccionado usando id único
+                                const temaSeleccionado = estaSeleccionadoEnNuevaLista(newLista.temas_subtemas, tema.id_tema);
                                 return (
                                   <div key={tema.id_tema} className="border border-gray-200 rounded-lg p-3">
                                     <label className="flex items-center mb-2">
@@ -1848,23 +2118,72 @@ const ClientsManagement: React.FC = () => {
                                       onChange={e => {
                                         if (e.target.checked) {
                                           // Seleccionar el tema y todos sus subtemas
-                                          const subtemasDelTema = temaSubtemas.map(st => st.subtema_text);
-                                          setNewLista(prev => ({
-                                            ...prev,
-                                            temas_subtemas: Array.from(new Set([
-                                              ...prev.temas_subtemas,
-                                              tema.nombre_tema,
-                                              ...subtemasDelTema
-                                            ]))
+                                          const subtemasDelTema = temaSubtemas.map(st => ({ 
+                                            subtema_text: st.subtema_text, 
+                                            id_gep: st.id_gep, 
+                                            id: st.id_subtema 
                                           }));
+                                          const temaObjeto = { 
+                                            nombre_tema: tema.nombre_tema, 
+                                            id_gep: tema.id_gep, 
+                                            id: tema.id_tema 
+                                          };
+                                          
+                                          setNewLista(prev => {
+                                            // Convertir strings existentes a objetos
+                                            const objetosExistentes: TemaSubtemaGuardado[] = prev.temas_subtemas
+                                              .map(str => {
+                                                if (typeof str === 'string') {
+                                                  const t = temas.find(t => t.nombre_tema === str)
+                                                  if (t) return { nombre_tema: t.nombre_tema, id_gep: t.id_gep, id: t.id_tema }
+                                                  const s = subtemas.find(s => s.subtema_text === str)
+                                                  if (s) return { subtema_text: s.subtema_text, id_gep: s.id_gep, id: s.id_subtema }
+                                                }
+                                                return str as TemaSubtemaGuardado
+                                              })
+                                              .filter((item): item is TemaSubtemaGuardado => typeof item !== 'string')
+                                            
+                                            // Combinar y eliminar duplicados por id único
+                                            const todosIds = new Set([
+                                              ...objetosExistentes.map(item => item.id),
+                                              temaObjeto.id,
+                                              ...subtemasDelTema.map(item => item.id)
+                                            ])
+                                            
+                                            const todosObjetos = [
+                                              ...objetosExistentes,
+                                              temaObjeto,
+                                              ...subtemasDelTema
+                                            ]
+                                            
+                                            const objetosUnicos = Array.from(todosIds).map(id => 
+                                              todosObjetos.find(item => item.id === id)!
+                                            )
+                                            
+                                            return {
+                                              ...prev,
+                                              temas_subtemas: objetosUnicos
+                                            }
+                                          });
                                         } else {
-                                          // Quitar el tema y todos sus subtemas asociados
-                                          const subtemasDelTema = temaSubtemas.map(st => st.subtema_text);
+                                          // Quitar el tema y todos sus subtemas asociados usando ids únicos
+                                          const idsARemover = new Set([
+                                            tema.id_tema,
+                                            ...temaSubtemas.map(st => st.id_subtema)
+                                          ]);
                                           setNewLista(prev => ({
                                             ...prev,
-                                            temas_subtemas: prev.temas_subtemas.filter(
-                                              t => t !== tema.nombre_tema && !subtemasDelTema.includes(t)
-                                            )
+                                            temas_subtemas: prev.temas_subtemas.filter(item => {
+                                              if (typeof item === 'string') {
+                                                // Convertir string a objeto temporalmente para verificar
+                                                const t = temas.find(t => t.nombre_tema === item)
+                                                if (t && idsARemover.has(t.id_tema)) return false
+                                                const s = subtemas.find(s => s.subtema_text === item)
+                                                if (s && idsARemover.has(s.id_subtema)) return false
+                                                return true
+                                              }
+                                              return !idsARemover.has(item.id)
+                                            })
                                           }));
                                         }
                                       }}
@@ -1875,9 +2194,8 @@ const ClientsManagement: React.FC = () => {
                                     <div className="flex flex-wrap gap-1 ml-5">
                                       {temaSubtemas.length > 0 ? (
                                         temaSubtemas.map(st => {
-                                          //Solucion propuesta por si se llega a mencionar que se seleccionan 2 subtemas con el mismo nombre, sustituir la variable de abajo por st.subtema_text
-                                          // const subtemaId = `${tema.id_tema}:${st.subtema_text}`;
-                                          const subtemaSeleccionado = newLista.temas_subtemas.includes(st.subtema_text);
+                                          // Usar id único para verificar selección
+                                          const subtemaSeleccionado = estaSeleccionadoEnNuevaLista(newLista.temas_subtemas, undefined, st.id_subtema);
                                           return (
                                             <label key={st.id_subtema} className="inline-flex items-center mr-2 mb-1">
                                               <input
@@ -1885,14 +2203,50 @@ const ClientsManagement: React.FC = () => {
                                                 checked={subtemaSeleccionado}
                                                 onChange={e => {
                                                   if (e.target.checked) {
-                                                    setNewLista(prev => ({
-                                                      ...prev,
-                                                      temas_subtemas: [...prev.temas_subtemas, st.subtema_text]
-                                                    }));
+                                                    const subtemaObjeto = { 
+                                                      subtema_text: st.subtema_text, 
+                                                      id_gep: st.id_gep, 
+                                                      id: st.id_subtema 
+                                                    };
+                                                    
+                                                    setNewLista(prev => {
+                                                      // Convertir strings existentes a objetos
+                                                      const objetosExistentes: TemaSubtemaGuardado[] = prev.temas_subtemas
+                                                        .map(str => {
+                                                          if (typeof str === 'string') {
+                                                            const t = temas.find(t => t.nombre_tema === str)
+                                                            if (t) return { nombre_tema: t.nombre_tema, id_gep: t.id_gep, id: t.id_tema }
+                                                            const s = subtemas.find(s => s.subtema_text === str)
+                                                            if (s) return { subtema_text: s.subtema_text, id_gep: s.id_gep, id: s.id_subtema }
+                                                          }
+                                                          return str as TemaSubtemaGuardado
+                                                        })
+                                                        .filter((item): item is TemaSubtemaGuardado => typeof item !== 'string')
+                                                      
+                                                      // Verificar si ya existe por id único
+                                                      const yaExiste = objetosExistentes.some(item => item.id === subtemaObjeto.id)
+                                                      if (yaExiste) {
+                                                        return prev
+                                                      }
+                                                      
+                                                      return {
+                                                        ...prev,
+                                                        temas_subtemas: [...objetosExistentes, subtemaObjeto]
+                                                      }
+                                                    });
                                                   } else {
+                                                    // Eliminar usando id único
                                                     setNewLista(prev => ({
                                                       ...prev,
-                                                      temas_subtemas: prev.temas_subtemas.filter(t => t !== st.subtema_text)
+                                                      temas_subtemas: prev.temas_subtemas.filter(item => {
+                                                        if (typeof item === 'string') {
+                                                          // Convertir string a objeto temporalmente para verificar
+                                                          const s = subtemas.find(s => s.subtema_text === item)
+                                                          if (s && s.id_subtema === st.id_subtema) return false
+                                                          return true
+                                                        }
+                                                        return item.id !== st.id_subtema
+                                                      })
                                                     }));
                                                   }
                                                 }}

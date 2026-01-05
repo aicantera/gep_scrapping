@@ -1022,37 +1022,79 @@ const ClientsManagement: React.FC = () => {
       rowIdx++;
 
       // Encabezados
-      worksheet.getRow(rowIdx).values = ['LISTA DE DISTRIBUCIÓN', 'ID GEP', 'TEMA/SUBTEMA', 'CORREOS ELECTRÓNICOS', 'TOTAL CORREOS'];
+      worksheet.getRow(rowIdx).values = ['LISTA DE DISTRIBUCIÓN', 'ID GEP', 'TEMA', 'ID GEP', 'SUBTEMA', 'CORREOS ELECTRÓNICOS', 'TOTAL CORREOS'];
       worksheet.getRow(rowIdx).font = { bold: true };
       rowIdx++;
 
-      // Datos de cada lista - cada tema/subtema en una fila separada
+      // Datos de cada lista - crear filas distribuyendo temas y subtemas en paralelo
       formData.listas_distribucion.forEach(lista => {
         const correos = lista.correos.map(correo => correo.nombre + ' - ' + correo.correo).join('; ');
         const totalCorreos = lista.correos.length;
         
-        // Si hay temas/subtemas, crear una fila por cada uno
-        if (lista.temas_subtemas.length > 0) {
-          lista.temas_subtemas.forEach((item, index) => {
-            const idGep = item.id_gep;
-            const texto = obtenerTexto(item);
+        // Separar temas y subtemas en arrays
+        const temas: string[] = [];
+        const temasIds: string[] = [];
+        const subtemas: string[] = [];
+        const subtemasIds: string[] = [];
+        
+        lista.temas_subtemas.forEach(item => {
+          if (item.nombre_tema) {
+            // Es un tema
+            temas.push(item.nombre_tema);
+            temasIds.push(item.id_gep ? String(item.id_gep) : '');
+          } else if (item.subtema_text) {
+            // Es un subtema
+            subtemas.push(item.subtema_text);
+            subtemasIds.push(item.id_gep ? String(item.id_gep) : '');
+          }
+        });
+        
+        // Determinar el número máximo de filas necesarias (máximo entre temas y subtemas)
+        const maxFilas = Math.max(temas.length, subtemas.length);
+        
+        // Si no hay temas ni subtemas, crear una fila con información básica
+        if (maxFilas === 0) {
+          worksheet.addRow([lista.nombre, '', '', '', '', correos, totalCorreos]);
+        } else {
+          // Crear tantas filas como el máximo entre temas y subtemas
+          for (let i = 0; i < maxFilas; i++) {
+            const tema = temas[i] || '';
+            const temaId = temasIds[i] || '';
+            const subtema = subtemas[i] || '';
+            const subtemaId = subtemasIds[i] || '';
             
-            // En la primera fila de cada lista, mostrar también los correos y total
-            if (index === 0) {
-              worksheet.addRow([lista.nombre, idGep, texto, correos, totalCorreos]);
+            // En la primera fila, mostrar también los correos y total
+            if (i === 0) {
+              worksheet.addRow([
+                lista.nombre,
+                temaId,
+                tema,
+                subtemaId,
+                subtema,
+                correos,
+                totalCorreos
+              ]);
             } else {
               // En las filas siguientes, dejar vacíos correos y total
-              worksheet.addRow([lista.nombre, idGep, texto, '', '']);
+              worksheet.addRow([
+                lista.nombre,
+                temaId,
+                tema,
+                subtemaId,
+                subtema,
+                '',
+                ''
+              ]);
             }
-          });
-        } else {
-          // Si no hay temas/subtemas, mostrar solo la información de la lista
-          worksheet.addRow([lista.nombre, '', 'Sin temas asignados', correos, totalCorreos]);
+          }
         }
       });
+      // Actualizar el índice de filas según el número real de filas creadas
       rowIdx += formData.listas_distribucion.reduce((acc, lista) => {
-        // Contar filas: una por cada tema/subtema, o 1 si no hay temas
-        return acc + (lista.temas_subtemas.length > 0 ? lista.temas_subtemas.length : 1);
+        const temas = lista.temas_subtemas.filter(item => item.nombre_tema).length;
+        const subtemas = lista.temas_subtemas.filter(item => item.subtema_text).length;
+        const maxFilas = Math.max(temas, subtemas);
+        return acc + (maxFilas > 0 ? maxFilas : 1);
       }, 0);
 
       // Resumen

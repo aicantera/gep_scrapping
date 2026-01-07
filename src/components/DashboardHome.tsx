@@ -63,6 +63,7 @@ interface Document {
   id_proponente: string;
   id_tema: string;
   id_subtema: string;
+  subtema: string;
 }
 
 const DashboardHome = () => {
@@ -360,9 +361,10 @@ const DashboardHome = () => {
       "Título",
       "Link",
       "Fuente",
-      "Temas",
       "ID Tema",
+      "Temas",
       "ID Subtema",
+      "Subtemas",
       "Resumen",
       "Análisis",
       "Proponente",
@@ -387,9 +389,10 @@ const DashboardHome = () => {
         doc.iniciativa_texto,
         doc.link_iniciativa,
         doc.fuente,
-        doc.temas,
         doc.id_tema,
+        doc.temas,
         doc.id_subtema,
+        doc.subtema,
         doc.resumen,
         doc.analisis,
         proponenteInfo,

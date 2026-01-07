@@ -1022,7 +1022,7 @@ const ClientsManagement: React.FC = () => {
       rowIdx++;
 
       // Encabezados
-      worksheet.getRow(rowIdx).values = ['LISTA DE DISTRIBUCIÓN', 'ID GEP', 'TEMA', 'ID GEP', 'SUBTEMA', 'CORREOS ELECTRÓNICOS', 'TOTAL CORREOS'];
+      worksheet.getRow(rowIdx).values = ['LISTA DE DISTRIBUCIÓN', 'ID TEMA', 'TEMA', 'ID SUBTEMA', 'SUBTEMA', 'CORREOS ELECTRÓNICOS', 'TOTAL CORREOS'];
       worksheet.getRow(rowIdx).font = { bold: true };
       rowIdx++;
 

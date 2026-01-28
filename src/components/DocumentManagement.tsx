@@ -50,6 +50,7 @@ interface Document {
   transitorios?: string      // Nueva columna opcional
   informacion_adicional?: string // Nueva columna opcional
   titulo?: string // Nueva columna opcional
+  id_tema?: string // Nueva columna opcional
 }
 
 interface Filters {
@@ -716,6 +717,9 @@ const DocumentManagement: React.FC = () => {
                         Descripción
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID GEP
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Temas
                       </th>
                       <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -763,6 +767,11 @@ const DocumentManagement: React.FC = () => {
                           <div className="flex items-center text-sm text-gray-900">
                             <Calendar className="w-4 h-4 mr-2 text-gray-400" />
                             {formatDate(document.created_at)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 font-mono">
+                            {document.id_tema}
                           </div>
                         </td>
                         <td className="px-6 py-4">

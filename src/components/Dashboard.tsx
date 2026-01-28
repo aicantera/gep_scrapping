@@ -77,6 +77,8 @@ interface Document {
   objeto: string
   correspondier: string
   tipo: string
+  id_tema: string
+  id_subtema: string
 }
 
 interface BotConfig {
@@ -1300,6 +1302,9 @@ const Dashboard: React.FC = () => {
                           Hora
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ID GEP
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Temas
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1337,6 +1342,11 @@ const Dashboard: React.FC = () => {
                                document.fuente === 'dof' ? 'Diario Oficial de la Federación' :
                                document.fuente}
                             </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm text-gray-900 font-mono">
+                              {document.id_tema}
+                            </div>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center text-sm text-gray-900">

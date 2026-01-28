@@ -758,6 +758,9 @@ const AlertsManagement: React.FC = () => {
                       Documento
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID GEP
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Temas
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -817,6 +820,11 @@ const AlertsManagement: React.FC = () => {
                             </a>
                           </div>
                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 font-mono">
+                          {alerta.id_tema_gep}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">

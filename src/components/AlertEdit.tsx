@@ -374,7 +374,7 @@ const AlertEdit: React.FC = () => {
         .select("*")
         .eq('id_cliente', alertaData.id_cliente);
       
-      const lists = JSON.parse(clienteData?.[0]?.listas_distribucion || "[]")
+      const lists = typeof clienteData?.[0]?.listas_distribucion === 'string' ? JSON.parse(clienteData?.[0]?.listas_distribucion) : clienteData?.[0]?.listas_distribucion || [];
       const emailsCount = lists[0]?.correos?.length || 0;
       
       setCliente({

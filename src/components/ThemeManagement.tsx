@@ -300,28 +300,31 @@ const ThemeManagement: React.FC = () => {
       let subtemasCreados = 0
       if (validSubthemes.length > 0) {
         try {
-          // Verificar duplicados en subtemas antes de insertar
-          const { data: existingSubthemes } = await supabase
-            .from('subtemas')
-            .select('subtema_text, id_gep')
+          // Verificar duplicados solo dentro de los subtemas del mismo tema
+          // Verificar duplicados en nombre e id_gep dentro del mismo tema
+          const seenNames = new Set<string>()
+          const seenIds = new Set<string>()
           
-          // Verificar duplicados en nombre e id_gep de subtemas
           for (const st of validSubthemes) {
-            if ((existingSubthemes || []).some(existing => 
-              existing.subtema_text.trim().toLowerCase() === st.subtema_text.trim().toLowerCase()
-            )) {
-              setError(`Ya existe un subtema con el nombre "${st.subtema_text.trim()}".`)
+            const stName = st.subtema_text.trim().toLowerCase()
+            const stIdGep = getIdGepAsString(st.id_gep)
+            
+            // Verificar duplicados de nombre dentro del mismo tema
+            if (seenNames.has(stName)) {
+              setError(`No puede haber dos subtemas con el mismo nombre en el mismo tema. El subtema "${st.subtema_text.trim()}" está duplicado.`)
               setLoading(false)
               return
             }
-            const stIdGep = getIdGepAsString(st.id_gep)
-            if (stIdGep && (existingSubthemes || []).some(existing => {
-              const existingIdGep = idGepToString(existing.id_gep)
-              return existingIdGep && existingIdGep === stIdGep
-            })) {
-              setError(`Ya existe un subtema con el ID GEP "${stIdGep}".`)
+            seenNames.add(stName)
+            
+            // Verificar duplicados de id_gep dentro del mismo tema
+            if (stIdGep && seenIds.has(stIdGep)) {
+              setError(`No puede haber dos subtemas con el mismo ID GEP en el mismo tema. El ID GEP "${stIdGep}" está duplicado.`)
               setLoading(false)
               return
+            }
+            if (stIdGep) {
+              seenIds.add(stIdGep)
             }
           }
 
@@ -506,31 +509,31 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
             throw deleteError
           }
           
-          // Verificar duplicados en subtemas antes de insertar
-          const { data: existingSubthemes } = await supabase
-            .from('subtemas')
-            .select('subtema_text, id_gep, id_subtema')
+          // Verificar duplicados solo dentro de los subtemas del mismo tema
+          // Verificar duplicados en nombre e id_gep dentro del mismo tema
+          const seenNames = new Set<string>()
+          const seenIds = new Set<string>()
           
-          // Verificar duplicados en nombre e id_gep de subtemas (excluyendo los del tema actual)
-          const currentSubthemes = getSubthemesByTheme(selectedTheme.id_tema)
           for (const st of validSubthemes) {
-            if ((existingSubthemes || []).some(existing => 
-              !currentSubthemes.some(current => current.id_subtema === existing.id_subtema) &&
-              existing.subtema_text.trim().toLowerCase() === st.subtema_text.trim().toLowerCase()
-            )) {
-              setError(`Ya existe un subtema con el nombre "${st.subtema_text.trim()}".`)
+            const stName = st.subtema_text.trim().toLowerCase()
+            const stIdGep = getIdGepAsString(st.id_gep)
+            
+            // Verificar duplicados de nombre dentro del mismo tema
+            if (seenNames.has(stName)) {
+              setError(`No puede haber dos subtemas con el mismo nombre en el mismo tema. El subtema "${st.subtema_text.trim()}" está duplicado.`)
               setLoading(false)
               return
             }
-            const stIdGep = getIdGepAsString(st.id_gep)
-            if (stIdGep && (existingSubthemes || []).some(existing => {
-              const existingIdGep = idGepToString(existing.id_gep)
-              return !currentSubthemes.some(current => current.id_subtema === existing.id_subtema) &&
-                existingIdGep && existingIdGep === stIdGep
-            })) {
-              setError(`Ya existe un subtema con el ID GEP "${stIdGep}".`)
+            seenNames.add(stName)
+            
+            // Verificar duplicados de id_gep dentro del mismo tema
+            if (stIdGep && seenIds.has(stIdGep)) {
+              setError(`No puede haber dos subtemas con el mismo ID GEP en el mismo tema. El ID GEP "${stIdGep}" está duplicado.`)
               setLoading(false)
               return
+            }
+            if (stIdGep) {
+              seenIds.add(stIdGep)
             }
           }
 

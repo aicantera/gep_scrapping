@@ -31,12 +31,27 @@ const SendAlertModal: React.FC<{
 
       // Transform data (listas_distribucion from string to array)
       const transformedData =
-        data?.map((client) => ({
-          ...client,
-          listas_distribucion: client.listas_distribucion
-            ? JSON.parse(client.listas_distribucion)
-            : [],
-        })) || [];
+        data?.map((client) => {
+          let listas_distribucion: any[] = [];
+
+          if (client.listas_distribucion) {
+            if (typeof client.listas_distribucion === 'string') {
+              try {
+                listas_distribucion = JSON.parse(client.listas_distribucion)
+              } catch (e) {
+                console.warn('Error parseando listas_distribucion para cliente:', client.id_cliente, e)
+                listas_distribucion = [];
+              }
+            } else if (Array.isArray(client.listas_distribucion)) {
+              listas_distribucion = client.listas_distribucion;
+            }
+          }
+
+          return {
+            ...client,
+            listas_distribucion: listas_distribucion
+          }
+        }) || [];
 
       setClients(transformedData);
       setError(null);

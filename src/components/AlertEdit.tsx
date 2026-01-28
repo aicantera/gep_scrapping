@@ -651,7 +651,10 @@ const AlertEdit: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Temas y Subtemas:</span>
-                  <div className="text-gray-900">{(cliente.temas_subtemas || []).join(', ')}</div>
+                  <div className="text-gray-900">{cliente.temas_subtemas?.map((tema: string) => {
+                    const temaData = JSON.parse(tema);
+                    return temaData.nombre_tema || temaData.subtema_text;
+                  }).join(', ')}</div>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Destinatarios:</span>

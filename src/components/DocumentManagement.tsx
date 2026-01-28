@@ -770,13 +770,13 @@ const DocumentManagement: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 font-mono">
-                            {document.id_tema}
+                          <div className="text-sm text-gray-900 max-w-xs">
+                            {truncateText(document.analisis || 'Sin descripción')}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 max-w-xs">
-                            {truncateText(document.analisis || 'Sin descripción')}
+                          <div className="text-sm text-gray-900 font-mono">
+                            {document.id_tema}
                           </div>
                         </td>
                         <td className="px-6 py-4">

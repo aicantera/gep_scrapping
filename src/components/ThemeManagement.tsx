@@ -19,6 +19,7 @@ interface Theme {
   id_tema: number // Auto-generado por PostgreSQL
   created_at: string
   nombre_tema: string
+  id_gep?: string
   desc_tema?: string
   activo?: boolean
   subtemas?: Subtheme[]
@@ -27,6 +28,7 @@ interface Theme {
 // Tipo para crear un tema (sin ID - se genera automáticamente)
 interface ThemeCreate {
   nombre_tema: string
+  id_gep?: string
   desc_tema?: string
 }
 
@@ -35,6 +37,7 @@ interface Subtheme {
   created_at: string
   id_tema: number
   subtema_text: string
+  id_gep?: string
   subtema_desc?: string
 }
 
@@ -42,13 +45,15 @@ interface Subtheme {
 interface SubthemeCreate {
   id_tema: number
   subtema_text: string
+  id_gep?: string
   subtema_desc?: string
 }
 
 interface ThemeFormData {
   nombre_tema: string
+  id_gep?: string
   desc_tema?: string
-  subtemas: { subtema_text: string; subtema_desc?: string }[]
+  subtemas: { subtema_text: string; id_gep?: string; subtema_desc?: string }[]
 }
 
 interface ClienteRelacionado {
@@ -83,6 +88,7 @@ const ThemeManagement: React.FC = () => {
   // Estados para el formulario
   const [themeFormData, setThemeFormData] = useState<ThemeFormData>({
     nombre_tema: '',
+    id_gep: '',
     desc_tema: '',
     subtemas: []
   })
@@ -186,11 +192,41 @@ const ThemeManagement: React.FC = () => {
     }
   }
 
+    // Función para convertir id_gep a string (maneja tanto string como number)
+  const idGepToString = (value: string | number | null | undefined): string => {
+    if (value === null || value === undefined) return ''
+    return String(value).trim()
+  }
+
+  // Función helper para obtener id_gep como string y hacer trim de forma segura
+  const getIdGepAsString = (value: string | number | null | undefined): string => {
+    if (value === null || value === undefined) return ''
+    return String(value).trim()
+  }
+
+    // Función para validar que un valor sea un número entero
+  const isValidInteger = (value: string): boolean => {
+    if (!value.trim()) return false
+    const num = Number(value.trim())
+    return Number.isInteger(num) && num >= 0
+  }
+
     // Función para crear tema
   const createTheme = async () => {
     try {
       if (!themeFormData.nombre_tema.trim()) {
         setError('El nombre del tema es obligatorio.')
+        return
+      }
+
+      const themeIdGepStr = getIdGepAsString(themeFormData.id_gep)
+      if (!themeIdGepStr) {
+        setError('El ID GEP del tema es obligatorio.')
+        return
+      }
+
+      if (!isValidInteger(themeIdGepStr)) {
+        setError('El ID GEP debe ser un número entero válido.')
         return
       }
       
@@ -199,16 +235,37 @@ const ThemeManagement: React.FC = () => {
         st.subtema_text.trim()
       )
 
-      // Validar que si hay subtemas, todos tengan nombre (Descripción puede ser opcional)
-      if (validSubthemes.length > 0 && validSubthemes.some(st => !st.subtema_text.trim())) {
-        setError('Todos los subtemas deben tener nombre.')
-        return
+      // Validar que si hay subtemas, todos tengan nombre e id_gep (Descripción puede ser opcional)
+      if (validSubthemes.length > 0) {
+        if (validSubthemes.some(st => !st.subtema_text.trim())) {
+          setError('Todos los subtemas deben tener nombre.')
+          return
+        }
+        if (validSubthemes.some(st => !getIdGepAsString(st.id_gep))) {
+          setError('Todos los subtemas deben tener ID GEP.')
+          return
+        }
+        if (validSubthemes.some(st => {
+          const stIdGep = getIdGepAsString(st.id_gep)
+          return stIdGep && !isValidInteger(stIdGep)
+        })) {
+          setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
+          return
+        }
       }
 
-      // Verificar duplicados
-      const { data } = await supabase.from('temas').select('nombre_tema')
+      // Verificar duplicados en nombre e id_gep
+      const { data } = await supabase.from('temas').select('nombre_tema, id_gep')
       if ((data || []).some(t => t.nombre_tema.trim().toLowerCase() === themeFormData.nombre_tema.trim().toLowerCase())) {
         setError('Ya existe un tema con este nombre.')
+        return
+      }
+      const themeIdGep = getIdGepAsString(themeFormData.id_gep)
+      if (themeIdGep && (data || []).some(t => {
+        const dbIdGep = idGepToString(t.id_gep)
+        return dbIdGep && dbIdGep === themeIdGep
+      })) {
+        setError('Ya existe un tema con este ID GEP.')
         return
       }
 
@@ -218,6 +275,7 @@ const ThemeManagement: React.FC = () => {
       // Preparar datos para inserción (sin ID)
       const themeToCreate: ThemeCreate = {
         nombre_tema: themeFormData.nombre_tema.trim(),
+        id_gep: getIdGepAsString(themeFormData.id_gep),
         desc_tema: themeFormData.desc_tema?.trim() || ''
         // ✅ NO incluye id_tema - se genera automáticamente
       }
@@ -242,10 +300,36 @@ const ThemeManagement: React.FC = () => {
       let subtemasCreados = 0
       if (validSubthemes.length > 0) {
         try {
+          // Verificar duplicados en subtemas antes de insertar
+          const { data: existingSubthemes } = await supabase
+            .from('subtemas')
+            .select('subtema_text, id_gep')
+          
+          // Verificar duplicados en nombre e id_gep de subtemas
+          for (const st of validSubthemes) {
+            if ((existingSubthemes || []).some(existing => 
+              existing.subtema_text.trim().toLowerCase() === st.subtema_text.trim().toLowerCase()
+            )) {
+              setError(`Ya existe un subtema con el nombre "${st.subtema_text.trim()}".`)
+              setLoading(false)
+              return
+            }
+            const stIdGep = getIdGepAsString(st.id_gep)
+            if (stIdGep && (existingSubthemes || []).some(existing => {
+              const existingIdGep = idGepToString(existing.id_gep)
+              return existingIdGep && existingIdGep === stIdGep
+            })) {
+              setError(`Ya existe un subtema con el ID GEP "${stIdGep}".`)
+              setLoading(false)
+              return
+            }
+          }
+
           // Preparar subtemas para inserción (sin ID - se genera automáticamente)
           const subtemasToInsert: SubthemeCreate[] = validSubthemes.map(st => ({
             id_tema: tema.id_tema,
             subtema_text: st.subtema_text.trim(),
+            id_gep: getIdGepAsString(st.id_gep),
             subtema_desc: st.subtema_desc?.trim() || ''
             // ✅ NO incluye id_subtema - se genera automáticamente
           }))          
@@ -342,13 +426,49 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
         return
       }
 
+      const themeIdGepStr = getIdGepAsString(themeFormData.id_gep)
+      if (!themeIdGepStr) {
+        setError('El ID GEP del tema es obligatorio.')
+        return
+      }
+
+      if (!isValidInteger(themeIdGepStr)) {
+        setError('El ID GEP debe ser un número entero válido.')
+        return
+      }
+
+      // Validar subtemas si los hay
+      const validSubthemesForUpdate = themeFormData.subtemas.filter(st => st.subtema_text.trim())
+      
+      if (validSubthemesForUpdate.length > 0) {
+        if (validSubthemesForUpdate.some(st => !getIdGepAsString(st.id_gep))) {
+          setError('Todos los subtemas deben tener ID GEP.')
+          return
+        }
+        if (validSubthemesForUpdate.some(st => {
+          const stIdGep = getIdGepAsString(st.id_gep)
+          return stIdGep && !isValidInteger(stIdGep)
+        })) {
+          setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
+          return
+        }
+      }
+
       // Verificar duplicados (excluyendo el tema actual)
-      const { data } = await supabase.from('temas').select('nombre_tema, id_tema')
+      const { data } = await supabase.from('temas').select('nombre_tema, id_tema, id_gep')
       if ((data || []).some(t => 
         t.id_tema !== selectedTheme.id_tema && 
         t.nombre_tema.trim().toLowerCase() === themeFormData.nombre_tema.trim().toLowerCase()
       )) {
         setError('Ya existe un tema con este nombre.')
+        return
+      }
+      const themeIdGep = getIdGepAsString(themeFormData.id_gep)
+      if (themeIdGep && (data || []).some(t => {
+        const dbIdGep = idGepToString(t.id_gep)
+        return t.id_tema !== selectedTheme.id_tema && dbIdGep && dbIdGep === themeIdGep
+      })) {
+        setError('Ya existe un tema con este ID GEP.')
         return
       }
       
@@ -360,6 +480,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
         .from('temas')
         .update({
           nombre_tema: themeFormData.nombre_tema.trim(),
+          id_gep: getIdGepAsString(themeFormData.id_gep),
           desc_tema: themeFormData.desc_tema?.trim() || ''
         })
         .eq('id_tema', selectedTheme.id_tema)
@@ -370,7 +491,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
       }
       
       // Manejar subtemas
-      const validSubthemes = themeFormData.subtemas.filter(st => st.subtema_text.trim())
+      const validSubthemes = validSubthemesForUpdate
       
       if (validSubthemes.length > 0) {
         try {
@@ -385,10 +506,39 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
             throw deleteError
           }
           
+          // Verificar duplicados en subtemas antes de insertar
+          const { data: existingSubthemes } = await supabase
+            .from('subtemas')
+            .select('subtema_text, id_gep, id_subtema')
+          
+          // Verificar duplicados en nombre e id_gep de subtemas (excluyendo los del tema actual)
+          const currentSubthemes = getSubthemesByTheme(selectedTheme.id_tema)
+          for (const st of validSubthemes) {
+            if ((existingSubthemes || []).some(existing => 
+              !currentSubthemes.some(current => current.id_subtema === existing.id_subtema) &&
+              existing.subtema_text.trim().toLowerCase() === st.subtema_text.trim().toLowerCase()
+            )) {
+              setError(`Ya existe un subtema con el nombre "${st.subtema_text.trim()}".`)
+              setLoading(false)
+              return
+            }
+            const stIdGep = getIdGepAsString(st.id_gep)
+            if (stIdGep && (existingSubthemes || []).some(existing => {
+              const existingIdGep = idGepToString(existing.id_gep)
+              return !currentSubthemes.some(current => current.id_subtema === existing.id_subtema) &&
+                existingIdGep && existingIdGep === stIdGep
+            })) {
+              setError(`Ya existe un subtema con el ID GEP "${stIdGep}".`)
+              setLoading(false)
+              return
+            }
+          }
+
           // Crear nuevos subtemas (sin ID - se genera automáticamente)
           const subtemasToInsert: SubthemeCreate[] = validSubthemes.map(st => ({
             id_tema: selectedTheme.id_tema,
             subtema_text: st.subtema_text.trim(),
+            id_gep: getIdGepAsString(st.id_gep),
             subtema_desc: st.subtema_desc?.trim() || ''
             // ✅ NO incluye id_subtema - se genera automáticamente
           }))
@@ -594,9 +744,11 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
     const subtemas = getSubthemesByTheme(theme.id_tema)
     setThemeFormData({
       nombre_tema: theme.nombre_tema,
+      id_gep: idGepToString(theme.id_gep),
       desc_tema: theme.desc_tema,
       subtemas: subtemas.map(st => ({
         subtema_text: st.subtema_text,
+        id_gep: idGepToString(st.id_gep),
         subtema_desc: st.subtema_desc
       }))
     })
@@ -624,6 +776,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
   const resetForm = () => {
     setThemeFormData({
       nombre_tema: '',
+      id_gep: '',
       desc_tema: '',
       subtemas: []
     })
@@ -634,7 +787,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
   const addSubthemeToForm = () => {
     setThemeFormData(prev => ({
       ...prev,
-      subtemas: [...prev.subtemas, { subtema_text: '', subtema_desc: '' }]
+      subtemas: [...prev.subtemas, { subtema_text: '', id_gep: '', subtema_desc: '' }]
     }))
   }
 
@@ -647,7 +800,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
   }
 
   // Función para actualizar subtema en el formulario
-  const updateSubthemeInForm = (index: number, field: 'subtema_text' | 'subtema_desc', value: string) => {
+  const updateSubthemeInForm = (index: number, field: 'subtema_text' | 'subtema_desc' | 'id_gep', value: string) => {
     setThemeFormData(prev => ({
       ...prev,
       subtemas: prev.subtemas.map((st, i) => 
@@ -797,6 +950,9 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                   Tema
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ID GEP
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Subtemas Asociados
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -813,7 +969,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12">
+                  <td colSpan={6} className="text-center py-12">
                     <div className="flex items-center justify-center">
                       <RefreshCw className="animate-spin mr-2" size={20} />
                       <span className="text-gray-500">Cargando temas...</span>
@@ -822,7 +978,7 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                 </tr>
               ) : currentThemes.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12">
+                  <td colSpan={6} className="text-center py-12">
                     <div className="text-gray-500">
                       {searchTerm || statusFilter ? 
                         'No se encontraron temas que coincidan con los filtros.' :
@@ -854,6 +1010,13 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                           </div>
                         </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {idGepToString(theme.id_gep) || (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
                           {subtemas.length > 0 ? (
@@ -864,7 +1027,10 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                               <div className="space-y-1">
                                 {subtemas.slice(0, 3).map((subtema) => (
                                   <div key={subtema.id_subtema} className="text-xs text-gray-600">
-                                    • {subtema.subtema_text}
+                                    • {subtema.subtema_text} 
+                                    {idGepToString(subtema.id_gep) && (
+                                      <span className="text-gray-500 ml-2">(ID: {idGepToString(subtema.id_gep)})</span>
+                                    )}
                                   </div>
                                 ))}
                                 {subtemas.length > 3 && (
@@ -1110,6 +1276,24 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                       placeholder="Ingresa el nombre del tema"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ID GEP *
+                    </label>
+                    <input
+                      type="text"
+                      value={themeFormData.id_gep || ''}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        // Solo permitir números enteros (incluyendo vacío para poder borrar)
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setThemeFormData(prev => ({ ...prev, id_gep: value }))
+                        }
+                      }}
+                      className="form-input w-full"
+                      placeholder="Ingresa el ID GEP del tema"
+                    />
+                  </div>
                   {/* Comentado por peticion de cliente */}
                   {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1166,6 +1350,24 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                                 onChange={(e) => updateSubthemeInForm(index, 'subtema_text', e.target.value)}
                                 className="form-input w-full text-sm"
                                 placeholder="Nombre del subtema"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                ID GEP *
+                              </label>
+                              <input
+                                type="text"
+                                value={subtema.id_gep || ''}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  // Solo permitir números enteros (incluyendo vacío para poder borrar)
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    updateSubthemeInForm(index, 'id_gep', value)
+                                  }
+                                }}
+                                className="form-input w-full text-sm"
+                                placeholder="ID GEP del subtema"
                               />
                             </div>
                             {/* Comentado por peticion de cliente */}
@@ -1246,6 +1448,14 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                       <span className="text-xs font-medium text-gray-600">Nombre:</span>
                       <p className="text-sm text-gray-900">{detailData.tema.nombre_tema}</p>
                     </div>
+                    <div>
+                      <span className="text-xs font-medium text-gray-600">ID GEP:</span>
+                      <p className="text-sm text-gray-900">
+                        {idGepToString(detailData.tema.id_gep) || (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </p>
+                    </div>
                     {/* Comentado por peticion de cliente */}
                     {/* <div>
                       <span className="text-xs font-medium text-gray-600">Descripción:</span>
@@ -1284,6 +1494,11 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
                           {subtemas.map(subtema => (
                             <div key={subtema.id_subtema} className="border-b border-gray-200 pb-2 last:border-b-0">
                               <p className="text-sm font-medium text-gray-900">{subtema.subtema_text}</p>
+                              {idGepToString(subtema.id_gep) && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                  ID GEP: <span className="font-medium">{idGepToString(subtema.id_gep)}</span>
+                                </p>
+                              )}
                               {/* Comentado por peticion de cliente */}
                               {/* <p className="text-xs text-gray-600">{subtema.subtema_desc}</p> */}
                             </div>

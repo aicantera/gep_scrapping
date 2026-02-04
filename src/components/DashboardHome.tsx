@@ -46,6 +46,12 @@ interface TemaRelacionado {
   desc_tema?: string;
 }
 
+interface SubtemaRelacionado {
+  id_subtema: number;
+  subtema_text: string;
+  id_gep: number;
+}
+
 interface Document {
   id_senado_doc: number;
   created_at: string;
@@ -72,6 +78,7 @@ interface Document {
   id_subtema: string;
   subtema: string;
   tema: TemaRelacionado;
+  subtema_relacionado: SubtemaRelacionado;
 }
 
 const DashboardHome = () => {
@@ -147,7 +154,7 @@ const DashboardHome = () => {
       // 2. Obtener TODOS los documentos del día actual (sin paginación)
       const { data: allDocumentsToday, error: allDocsError } = await supabase
         .from("senado")
-        .select("*, tema:temas!id_tema (id_tema, nombre_tema, id_gep, desc_tema)")
+        .select("*, tema:temas!id_tema (id_tema, nombre_tema, id_gep, desc_tema), subtema_relacionado:subtemas!id_subtema (id_subtema, subtema_text, id_gep)")
         .gte("created_at", startOfDay.toISOString())
         .lt("created_at", endOfDay.toISOString())
         .order("created_at", { ascending: false });
@@ -399,7 +406,7 @@ const DashboardHome = () => {
         doc.fuente,
         doc.tema?.id_gep || 'N/A',
         doc.temas,
-        doc.id_subtema,
+        doc.subtema_relacionado?.id_gep || 'N/A',
         doc.subtema,
         doc.resumen,
         doc.analisis,

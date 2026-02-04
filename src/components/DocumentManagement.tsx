@@ -22,6 +22,14 @@ import {
   X,
 } from 'lucide-react'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
+
+interface TemaRelacionado {
+  id_tema: number
+  nombre_tema: string
+  id_gep: number
+  desc_tema?: string
+}
+
 interface Document {
   id_senado_doc: number
   created_at: string
@@ -51,6 +59,7 @@ interface Document {
   informacion_adicional?: string // Nueva columna opcional
   titulo?: string // Nueva columna opcional
   id_tema?: string // Nueva columna opcional
+  tema?: TemaRelacionado | null // Tema relacionado desde la relación de Supabase
 }
 
 interface Filters {
@@ -108,23 +117,30 @@ const DocumentManagement: React.FC = () => {
       const activeFilters = overrideFilters || filters
       const activePage = overridePage !== undefined ? overridePage : currentPage
 
-      // Construir los filtros como parámetros
-      let params: string[] = []
+      let query = supabase
+        .from('senado')
+        .select(`
+          *,
+          tema:temas!id_tema (
+            id_tema,
+            nombre_tema,
+            id_gep,
+            desc_tema
+          )
+        `, { count: 'exact' })
 
-      // Fuente
       if (activeFilters.fuente) {
-        params.push(`fuente=ilike.%${activeFilters.fuente}%`)
+        query = query.ilike('fuente', `%${activeFilters.fuente}%`)
       }
 
-      // Fechas
       if (activeFilters.fechaDesde) {
-        params.push(`created_at=gte.${activeFilters.fechaDesde}T00:00:00`)
-      }
-      if (activeFilters.fechaHasta) {
-        params.push(`created_at=lte.${activeFilters.fechaHasta}T23:59:59`)
+        query = query.gte('created_at', `${activeFilters.fechaDesde}T00:00:00`)
       }
 
-      // Búsqueda en varios campos
+      if (activeFilters.fechaHasta) {
+        query = query.lte('created_at', `${activeFilters.fechaHasta}T23:59:59`)
+      }
+
       if (activeFilters.busqueda && activeFilters.busqueda.trim()) {
         const searchTerm = activeFilters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
         const fields = [
@@ -140,61 +156,28 @@ const DocumentManagement: React.FC = () => {
           'dependencia',
           'titulo'
         ]
-        const encodedTerm = encodeURIComponent(searchTerm)
-        const orConditions = fields.map(f => `${f}.ilike.*${encodedTerm}*`).join(',')
-        params.push(`or=(${orConditions})`)
+        
+        const orConditions = fields.map(field => `${field}.ilike.%${searchTerm}%`).join(',')
+        query = query.or(orConditions)
       }
 
-      // Paginación
       const from = (activePage - 1) * documentsPerPage
+      query = query
+        .order('created_at', { ascending: false })
+        .range(from, from + documentsPerPage - 1)
 
-      // URL final
-      let url = `${supabaseUrl}/rest/v1/senado?select=*&order=created_at.desc`
-      if (params.length > 0) url += `&${params.join('&')}`
-      url += `&limit=${documentsPerPage}&offset=${from}`
+      const { data, error, count } = await query
 
-      // Para contar total de documentos (sin paginación)
-      let countUrl = `${supabaseUrl}/rest/v1/senado?select=id_senado_doc`
-      if (params.length > 0) countUrl += `&${params.join('&')}`
-
-      // Fetch documentos paginados
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'apikey': supabaseServiceKey,
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) throw new Error(`Error: ${response.status}`)
-
-      const data = await response.json()
-
-      // Fetch total count
-      const countResponse = await fetch(countUrl, {
-        method: 'GET',
-        headers: {
-          'apikey': supabaseServiceKey,
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-          'Content-Type': 'application/json',
-          'Range-Unit': 'items',
-          'Range': '0-0',
-          'Prefer': 'count=exact'
-        }
-      })
-      let total = 0
-      if (countResponse.ok) {
-        const contentRange = countResponse.headers.get('content-range')
-        if (contentRange) {
-          const match = contentRange.match(/\/(\d+)$/)
-          if (match) total = parseInt(match[1], 10)
-        }
+      if (error) {
+        console.error("Error fetchDocuments:", error)
+        throw error
       }
+
       await fetchAllDocumentIds(activeFilters)
+      
       setDocuments(data || [])
-      setTotalDocuments(total)
-      setTotalPages(Math.ceil(total / documentsPerPage))
+      setTotalDocuments(count || 0)
+      setTotalPages(Math.ceil((count || 0) / documentsPerPage))
 
     } catch (error) {
       console.error("fetchDocuments:", error)
@@ -206,35 +189,39 @@ const DocumentManagement: React.FC = () => {
 
   const fetchAllDocumentIds = async (overrideFilters?: Filters) => {
     try {
-      // Use override filters if provided, otherwise use state
       const activeFilters = overrideFilters || filters
       
-      let params: string[] = []
+      let query = supabase
+        .from('senado')
+        .select('id_senado_doc', { count: 'exact' })
       
-      if (activeFilters.fuente) params.push(`fuente=ilike.%${activeFilters.fuente}%`)
-      if (activeFilters.fechaDesde) params.push(`created_at=gte.${activeFilters.fechaDesde}T00:00:00`)
-      if (activeFilters.fechaHasta) params.push(`created_at=lte.${activeFilters.fechaHasta}T23:59:59`)
+      if (activeFilters.fuente) {
+        query = query.ilike('fuente', `%${activeFilters.fuente}%`)
+      }
+      
+      if (activeFilters.fechaDesde) {
+        query = query.gte('created_at', `${activeFilters.fechaDesde}T00:00:00`)
+      }
+      
+      if (activeFilters.fechaHasta) {
+        query = query.lte('created_at', `${activeFilters.fechaHasta}T23:59:59`)
+      }
       
       if (activeFilters.busqueda?.trim()) {
         const searchTerm = activeFilters.busqueda.trim().toLowerCase().replace(/[,()\[\]]/g, ' ')
         const fields = ['iniciativa_texto', 'sinopsis', 'temas', 'personas', 'leyes', 'objeto', 'resumen', 'analisis', 'Proponente', 'dependencia']
-        const encodedTerm = encodeURIComponent(searchTerm)
-        params.push(`or=(${fields.map(f => `${f}.ilike.*${encodedTerm}*`).join(',')})`)
+        const orConditions = fields.map(field => `${field}.ilike.%${searchTerm}%`).join(',')
+        query = query.or(orConditions)
       }
 
-      let url = `${supabaseUrl}/rest/v1/senado?select=id_senado_doc`
-      if (params.length > 0) url += `&${params.join('&')}`
+      const { data, error } = await query
 
-      const response = await fetch(url, {
-        headers: {
-          'apikey': supabaseServiceKey,
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      if (error) {
+        console.error("Error fetchAllDocumentIds:", error)
+        return
+      }
 
-      const data: { id_senado_doc: number }[] = await response.json()
-      setDocumentIds(data.map(doc => doc.id_senado_doc))
+      setDocumentIds((data || []).map(doc => doc.id_senado_doc))
     } catch (error) {
       console.error("Error:", error)
     }
@@ -776,7 +763,7 @@ const DocumentManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 font-mono">
-                            {document.id_tema}
+                          {document.tema?.id_gep || 'N/A'}
                           </div>
                         </td>
                         <td className="px-6 py-4">

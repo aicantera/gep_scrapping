@@ -74,6 +74,20 @@ interface Alerta {
   newEmailsList?: string[];
   id_tema_gep?: number | null;
   id_subtema_gep?: number | null;
+
+  tema_relacionado?: {
+    id_tema: number;
+    nombre_tema: string;
+    id_gep: number;
+    desc_tema?: string;
+  } | null;
+  subtema_relacionado?: {
+    id_subtema: number;
+    subtema_text: string;
+    id_gep: number;
+    id_tema: number;
+    subtema_desc?: string;
+  } | null;
 }
 
 const AlertsManagement: React.FC = () => {
@@ -121,48 +135,102 @@ const AlertsManagement: React.FC = () => {
         return alertas
       }
 
-      // Cargar datos de clientes con sus listas de distribución
-      const { data: clientesData, error } = await supabase
-        .from('clientes')
-        .select('id_cliente, listas_distribucion')
-        .in('id_cliente', clientesIds)
+      let listasVistaMap = new Map<string, any[]>();
+      
+      const { data: listasData, error: listasError } = await supabase
+        .from('vw_clientes_listas_distribucion')
+        .select('*')
+        .in('id_cliente', clientesIds);
 
-      if (error) {
-        console.error('❌ Error cargando datos de clientes para listas:', error)
-        return alertas
+      if (listasError) {
+        console.error('❌ Error cargando listas desde vista:', listasError);
+        return alertas;
       }
 
-      // Crear mapa de clientes para búsqueda rápida
-      const clientesMap = new Map()
-      if (clientesData) {
-        clientesData.forEach(cliente => {
-          let listasDistribucion = []
-          
-          // Parsear listas de distribución si es string
-          if (cliente.listas_distribucion) {
-            if (typeof cliente.listas_distribucion === 'string') {
-              try {
-                listasDistribucion = JSON.parse(cliente.listas_distribucion)
-              } catch (e) {
-                console.warn('Error parseando listas_distribucion para cliente:', cliente.id_cliente, e)
-                listasDistribucion = []
-              }
-            } else if (Array.isArray(cliente.listas_distribucion)) {
-              listasDistribucion = cliente.listas_distribucion
-            }
+      const listasResult = listasData || [];
+      listasResult.forEach((item: any) => {
+        if (item.listas_distribucion && Array.isArray(item.listas_distribucion)) {
+          listasVistaMap.set(item.id_cliente, item.listas_distribucion);
+        } 
+        else {
+          if (!listasVistaMap.has(item.id_cliente)) {
+            listasVistaMap.set(item.id_cliente, []);
+          }
+          listasVistaMap.get(item.id_cliente)!.push(item);
+        }
+      });
+
+      const convertirTemasVistaAStrings = (temasVista: any[]): string[] => {
+        if (!temasVista || temasVista.length === 0) return [];
+        
+        return temasVista.map((item: any) => {
+          if (item.nombre_tema) return item.nombre_tema;
+          if (item.subtema_text) return item.subtema_text;
+          return '';
+        }).filter(Boolean);
+      };
+
+      const convertirListasVista = (listasVista: any[]): any[] => {
+        if (!listasVista || listasVista.length === 0) return [];
+        
+        return listasVista.map((lista: any) => {
+          if (lista.nombre && (lista.temas_subtemas !== undefined || lista.correos !== undefined)) {
+            return {
+              id: lista.id || lista.id_lista || crypto.randomUUID(),
+              nombre: lista.nombre || lista.nombre_lista || 'Lista sin nombre',
+              temas_subtemas: Array.isArray(lista.temas_subtemas) 
+                ? convertirTemasVistaAStrings(lista.temas_subtemas)
+                : [],
+              correos: Array.isArray(lista.correos) 
+                ? lista.correos.map((correo: any) => {
+                    if (typeof correo === 'string') {
+                      return { nombre: '', correo };
+                    }
+                    return correo?.nombre !== undefined 
+                      ? correo 
+                      : { nombre: '', correo: correo.correo || correo || '' };
+                  })
+                : []
+            };
           }
           
-          clientesMap.set(cliente.id_cliente, listasDistribucion)
-        })
-      }
+          return {
+            id: lista.id || lista.id_lista || crypto.randomUUID(),
+            nombre: lista.nombre || lista.nombre_lista || 'Lista sin nombre',
+            temas_subtemas: lista.temas_subtemas 
+              ? (Array.isArray(lista.temas_subtemas) 
+                  ? convertirTemasVistaAStrings(lista.temas_subtemas)
+                  : [])
+              : [],
+            correos: lista.correos 
+              ? (Array.isArray(lista.correos) 
+                  ? lista.correos.map((correo: any) => {
+                      if (typeof correo === 'string') {
+                        return { nombre: '', correo };
+                      }
+                      return correo?.nombre !== undefined 
+                        ? correo 
+                        : { nombre: '', correo: correo.correo || correo || '' };
+                    })
+                  : [])
+              : []
+          };
+        });
+      };
+
+      const clientesMap = new Map();
+      listasVistaMap.forEach((listasVista, idCliente) => {
+        const listasDistribucion = convertirListasVista(listasVista);
+        clientesMap.set(idCliente, listasDistribucion);
+      });
 
       // Procesar cada alerta para calcular sus listas de distribución
       const alertasConListas = alertas.map(alerta => {
-        const listasCliente = clientesMap.get(alerta.id_cliente) || []
-        const temasAlerta = alerta.temas_subtemas || []
+        const listasCliente = clientesMap.get(alerta.id_cliente) || [];
+        const temasAlerta = alerta.temas_subtemas || [];
         
         // Buscar listas que contengan los temas de la alerta
-        const correosDestino: string[] = []
+        const correosDestino: string[] = [];
         
         listasCliente.forEach((lista: any) => {
           if (lista.temas_subtemas && Array.isArray(lista.temas_subtemas)) {
@@ -171,38 +239,38 @@ const AlertsManagement: React.FC = () => {
               lista.temas_subtemas.some((temaLista: string) => 
                 temaLista.toLowerCase().trim() === temaAlerta.toLowerCase().trim()
               )
-            )
+            );
             
             if (hayCoincidencia && lista.correos && Array.isArray(lista.correos)) {
               // lista.correos puede ser un array de strings o de objetos { correo, nombre }
               lista.correos.forEach((c: any) => {
                 if (typeof c === 'string') {
-                  correosDestino.push(c)
+                  correosDestino.push(c);
                 } else if (c && typeof c.correo === 'string') {
-                  correosDestino.push(c.correo)
+                  correosDestino.push(c.correo);
                 }
-              })
+              });
             }
           }
-        })
+        });
 
         // Eliminar duplicados de correos
-        const correosUnicos = Array.from(new Set(correosDestino))
+        const correosUnicos = Array.from(new Set(correosDestino));
 
         // Convertir a la forma esperada por la interfaz: { nombre, correo }[]
-        const listasDistribucion = correosUnicos.map(email => ({ nombre: '', correo: email }))
+        const listasDistribucion = correosUnicos.map(email => ({ nombre: '', correo: email }));
         
         return {
           ...alerta,
           listas_distribucion: listasDistribucion
-        }
-      })
+        };
+      });
 
-      return alertasConListas
+      return alertasConListas;
 
     } catch (error) {
-      console.error('❌ Error calculando listas de distribución:', error)
-      return alertas
+      console.error('❌ Error calculando listas de distribución:', error);
+      return alertas;
     }
   }
 
@@ -220,8 +288,6 @@ const AlertsManagement: React.FC = () => {
           status_alerta,
           temas,
           sub_tema,
-          id_tema_gep,
-          id_subtema_gep,
           fuente,
           estado,
           id_doc_senado,
@@ -262,6 +328,19 @@ const AlertsManagement: React.FC = () => {
             informacion_adicional,
             titulo,
             link_documento
+          ),
+          tema:temas!id_tema (
+            id_tema,
+            nombre_tema,
+            id_gep,
+            desc_tema
+          ),
+          subtema:subtemas!id_subtema (
+            id_subtema,
+            subtema_text,
+            id_gep,
+            id_tema,
+            subtema_desc
           )
         `)
         .order('id_alerta', { ascending: false })
@@ -349,6 +428,20 @@ const AlertsManagement: React.FC = () => {
           tipo_alerta: alerta.tipo_alerta || null,
           id_tema_gep: alerta.id_tema_gep || null,
           id_subtema_gep: alerta.id_subtema_gep || null,
+          
+          tema_relacionado: {
+            id_tema: alerta.tema.id_tema,
+            nombre_tema: alerta.tema.nombre_tema,
+            id_gep: alerta.tema.id_gep,
+            desc_tema: alerta.tema.desc_tema || undefined
+          },
+          subtema_relacionado: {
+            id_subtema: alerta.subtema.id_subtema,
+            subtema_text: alerta.subtema.subtema_text,
+            id_gep: alerta.subtema.id_gep,
+            id_tema: alerta.subtema.id_tema,
+            subtema_desc: alerta.subtema.subtema_desc || undefined
+          },
           
           // Campos derivados para UI (siempre arrays)
           nombre_cliente: nombreCliente,
@@ -529,9 +622,9 @@ const AlertsManagement: React.FC = () => {
       'Documento': alerta.documento_senado?.sinopsis || 
         alerta.documento_senado?.iniciativa_texto || 
           'Sin documento',
-      "Id Tema": alerta?.id_tema_gep || 'N/A',
+      "Id Tema": alerta?.tema_relacionado?.id_gep || 'N/A',
       'Temas': (alerta.temas || []).join(', '),
-      "Id Subtema": alerta?.id_subtema_gep || 'N/A',
+      "Id Subtema": alerta?.subtema_relacionado?.id_gep || 'N/A',
       'Subtemas': (alerta.sub_tema || []).join(', '),
       'Estado': alerta.estado,
       'Enviado por Correo': alerta.enviado_correo ? 'Sí' : 'No',
@@ -823,7 +916,7 @@ const AlertsManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 font-mono">
-                          {alerta.id_tema_gep}
+                          {alerta.tema_relacionado?.id_gep}
                         </div>
                       </td>
                       <td className="px-6 py-4">

@@ -39,6 +39,13 @@ interface ChartData {
   documents: number;
 }
 
+interface TemaRelacionado {
+  id_tema: number;
+  nombre_tema: string;
+  id_gep: number;
+  desc_tema?: string;
+}
+
 interface Document {
   id_senado_doc: number;
   created_at: string;
@@ -64,6 +71,7 @@ interface Document {
   id_tema: string;
   id_subtema: string;
   subtema: string;
+  tema: TemaRelacionado;
 }
 
 const DashboardHome = () => {
@@ -139,7 +147,7 @@ const DashboardHome = () => {
       // 2. Obtener TODOS los documentos del día actual (sin paginación)
       const { data: allDocumentsToday, error: allDocsError } = await supabase
         .from("senado")
-        .select("*")
+        .select("*, tema:temas!id_tema (id_tema, nombre_tema, id_gep, desc_tema)")
         .gte("created_at", startOfDay.toISOString())
         .lt("created_at", endOfDay.toISOString())
         .order("created_at", { ascending: false });
@@ -389,7 +397,7 @@ const DashboardHome = () => {
         doc.iniciativa_texto,
         doc.link_iniciativa,
         doc.fuente,
-        doc.id_tema,
+        doc.tema?.id_gep || 'N/A',
         doc.temas,
         doc.id_subtema,
         doc.subtema,
@@ -846,7 +854,7 @@ const DashboardHome = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center text-sm text-gray-900 font-mono">
-                        {document.id_tema}
+                        {document.tema?.id_gep || 'N/A'}
                       </div>
                     </td>
                     <td className="px-4 py-3">

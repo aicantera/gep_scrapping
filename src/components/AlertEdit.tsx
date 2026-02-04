@@ -374,8 +374,85 @@ const AlertEdit: React.FC = () => {
         .select("*")
         .eq('id_cliente', alertaData.id_cliente);
       
-      const lists = typeof clienteData?.[0]?.listas_distribucion === 'string' ? JSON.parse(clienteData?.[0]?.listas_distribucion) : clienteData?.[0]?.listas_distribucion || [];
-      const emailsCount = lists[0]?.correos?.length || 0;
+      const [listasResult, temasResult] = await Promise.all([
+        supabase
+          .from('vw_clientes_listas_distribucion')
+          .select('*')
+          .eq('id_cliente', alertaData.id_cliente),
+        supabase
+          .from('vw_clientes_temas_inscritos')
+          .select('*')
+          .eq('id_cliente', alertaData.id_cliente)
+      ]);
+
+      let listasVistaData: any[] = [];
+      if (listasResult.data) {
+        const item = listasResult.data[0];
+        if (item?.listas_distribucion && Array.isArray(item.listas_distribucion)) {
+          listasVistaData = item.listas_distribucion;
+        } else {
+          listasVistaData = listasResult.data || [];
+        }
+      }
+
+      const convertirListasVista = (listasVista: any[]): any[] => {
+        if (!listasVista || listasVista.length === 0) return [];
+        
+        return listasVista.map((lista: any) => {
+          if (lista.nombre && (lista.temas_subtemas !== undefined || lista.correos !== undefined)) {
+            return {
+              id: lista.id || lista.id_lista || crypto.randomUUID(),
+              nombre: lista.nombre || lista.nombre_lista || 'Lista sin nombre',
+              correos: Array.isArray(lista.correos) 
+                ? lista.correos.map((correo: any) => {
+                    if (typeof correo === 'string') {
+                      return { nombre: '', correo };
+                    }
+                    return correo?.nombre !== undefined 
+                      ? correo 
+                      : { nombre: '', correo: correo.correo || correo || '' };
+                  })
+                : []
+            };
+          }
+          
+          return {
+            id: lista.id || lista.id_lista || crypto.randomUUID(),
+            nombre: lista.nombre || lista.nombre_lista || 'Lista sin nombre',
+            correos: lista.correos 
+              ? (Array.isArray(lista.correos) 
+                  ? lista.correos.map((correo: any) => {
+                      if (typeof correo === 'string') {
+                        return { nombre: '', correo };
+                      }
+                      return correo?.nombre !== undefined 
+                        ? correo 
+                        : { nombre: '', correo: correo.correo || correo || '' };
+                    })
+                  : [])
+              : []
+          };
+        });
+      };
+
+      let temasSuscrit: any[] = [];
+      if (temasResult.data && temasResult.data.length > 0) {
+        const item = temasResult.data[0];
+        temasSuscrit = item.temas_inscritos || [];
+      }
+
+      const convertirTemasVistaAStrings = (temasVista: any[]): string[] => {
+        if (!temasVista || temasVista.length === 0) return [];
+        
+        return temasVista.map((item: any) => {
+          if (item.nombre_tema) return item.nombre_tema;
+          if (item.subtema_text) return item.subtema_text;
+          return '';
+        }).filter(Boolean);
+      };
+
+      const lists = convertirListasVista(listasVistaData);
+      const emailsCount = lists.length > 0 && lists[0]?.correos ? lists[0].correos.length : 0;
       
       setCliente({
         nombre_cliente: clienteData?.[0]?.nombre_cliente,
@@ -383,8 +460,8 @@ const AlertEdit: React.FC = () => {
         email: clienteData?.[0]?.email,
         listas_distribucion: lists,
         emailsCount,
-        newEmailsList: lists[0]?.correos || [],
-        temas_subtemas: clienteData?.[0]?.temas_suscrit
+        newEmailsList: lists.length > 0 && lists[0]?.correos ? lists[0].correos.map((c: any) => typeof c === 'string' ? c : c.correo) : [],
+        temas_subtemas: convertirTemasVistaAStrings(temasSuscrit)
       });
       setAlert({
         ...alertaData,
@@ -651,10 +728,7 @@ const AlertEdit: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Temas y Subtemas:</span>
-                  <div className="text-gray-900">{cliente.temas_subtemas?.map((tema: string) => {
-                    const temaData = JSON.parse(tema);
-                    return temaData.nombre_tema || temaData.subtema_text;
-                  }).join(', ')}</div>
+                  <div className="text-gray-900">{cliente.temas_subtemas?.join(', ') || 'Sin temas asignados'}</div>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Destinatarios:</span>

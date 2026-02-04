@@ -53,7 +53,7 @@ interface ThemeFormData {
   nombre_tema: string
   id_gep?: string
   desc_tema?: string
-  subtemas: { subtema_text: string; id_gep?: string; subtema_desc?: string }[]
+  subtemas: { subtema_text: string; id_gep?: string; subtema_desc?: string, id_subtema?: number }[]
 }
 
 interface ClienteRelacionado {
@@ -167,14 +167,44 @@ const ThemeManagement: React.FC = () => {
   // Función para verificar relaciones del tema
   const checkThemeRelations = async (theme: Theme) => {
     try {
-      // Buscar clientes relacionados
-      const { data: clientes } = await supabase
+      const { data: clientesData } = await supabase
         .from('clientes')
-        .select('id_cliente, nombre_cliente, temas_suscrit')
+        .select('id_cliente, nombre_cliente');
       
-      const relacionadosClientes = (clientes || []).filter((c: ClienteRelacionado) => 
-        Array.isArray(c.temas_suscrit) && c.temas_suscrit.includes(theme.nombre_tema)
-      )
+      const clienteIds = (clientesData || []).map(c => c.id_cliente);
+      
+      const { data: temasVistaData } = await supabase
+        .from('vw_clientes_temas_inscritos')
+        .select('*')
+        .in('id_cliente', clienteIds);
+      
+      const temasPorClienteMap = new Map<string, any[]>();
+      if (temasVistaData) {
+        temasVistaData.forEach((item: any) => {
+          const temasInscritos = item.temas_inscritos || [];
+          temasPorClienteMap.set(item.id_cliente, temasInscritos);
+        });
+      }
+      
+      const convertirTemasVistaAStrings = (temasVista: any[]): string[] => {
+        if (!temasVista || temasVista.length === 0) return [];
+        
+        return temasVista.map((item: any) => {
+          if (item.nombre_tema) return item.nombre_tema;
+          if (item.subtema_text) return item.subtema_text;
+          return '';
+        }).filter(Boolean);
+      };
+      
+      const relacionadosClientes = (clientesData || []).filter((c: any) => {
+        const temasSuscrit = temasPorClienteMap.get(c.id_cliente) || [];
+        const temasStrings = convertirTemasVistaAStrings(temasSuscrit);
+        return temasStrings.includes(theme.nombre_tema);
+      }).map((c: any) => ({
+        id_cliente: c.id_cliente,
+        nombre_cliente: c.nombre_cliente,
+        temas_suscrit: convertirTemasVistaAStrings(temasPorClienteMap.get(c.id_cliente) || [])
+      }));
       
       // Buscar documentos relacionados
       const { data: documentos } = await supabase
@@ -495,30 +525,28 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
       
       // Manejar subtemas
       const validSubthemes = validSubthemesForUpdate
+
+      const { data: existingSubthemes, error: fetchError } = await supabase
+        .from('subtemas')
+        .select('*')
+        .eq('id_tema', selectedTheme.id_tema)
+
+      if (fetchError) {
+        console.error('❌ Error al obtener subtemas existentes:', fetchError)
+        throw fetchError
+      }
+
+      const existingSubthemesList = existingSubthemes || []
       
       if (validSubthemes.length > 0) {
         try {
-          // Primero eliminar subtemas existentes
-          const { error: deleteError } = await supabase
-            .from('subtemas')
-            .delete()
-            .eq('id_tema', selectedTheme.id_tema)
-          
-          if (deleteError) {
-            console.error('❌ Error eliminando subtemas existentes:', deleteError)
-            throw deleteError
-          }
-          
-          // Verificar duplicados solo dentro de los subtemas del mismo tema
-          // Verificar duplicados en nombre e id_gep dentro del mismo tema
           const seenNames = new Set<string>()
           const seenIds = new Set<string>()
-          
+
           for (const st of validSubthemes) {
             const stName = st.subtema_text.trim().toLowerCase()
             const stIdGep = getIdGepAsString(st.id_gep)
-            
-            // Verificar duplicados de nombre dentro del mismo tema
+
             if (seenNames.has(stName)) {
               setError(`No puede haber dos subtemas con el mismo nombre en el mismo tema. El subtema "${st.subtema_text.trim()}" está duplicado.`)
               setLoading(false)
@@ -526,7 +554,6 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
             }
             seenNames.add(stName)
             
-            // Verificar duplicados de id_gep dentro del mismo tema
             if (stIdGep && seenIds.has(stIdGep)) {
               setError(`No puede haber dos subtemas con el mismo ID GEP en el mismo tema. El ID GEP "${stIdGep}" está duplicado.`)
               setLoading(false)
@@ -537,40 +564,92 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
             }
           }
 
-          // Crear nuevos subtemas (sin ID - se genera automáticamente)
-          const subtemasToInsert: SubthemeCreate[] = validSubthemes.map(st => ({
-            id_tema: selectedTheme.id_tema,
-            subtema_text: st.subtema_text.trim(),
-            id_gep: getIdGepAsString(st.id_gep),
-            subtema_desc: st.subtema_desc?.trim() || ''
-            // ✅ NO incluye id_subtema - se genera automáticamente
-          }))
-          
-          console.log('🔄 Insertando subtemas SIN especificar ID:', subtemasToInsert)
-          
-          const { data: subtemasData, error: subthemesError } = await supabase
-            .from('subtemas')
-            .insert(subtemasToInsert)
-            .select('*')
-          
-          if (subthemesError) {
-            console.error('❌ Error creando nuevos subtemas:', subthemesError)
-            
-            // Manejo específico para error de clave duplicada en subtemas
-            if (subthemesError.code === '23505') {
-              console.error('🔧 ERROR DE SECUENCIA EN SUBTEMAS - ID NO DEBE SER ENVIADO')
-              throw new Error(`Error de secuencia en subtemas. La tabla 'subtemas' tiene problemas de auto-incremento. 
-              
-🔧 SOLUCIÓN: Ejecuta en Supabase SQL Editor:
-SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FROM subtemas) + 1);`)
+          const subtemasToUpdate: Array<{id_subtema: number, data: SubthemeCreate}> = []
+          const subtemasToCreate: SubthemeCreate[] = []
+          const subtemasToDelete: number[] = []
+
+          for (const newSubtema of validSubthemes) {
+            if(newSubtema.id_subtema) {
+              const existingSubtema = existingSubthemesList.find(existing => existing.id_subtema === newSubtema.id_subtema)
+
+            if (existingSubtema) {
+              subtemasToUpdate.push({
+                id_subtema: existingSubtema.id_subtema,
+                data: {
+                  id_tema: selectedTheme.id_tema,
+                  subtema_text: newSubtema.subtema_text.trim(),
+                  id_gep: newSubtema.id_gep || '',
+                  subtema_desc: newSubtema.subtema_desc?.trim() || ''
+                }
+              })
+            } else {
+              subtemasToCreate.push({
+                id_tema: selectedTheme.id_tema,
+                subtema_text: newSubtema.subtema_text.trim(),
+                id_gep: newSubtema.id_gep || '',
+                subtema_desc: newSubtema.subtema_desc?.trim() || ''
+              })
             }
-            
-            throw subthemesError
-          } else if (subtemasData?.length > 0) {
-            //Se deja el console.log debido a que se ocupa utilizar la variable subtemasData
-            console.log('✅ Subtemas actualizados exitosamente:')
-          }          
+          } else {
+            subtemasToCreate.push({
+              id_tema: selectedTheme.id_tema,
+              subtema_text: newSubtema.subtema_text.trim(),
+              id_gep: newSubtema.id_gep || '',
+              subtema_desc: newSubtema.subtema_desc?.trim() || ''
+            })
+          }}
+
+          for (const existingSubtema of existingSubthemesList) {
+            const existsInForm = validSubthemes.some(newSubtema => newSubtema.id_subtema === existingSubtema.id_subtema)
+            if (!existsInForm) {
+              subtemasToDelete.push(existingSubtema.id_subtema)
+            }
+          }
           
+
+          for(const { id_subtema, data } of subtemasToUpdate) {
+            const { error: updateError } = await supabase
+              .from('subtemas')
+              .update({
+                subtema_text: data.subtema_text.trim(),
+                id_gep: Number(data.id_gep) || '',
+                subtema_desc: data.subtema_desc?.trim() || ''
+              })
+              .eq('id_subtema', id_subtema)
+
+            if (updateError) {
+              console.error('❌ Error actualizando subtema:', updateError)
+              throw updateError
+            }
+          }
+
+          if(subtemasToCreate.length > 0) {
+            const { error: createError } = await supabase
+              .from('subtemas')
+              .insert(subtemasToCreate)
+              .select('*')
+
+            if(createError) {
+              console.error('❌ Error creando nuevos subtemas:', createError)
+              if(createError.code === '23505') {
+                console.error('🔧 ERROR DE SECUENCIA EN SUBTEMAS - ID NO DEBE SER ENVIADO')
+                throw new Error(`Error de secuencia en subtemas. La tabla 'subtemas' tiene problemas de auto-incremento.`)
+              }
+              throw createError
+            }
+          }
+
+          if(subtemasToDelete.length > 0) {
+            const { error: deleteError } = await supabase
+              .from('subtemas')
+              .delete()
+              .eq('id_subtema', subtemasToDelete)
+
+            if (deleteError) {
+              console.error('❌ Error eliminando subtemas:', deleteError)
+              throw deleteError
+            }
+          }       
         } catch (subthemeError) {
           console.error('❌ Error manejando subtemas:', subthemeError)
           const errorMessage = subthemeError instanceof Error ? subthemeError.message : 'Error desconocido'
@@ -752,7 +831,8 @@ SELECT setval('subtemas_id_subtema_seq', (SELECT COALESCE(MAX(id_subtema), 0) FR
       subtemas: subtemas.map(st => ({
         subtema_text: st.subtema_text,
         id_gep: idGepToString(st.id_gep),
-        subtema_desc: st.subtema_desc
+        subtema_desc: st.subtema_desc,
+        id_subtema: st.id_subtema
       }))
     })
     

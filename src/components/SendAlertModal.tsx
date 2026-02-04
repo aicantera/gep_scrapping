@@ -29,29 +29,83 @@ const SendAlertModal: React.FC<{
 
       if (error) throw error;
 
-      // Transform data (listas_distribucion from string to array)
-      const transformedData =
-        data?.map((client) => {
-          let listas_distribucion: any[] = [];
-
-          if (client.listas_distribucion) {
-            if (typeof client.listas_distribucion === 'string') {
-              try {
-                listas_distribucion = JSON.parse(client.listas_distribucion)
-              } catch (e) {
-                console.warn('Error parseando listas_distribucion para cliente:', client.id_cliente, e)
-                listas_distribucion = [];
+      const clienteIds = (data || []).map(c => c.id_cliente);
+      
+      let listasVistaMap = new Map<string, any[]>();
+      
+      if (clienteIds.length > 0) {
+        const { data: listasData, error: listasError } = await supabase
+          .from('vw_clientes_listas_distribucion')
+          .select('*')
+          .in('id_cliente', clienteIds);
+        
+        if (listasError) {
+          console.warn('Error cargando listas desde vista:', listasError);
+        } else {
+          const listasResult = listasData || [];
+          listasResult.forEach((item: any) => {
+            if (item.listas_distribucion && Array.isArray(item.listas_distribucion)) {
+              listasVistaMap.set(item.id_cliente, item.listas_distribucion);
+            } 
+            else {
+              if (!listasVistaMap.has(item.id_cliente)) {
+                listasVistaMap.set(item.id_cliente, []);
               }
-            } else if (Array.isArray(client.listas_distribucion)) {
-              listas_distribucion = client.listas_distribucion;
+              listasVistaMap.get(item.id_cliente)!.push(item);
             }
-          }
+          });
+        }
+      }
 
-          return {
-            ...client,
-            listas_distribucion: listas_distribucion
+      const convertirListasVista = (listasVista: any[]): any[] => {
+        if (!listasVista || listasVista.length === 0) return [];
+        
+        return listasVista.map((lista: any) => {
+          if (lista.nombre && (lista.temas_subtemas !== undefined || lista.correos !== undefined)) {
+            return {
+              id: lista.id || lista.id_lista || crypto.randomUUID(),
+              nombre: lista.nombre || lista.nombre_lista || 'Lista sin nombre',
+              correos: Array.isArray(lista.correos) 
+                ? lista.correos.map((correo: any) => {
+                    if (typeof correo === 'string') {
+                      return { nombre: '', correo };
+                    }
+                    return correo?.nombre !== undefined 
+                      ? correo 
+                      : { nombre: '', correo: correo.correo || correo || '' };
+                  })
+                : []
+            };
           }
-        }) || [];
+          
+          return {
+            id: lista.id || lista.id_lista || crypto.randomUUID(),
+            nombre: lista.nombre || lista.nombre_lista || 'Lista sin nombre',
+            correos: lista.correos 
+              ? (Array.isArray(lista.correos) 
+                  ? lista.correos.map((correo: any) => {
+                      if (typeof correo === 'string') {
+                        return { nombre: '', correo };
+                      }
+                      return correo?.nombre !== undefined 
+                        ? correo 
+                        : { nombre: '', correo: correo.correo || correo || '' };
+                    })
+                  : [])
+              : []
+          };
+        });
+      };
+
+      const transformedData = (data || []).map((client) => {
+        const listasVistaData = listasVistaMap.get(client.id_cliente) || [];
+        const listas_distribucion = convertirListasVista(listasVistaData);
+
+        return {
+          ...client,
+          listas_distribucion: listas_distribucion
+        };
+      });
 
       setClients(transformedData);
       setError(null);

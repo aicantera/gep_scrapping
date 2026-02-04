@@ -241,6 +241,13 @@ const ThemeManagement: React.FC = () => {
     return Number.isInteger(num) && num >= 0
   }
 
+  // Función para validar que el ID GEP no supere 5 dígitos
+  const isValidIdGep = (value: string): boolean => {
+    if (!value.trim()) return false
+    const num = Number(value.trim())
+    return Number.isInteger(num) && num >= 0 && value.trim().length <= 5
+  }
+
     // Función para crear tema
   const createTheme = async () => {
     try {
@@ -257,6 +264,11 @@ const ThemeManagement: React.FC = () => {
 
       if (!isValidInteger(themeIdGepStr)) {
         setError('El ID GEP debe ser un número entero válido.')
+        return
+      }
+
+      if (!isValidIdGep(themeIdGepStr)) {
+        setError('El ID GEP del tema no puede superar los 5 dígitos.')
         return
       }
       
@@ -280,6 +292,13 @@ const ThemeManagement: React.FC = () => {
           return stIdGep && !isValidInteger(stIdGep)
         })) {
           setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
+          return
+        }
+        if (validSubthemes.some(st => {
+          const stIdGep = getIdGepAsString(st.id_gep)
+          return stIdGep && !isValidIdGep(stIdGep)
+        })) {
+          setError('Todos los ID GEP de los subtemas no pueden superar los 5 dígitos.')
           return
         }
       }
@@ -470,6 +489,11 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
         return
       }
 
+      if (!isValidIdGep(themeIdGepStr)) {
+        setError('El ID GEP del tema no puede superar los 5 dígitos.')
+        return
+      }
+
       // Validar subtemas si los hay
       const validSubthemesForUpdate = themeFormData.subtemas.filter(st => st.subtema_text.trim())
       
@@ -483,6 +507,13 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
           return stIdGep && !isValidInteger(stIdGep)
         })) {
           setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
+          return
+        }
+        if (validSubthemesForUpdate.some(st => {
+          const stIdGep = getIdGepAsString(st.id_gep)
+          return stIdGep && !isValidIdGep(stIdGep)
+        })) {
+          setError('Todos los ID GEP de los subtemas no pueden superar los 5 dígitos.')
           return
         }
       }
@@ -1366,10 +1397,11 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
                     <input
                       type="text"
                       value={themeFormData.id_gep || ''}
+                      maxLength={5}
                       onChange={(e) => {
                         const value = e.target.value
-                        // Solo permitir números enteros (incluyendo vacío para poder borrar)
-                        if (value === '' || /^\d+$/.test(value)) {
+                        // Solo permitir números enteros (incluyendo vacío para poder borrar) y máximo 5 dígitos
+                        if (value === '' || (/^\d+$/.test(value) && value.length <= 5)) {
                           setThemeFormData(prev => ({ ...prev, id_gep: value }))
                         }
                       }}
@@ -1442,10 +1474,11 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
                               <input
                                 type="text"
                                 value={subtema.id_gep || ''}
+                                maxLength={5}
                                 onChange={(e) => {
                                   const value = e.target.value
-                                  // Solo permitir números enteros (incluyendo vacío para poder borrar)
-                                  if (value === '' || /^\d+$/.test(value)) {
+                                  // Solo permitir números enteros (incluyendo vacío para poder borrar) y máximo 5 dígitos
+                                  if (value === '' || (/^\d+$/.test(value) && value.length <= 5)) {
                                     updateSubthemeInForm(index, 'id_gep', value)
                                   }
                                 }}

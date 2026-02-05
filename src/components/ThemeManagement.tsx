@@ -235,11 +235,11 @@ const ThemeManagement: React.FC = () => {
   }
 
     // Función para validar que un valor sea un número entero
-  const isValidInteger = (value: string): boolean => {
-    if (!value.trim()) return false
-    const num = Number(value.trim())
-    return Number.isInteger(num) && num >= 0
-  }
+  // const isValidInteger = (value: string): boolean => {
+  //   if (!value.trim()) return false
+  //   const num = Number(value.trim())
+  //   return Number.isInteger(num) && num >= 0
+  // }
 
   // Función para validar que el ID GEP no supere 5 dígitos
   const isValidIdGep = (value: string): boolean => {

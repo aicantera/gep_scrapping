@@ -28,7 +28,7 @@ interface Theme {
 // Tipo para crear un tema (sin ID - se genera automáticamente)
 interface ThemeCreate {
   nombre_tema: string
-  id_gep?: string
+  id_gep?: string | null
   desc_tema?: string
 }
 
@@ -37,7 +37,7 @@ interface Subtheme {
   created_at: string
   id_tema: number
   subtema_text: string
-  id_gep?: string
+  id_gep?: string | null
   subtema_desc?: string
 }
 
@@ -45,7 +45,7 @@ interface Subtheme {
 interface SubthemeCreate {
   id_tema: number
   subtema_text: string
-  id_gep?: string
+  id_gep?: string | null
   subtema_desc?: string
 }
 
@@ -243,7 +243,7 @@ const ThemeManagement: React.FC = () => {
 
   // Función para validar que el ID GEP no supere 5 dígitos
   const isValidIdGep = (value: string): boolean => {
-    if (!value.trim()) return false
+    // if (!value.trim()) return false
     const num = Number(value.trim())
     return Number.isInteger(num) && num >= 0 && value.trim().length <= 5
   }
@@ -257,15 +257,15 @@ const ThemeManagement: React.FC = () => {
       }
 
       const themeIdGepStr = getIdGepAsString(themeFormData.id_gep)
-      if (!themeIdGepStr) {
-        setError('El ID GEP del tema es obligatorio.')
-        return
-      }
+      // if (!themeIdGepStr) {
+      //   setError('El ID GEP del tema es obligatorio.')
+      //   return
+      // }
 
-      if (!isValidInteger(themeIdGepStr)) {
-        setError('El ID GEP debe ser un número entero válido.')
-        return
-      }
+      // if (!isValidInteger(themeIdGepStr)) {
+      //   setError('El ID GEP debe ser un número entero válido.')
+      //   return
+      // }
 
       if (!isValidIdGep(themeIdGepStr)) {
         setError('El ID GEP del tema no puede superar los 5 dígitos.')
@@ -283,17 +283,17 @@ const ThemeManagement: React.FC = () => {
           setError('Todos los subtemas deben tener nombre.')
           return
         }
-        if (validSubthemes.some(st => !getIdGepAsString(st.id_gep))) {
-          setError('Todos los subtemas deben tener ID GEP.')
-          return
-        }
-        if (validSubthemes.some(st => {
-          const stIdGep = getIdGepAsString(st.id_gep)
-          return stIdGep && !isValidInteger(stIdGep)
-        })) {
-          setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
-          return
-        }
+        // if (validSubthemes.some(st => !getIdGepAsString(st.id_gep))) {
+        //   setError('Todos los subtemas deben tener ID GEP.')
+        //   return
+        // }
+        // if (validSubthemes.some(st => {
+        //   const stIdGep = getIdGepAsString(st.id_gep)
+        //   return stIdGep && !isValidInteger(stIdGep)
+        // })) {
+        //   setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
+        //   return
+        // }
         if (validSubthemes.some(st => {
           const stIdGep = getIdGepAsString(st.id_gep)
           return stIdGep && !isValidIdGep(stIdGep)
@@ -324,7 +324,7 @@ const ThemeManagement: React.FC = () => {
       // Preparar datos para inserción (sin ID)
       const themeToCreate: ThemeCreate = {
         nombre_tema: themeFormData.nombre_tema.trim(),
-        id_gep: getIdGepAsString(themeFormData.id_gep),
+        id_gep: themeIdGep === '' ? null : themeIdGep,
         desc_tema: themeFormData.desc_tema?.trim() || ''
         // ✅ NO incluye id_tema - se genera automáticamente
       }
@@ -381,7 +381,7 @@ const ThemeManagement: React.FC = () => {
           const subtemasToInsert: SubthemeCreate[] = validSubthemes.map(st => ({
             id_tema: tema.id_tema,
             subtema_text: st.subtema_text.trim(),
-            id_gep: getIdGepAsString(st.id_gep),
+            id_gep: getIdGepAsString(st.id_gep) === '' ? null : getIdGepAsString(st.id_gep),
             subtema_desc: st.subtema_desc?.trim() || ''
             // ✅ NO incluye id_subtema - se genera automáticamente
           }))          
@@ -479,15 +479,15 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
       }
 
       const themeIdGepStr = getIdGepAsString(themeFormData.id_gep)
-      if (!themeIdGepStr) {
-        setError('El ID GEP del tema es obligatorio.')
-        return
-      }
+      // if (!themeIdGepStr) {
+      //   setError('El ID GEP del tema es obligatorio.')
+      //   return
+      // }
 
-      if (!isValidInteger(themeIdGepStr)) {
-        setError('El ID GEP debe ser un número entero válido.')
-        return
-      }
+      // if (!isValidInteger(themeIdGepStr)) {
+      //   setError('El ID GEP debe ser un número entero válido.')
+      //   return
+      // }
 
       if (!isValidIdGep(themeIdGepStr)) {
         setError('El ID GEP del tema no puede superar los 5 dígitos.')
@@ -498,17 +498,17 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
       const validSubthemesForUpdate = themeFormData.subtemas.filter(st => st.subtema_text.trim())
       
       if (validSubthemesForUpdate.length > 0) {
-        if (validSubthemesForUpdate.some(st => !getIdGepAsString(st.id_gep))) {
-          setError('Todos los subtemas deben tener ID GEP.')
-          return
-        }
-        if (validSubthemesForUpdate.some(st => {
-          const stIdGep = getIdGepAsString(st.id_gep)
-          return stIdGep && !isValidInteger(stIdGep)
-        })) {
-          setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
-          return
-        }
+        // if (validSubthemesForUpdate.some(st => !getIdGepAsString(st.id_gep))) {
+        //   setError('Todos los subtemas deben tener ID GEP.')
+        //   return
+        // }
+        // if (validSubthemesForUpdate.some(st => {
+        //   const stIdGep = getIdGepAsString(st.id_gep)
+        //   return stIdGep && !isValidInteger(stIdGep)
+        // })) {
+        //   setError('Todos los ID GEP de los subtemas deben ser números enteros válidos.')
+        //   return
+        // }
         if (validSubthemesForUpdate.some(st => {
           const stIdGep = getIdGepAsString(st.id_gep)
           return stIdGep && !isValidIdGep(stIdGep)
@@ -544,7 +544,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
         .from('temas')
         .update({
           nombre_tema: themeFormData.nombre_tema.trim(),
-          id_gep: getIdGepAsString(themeFormData.id_gep),
+          id_gep: themeIdGep === '' ? null : themeIdGep,
           desc_tema: themeFormData.desc_tema?.trim() || ''
         })
         .eq('id_tema', selectedTheme.id_tema)
@@ -609,7 +609,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
                 data: {
                   id_tema: selectedTheme.id_tema,
                   subtema_text: newSubtema.subtema_text.trim(),
-                  id_gep: newSubtema.id_gep || '',
+                  id_gep: newSubtema.id_gep === '' ? null : newSubtema.id_gep,
                   subtema_desc: newSubtema.subtema_desc?.trim() || ''
                 }
               })
@@ -617,7 +617,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
               subtemasToCreate.push({
                 id_tema: selectedTheme.id_tema,
                 subtema_text: newSubtema.subtema_text.trim(),
-                id_gep: newSubtema.id_gep || '',
+                id_gep: newSubtema.id_gep === '' ? null : newSubtema.id_gep,
                 subtema_desc: newSubtema.subtema_desc?.trim() || ''
               })
             }
@@ -625,7 +625,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
             subtemasToCreate.push({
               id_tema: selectedTheme.id_tema,
               subtema_text: newSubtema.subtema_text.trim(),
-              id_gep: newSubtema.id_gep || '',
+              id_gep: newSubtema.id_gep === '' ? null : newSubtema.id_gep,
               subtema_desc: newSubtema.subtema_desc?.trim() || ''
             })
           }}
@@ -643,7 +643,7 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
               .from('subtemas')
               .update({
                 subtema_text: data.subtema_text.trim(),
-                id_gep: Number(data.id_gep) || '',
+                id_gep: data.id_gep === '' ? null : data.id_gep,
                 subtema_desc: data.subtema_desc?.trim() || ''
               })
               .eq('id_subtema', id_subtema)
@@ -921,6 +921,43 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
         i === index ? { ...st, [field]: value } : st
       )
     }))
+  }
+
+  const searchAndAutocompleteSubthemeIdGep = async (index: number, subtemaText: string) => {
+    if (!subtemaText.trim()) return
+
+    const currentSubtema = themeFormData.subtemas[index]
+    
+    if (currentSubtema.id_subtema) return
+    
+    if (currentSubtema.id_gep && currentSubtema.id_gep.trim() !== '') return
+
+    try {
+      let query = supabase
+        .from('subtemas')
+        .select('id_gep, subtema_text, id_tema')
+        .ilike('subtema_text', subtemaText.trim())
+      
+      if (modalType === 'edit' && selectedTheme) {
+        query = query.neq('id_tema', selectedTheme.id_tema)
+      }
+      
+      const { data, error } = await query.limit(1)
+
+      if (error) {
+        console.error('Error buscando subtema existente:', error)
+        return
+      }
+
+      if (data && data.length > 0 && data[0].id_gep) {
+        const existingIdGep = idGepToString(data[0].id_gep)
+        if (existingIdGep) {
+          updateSubthemeInForm(index, 'id_gep', existingIdGep)
+        }
+      }
+    } catch (error) {
+      console.error('Error en búsqueda de subtema:', error)
+    }
   }
 
   // Filtrar temas
@@ -1463,6 +1500,9 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
                                 type="text"
                                 value={subtema.subtema_text}
                                 onChange={(e) => updateSubthemeInForm(index, 'subtema_text', e.target.value)}
+                                onBlur={(e) => {
+                                  searchAndAutocompleteSubthemeIdGep(index, e.target.value)
+                                }}
                                 className="form-input w-full text-sm"
                                 placeholder="Nombre del subtema"
                               />

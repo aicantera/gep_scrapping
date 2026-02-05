@@ -429,19 +429,19 @@ const AlertsManagement: React.FC = () => {
           id_tema_gep: alerta.id_tema_gep || null,
           id_subtema_gep: alerta.id_subtema_gep || null,
           
-          tema_relacionado: {
+          tema_relacionado: alerta.tema ? {
             id_tema: alerta.tema.id_tema,
             nombre_tema: alerta.tema.nombre_tema,
             id_gep: alerta.tema.id_gep,
             desc_tema: alerta.tema.desc_tema || undefined
-          },
-          subtema_relacionado: {
+          } : null,
+          subtema_relacionado: alerta.subtema ? {
             id_subtema: alerta.subtema.id_subtema,
             subtema_text: alerta.subtema.subtema_text,
             id_gep: alerta.subtema.id_gep,
             id_tema: alerta.subtema.id_tema,
             subtema_desc: alerta.subtema.subtema_desc || undefined
-          },
+          } : null,
           
           // Campos derivados para UI (siempre arrays)
           nombre_cliente: nombreCliente,

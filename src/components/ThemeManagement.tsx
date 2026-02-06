@@ -960,12 +960,27 @@ Verifica que la columna 'id_tema' en Supabase esté configurada como:
     }
   }
 
+  // Función para normalizar texto removiendo tildes
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  }
+
   // Filtrar temas
   const filteredThemes = themes.filter(theme => {
-    const matchesSearch = searchTerm === '' || 
-      theme.nombre_tema.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    if (searchTerm === '') {
+      const matchesStatus = statusFilter === '' || 
+        theme.activo === (statusFilter === 'activo')
+      return matchesStatus
+    }
+    
+    const searchNormalized = normalizeText(searchTerm)
+    const matchesSearch = 
+      normalizeText(theme.nombre_tema).includes(searchNormalized) ||
       getSubthemesByTheme(theme.id_tema).some(st => 
-        st.subtema_text.toLowerCase().includes(searchTerm.toLowerCase())
+        normalizeText(st.subtema_text).includes(searchNormalized)
       )
     
     const matchesStatus = statusFilter === '' || 

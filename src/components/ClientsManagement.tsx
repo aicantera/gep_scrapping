@@ -197,10 +197,7 @@ const ClientsManagement: React.FC = () => {
       if (searchTerm.trim()) {
         const searchPattern = `%${searchTerm.trim().toLowerCase()}%`
         // Buscar solo en campos textuales soportados por el backend; el resto se filtra en front
-        query = query.or(`
-          nombre_cliente.ilike.${searchPattern},
-          siglas.ilike.${searchPattern}
-        `)
+        query = query.or(`nombre_cliente.ilike.${searchPattern},siglas.ilike.${searchPattern}`)
       }
       
       const { data, error, count } = await query
@@ -981,6 +978,11 @@ const ClientsManagement: React.FC = () => {
     setBusquedaTemasPorLista(prev => ({ ...prev, [listaId]: value }))
   }
 
+  // Función helper para obtener el texto a mostrar de un tema/subtema
+  const obtenerTexto = (item: TemaSubtemaGuardado): string => {
+    return item.nombre_tema || item.subtema_text || ''
+  }
+
   // Filtrar clientes - búsqueda mejorada en todos los campos relevantes
   const filteredClients = clients.filter(client => {
     if (!searchTerm.trim()) return true
@@ -1368,10 +1370,7 @@ const ClientsManagement: React.FC = () => {
     return false
   }
 
-  // Función helper para obtener el texto a mostrar de un tema/subtema
-  const obtenerTexto = (item: TemaSubtemaGuardado): string => {
-    return item.nombre_tema || item.subtema_text || ''
-  }
+  
 
   // Función para subir el logo a Supabase Storage
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

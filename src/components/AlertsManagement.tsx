@@ -921,25 +921,16 @@ const AlertsManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {(alerta.temas_subtemas && alerta.temas_subtemas.length > 0) ? (
-                            alerta.temas_subtemas.slice(0, 3).map((tema, index) => (
-                              <span
-                                key={index}
+                          {alerta.temas && <span
                                 className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full"
                               >
-                                {tema}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                              Sin temas
-                            </span>
-                          )}
-                          {alerta.temas_subtemas && alerta.temas_subtemas.length > 3 && (
-                            <span className="text-xs text-gray-500">
-                              +{alerta.temas_subtemas.length - 3} más
-                            </span>
-                          )}
+                                {alerta.temas}
+                              </span>}
+                          {alerta.sub_tema && <span
+                                className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full"
+                              >
+                                {alerta.sub_tema}
+                              </span>}
                         </div>
                       </td>
                       <td className="px-6 py-4">

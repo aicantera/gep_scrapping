@@ -623,9 +623,9 @@ const AlertsManagement: React.FC = () => {
         alerta.documento_senado?.iniciativa_texto || 
           'Sin documento',
       "Id Tema": alerta?.tema_relacionado?.id_gep || 'N/A',
-      'Temas': (alerta.temas || []).join(', '),
+      'Temas': alerta?.tema_relacionado?.nombre_tema || 'N/A',
       "Id Subtema": alerta?.subtema_relacionado?.id_gep || 'N/A',
-      'Subtemas': (alerta.sub_tema || []).join(', '),
+      'Subtemas': alerta?.subtema_relacionado?.subtema_text || 'N/A',
       'Estado': alerta.estado,
       'Enviado por Correo': alerta.enviado_correo ? 'Sí' : 'No',
       'Fecha de Envío': alerta.datetime_enviado_correo ? 
@@ -921,15 +921,15 @@ const AlertsManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {alerta.temas && <span
+                          {alerta.tema_relacionado?.nombre_tema && <span
                                 className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full"
                               >
-                                {alerta.temas}
+                                {alerta.tema_relacionado?.nombre_tema}
                               </span>}
-                          {alerta.sub_tema && <span
+                          {alerta.subtema_relacionado?.subtema_text && <span
                                 className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full"
                               >
-                                {alerta.sub_tema}
+                                {alerta.subtema_relacionado?.subtema_text}
                               </span>}
                         </div>
                       </td>

@@ -769,7 +769,7 @@ const DocumentManagement: React.FC = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-900">
                             <Tag className="w-4 h-4 mr-2 text-gray-400" />
-                            {truncateText(document.temas || 'Sin temas', 40)}
+                            {truncateText(document.tema?.nombre_tema || 'Sin temas', 40)}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
